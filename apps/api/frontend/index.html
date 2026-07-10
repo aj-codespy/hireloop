@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HireLoop — Interview Spike</title>
+    <style>
+      :root {
+        --bg: #fafaf8;
+        --surface: #ffffff;
+        --text: #1a2332;
+        --muted: #5c6678;
+        --primary: #1e3a5f;
+        --accent: #c1652f;
+        --border: #e8e6e1;
+        --ai: #2d6a9f;
+        --candidate: #3d7a5a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .shell {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+
+      header h1 {
+        margin: 0 0 0.25rem;
+        font-size: 1.5rem;
+        color: var(--primary);
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      @media (max-width: 720px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+      }
+
+      .card h2 {
+        margin: 0 0 0.75rem;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+
+      .status-pill {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        background: #eef2f7;
+        color: var(--primary);
+      }
+
+      .status-pill.live {
+        background: #e8f4ec;
+        color: var(--candidate);
+      }
+
+      .status-pill.ended {
+        background: #f4ece8;
+        color: var(--accent);
+      }
+
+      .orb {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        margin: 1rem auto;
+        background: radial-gradient(circle at 30% 30%, #4a7ab0, var(--primary));
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .orb.speaking {
+        transform: scale(1.06);
+        box-shadow: 0 0 0 12px rgba(45, 106, 159, 0.12);
+      }
+
+      .orb.listening {
+        background: radial-gradient(circle at 30% 30%, #5fa87a, var(--candidate));
+        box-shadow: 0 0 0 8px rgba(61, 122, 90, 0.1);
+      }
+
+      .timer-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      .timer-row strong {
+        display: block;
+        font-size: 1.25rem;
+        color: var(--primary);
+      }
+
+      .question-box {
+        min-height: 5rem;
+        line-height: 1.5;
+      }
+
+      .controls {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+      }
+
+      button {
+        border: none;
+        border-radius: 8px;
+        padding: 0.7rem 1.1rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+
+      button.primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      button.secondary {
+        background: #eef2f7;
+        color: var(--primary);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .transcript {
+        max-height: 320px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .line {
+        padding: 0.65rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.92rem;
+        line-height: 1.45;
+      }
+
+      .line.ai {
+        background: #eef4fa;
+        border-left: 3px solid var(--ai);
+      }
+
+      .line.candidate {
+        background: #f0f7f2;
+        border-left: 3px solid var(--candidate);
+      }
+
+      .line.system {
+        background: #f7f5f0;
+        border-left: 3px solid var(--accent);
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .meta {
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-bottom: 0.2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .log {
+        margin-top: 1rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.78rem;
+        color: var(--muted);
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <h1>HireLoop Interview Spike</h1>
+        <p>FastAPI ↔ Gemini Live relay with server-side timers and question sequencing.</p>
+      </header>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Live session</h2>
+          <div id="status" class="status-pill">Idle</div>
+          <div id="orb" class="orb"></div>
+          <div class="timer-row">
+            <div>
+              Question
+              <strong id="question-timer">—</strong>
+            </div>
+            <div>
+              Overall
+              <strong id="overall-timer">—</strong>
+            </div>
+          </div>
+          <div class="controls">
+            <button id="start-btn" class="primary">Start interview</button>
+            <button id="stop-btn" class="secondary" disabled>End session</button>
+          </div>
+          <div id="debug-log" class="log"></div>
+        </section>
+
+        <section class="card">
+          <h2>Current question</h2>
+          <div id="question-meta" class="meta">Not started</div>
+          <div id="question-text" class="question-box">Press start to begin.</div>
+        </section>
+      </div>
+
+      <section class="card" style="margin-top: 1rem">
+        <h2>Transcript</h2>
+        <div id="transcript" class="transcript"></div>
+      </section>
+    </div>
+
+    <script src="/static/media-handler.js"></script>
+    <script src="/static/interview.js"></script>
+  </body>
+</html>

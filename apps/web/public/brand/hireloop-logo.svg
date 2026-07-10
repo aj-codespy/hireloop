@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 36" fill="none">
+  <rect x="0" y="2" width="32" height="32" rx="8" fill="#FF6B00"/>
+  <path
+    d="M22 12.5C22 16.09 19.09 19 15.5 19C11.91 19 9 16.09 9 12.5C9 8.91 11.91 6 15.5 6"
+    stroke="white"
+    stroke-width="2.25"
+    stroke-linecap="round"
+  />
+  <path
+    d="M10 23.5C10 19.91 12.91 17 16.5 17C20.09 17 23 19.91 23 23.5C23 27.09 20.09 30 16.5 30"
+    stroke="white"
+    stroke-width="2.25"
+    stroke-linecap="round"
+    opacity="0.85"
+  />
+  <circle cx="15.5" cy="12.5" r="1.75" fill="white"/>
+  <text x="42" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="600" fill="#111827">
+    Hire<tspan fill="#FF6B00">Loop</tspan>
+  </text>
+</svg>
