@@ -41,6 +41,12 @@ export default function RootLayout({
           </HireLoopProvider>
           <Toaster position="top-right" />
         </ThemeProvider>
+        <script dangerouslySetInnerHTML={{ __html:
+          `(()=>{try{var els=document.querySelectorAll('.reveal');`
+          + `if(!('IntersectionObserver'in window)){els.forEach(function(e){e.classList.add('is-visible')});return;}`
+          + `var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('is-visible');io.unobserve(en.target);}});},{rootMargin:'0px 0px -10% 0px',threshold:0.08});`
+          + `els.forEach(function(e){io.observe(e);});}catch(e){}})();`
+        }} />
       </body>
     </html>
   );
