@@ -314,7 +314,7 @@ export async function sendToFinalInterviewAction(applicationId: string): Promise
         // Get AI interview score
         const { data: session } = await supabase
           .from("interview_sessions")
-          .select("overall_score, proctoring_summary")
+          .select("overall_score, proctoring_summary, cheating_probability")
           .eq("application_id", applicationId)
           .order("created_at", { ascending: false })
           .limit(1)

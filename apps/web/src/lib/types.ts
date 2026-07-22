@@ -168,6 +168,7 @@ export interface OverallScore {
 export interface ProctoringSummary {
   flagged?: boolean;
   reason?: string;
+  reasons?: string[];
   warnings?: number;
   critical?: number;
 }
@@ -184,6 +185,7 @@ export interface InterviewSession {
   overallScore?: OverallScore;
   proctoringLog?: ProctoringLogEntry[];
   proctoringSummary?: ProctoringSummary;
+  cheating_probability?: number;
 }
 
 export interface ProctoringLogEntry {
