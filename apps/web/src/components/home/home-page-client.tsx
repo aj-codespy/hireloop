@@ -198,17 +198,21 @@ export function HomePageClient({ userEmail }: { userEmail?: string | null }) {
 
       <main>
         <section className="relative overflow-hidden border-b border-border">
+          {/* Hero background gradient */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,107,0,0.12),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(255,107,0,0.06),transparent_30%)]" />
           <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-28">
+            {/* Left side content */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -48, y: 24 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
               <Badge className="mb-5 rounded-full bg-brand-muted px-3 py-1 text-brand">
                 Structured hiring workspace
               </Badge>
-              <h1 className="text-display max-w-xl text-foreground">
+              <h1
+                className="text-display max-w-xl font-bold text-gradient"
+              >
                 Run structured hiring from one workspace.
               </h1>
               <p className="mt-6 max-w-lg text-body text-muted-foreground sm:text-base">
@@ -218,7 +222,7 @@ export function HomePageClient({ userEmail }: { userEmail?: string | null }) {
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <ButtonLink
                   href={userEmail ? "/admin" : "/admin/login"}
-                  className="h-11 rounded-full bg-brand px-6 text-brand-foreground shadow-lg shadow-brand/20 transition-transform hover:-translate-y-0.5 hover:bg-brand/90"
+                  className="h-11 rounded-full bg-brand-gradient text-brand-foreground hover:bg-brand/90 transition-colors shadow-lg"
                 >
                   {userEmail ? "Open dashboard" : "Start hiring"}
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
@@ -231,39 +235,33 @@ export function HomePageClient({ userEmail }: { userEmail?: string | null }) {
                   See how it works
                 </ButtonLink>
               </div>
-              <div className="mt-10 grid max-w-xl grid-cols-2 gap-4 sm:grid-cols-4">
-                {proof.map((item, i) => (
-                  <motion.div
-                    key={item.label}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 + i * 0.08 }}
-                    className="border-l-2 border-brand/30 pl-4"
-                  >
-                    <p className="text-xl font-bold tracking-tight">{item.value}</p>
-                    <p className="mt-1 text-caption leading-5">{item.label}</p>
-                  </motion.div>
-                ))}
+              {/* Placeholder for live interview preview orb */}
+              <div className="mt-10">
+                <div className="relative mx-auto max-w-[280px] h-[280px] rounded-full border-4 border-primary flex items-center justify-center">
+                  {/* Orb fake */}
+                  <div className="w-72 h-72 rounded-full bg-gradient-to-r from-orange-200 to-orange-300 opacity-30" />
+                </div>
               </div>
             </motion.div>
 
+            {/* Right side card with elev-3 effect */}
             <motion.div
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+              initial={{ opacity: 0, x: 48, y: 32 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
               className="hidden lg:block"
             >
-              <div className="rounded-2xl border border-border bg-card p-6 shadow-card-hover">
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-none elev-3">
                 <div className="mb-5 flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-foreground">Your hiring pipeline</p>
                     <p className="text-caption">Applications to decisions</p>
                   </div>
-                  {liveJobs.length > 0 ? (
+                  {liveJobs.length > 0 && (
                     <Badge className="rounded-full bg-brand-muted text-brand">
                       {liveJobs.length} live {liveJobs.length === 1 ? "role" : "roles"}
                     </Badge>
-                  ) : null}
+                  )}
                 </div>
                 {liveJobs.length > 0 ? (
                   <div className="space-y-3">
@@ -312,7 +310,7 @@ export function HomePageClient({ userEmail }: { userEmail?: string | null }) {
           </div>
         </section>
 
-        <section id="features" className="border-b border-border bg-muted/30 py-20">
+        <section id="features" className="reveal border-b border-border bg-muted/30 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="max-w-2xl">
               <Badge variant="secondary" className="rounded-full">
@@ -350,7 +348,7 @@ export function HomePageClient({ userEmail }: { userEmail?: string | null }) {
           </div>
         </section>
 
-        <section id="workflow" className="py-20">
+        <section id="workflow" className="reveal py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="max-w-2xl">
               <Badge className="rounded-full bg-brand-muted text-brand">How it works</Badge>
@@ -490,6 +488,68 @@ export function HomePageClient({ userEmail }: { userEmail?: string | null }) {
           </motion.div>
         </section>
       </main>
+      {/* Problem band section */}
+      <section id="problem" className="py-20 bg-muted/15">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="reveal">
+            <h2 className="text-3xl font-bold mb-6">The Problem</h2>
+            <p className="text-muted-foreground">Candidates and recruiters lose track of interviews, notes, and outcomes, causing delays.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* System boundary section */}
+      <section id="boundary" className="py-20 bg-background">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="reveal">
+            <h2 className="text-3xl font-bold mb-6">System Boundary</h2>
+            <p className="text-muted-foreground">All data stays in the tenant and is accessible only to authorized roles.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Reports ticker section */}
+      <section id="reports" className="py-20 bg-muted/10">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="reveal">
+            <h2 className="text-3xl font-bold mb-6">Reports</h2>
+            <p className="text-muted-foreground">See analytics and metrics in real time.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials section */}
+      <section id="testimonials" className="py-20 bg-background">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="reveal">
+            <h2 className="text-3xl font-bold mb-6">What Teams Say</h2>
+            <p className="text-muted-foreground">Positive feedback from real users.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing tiers section */}
+      <section id="pricing" className="py-20 bg-muted/15">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="reveal">
+            <h2 className="text-3xl font-bold mb-6">Pricing</h2>
+            <p className="text-muted-foreground">Flexible plans to fit your team's needs.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA section */}
+      <section id="cta" className="px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="reveal text-center">
+            <h2 className="text-3xl font-bold mb-4">Ready to transform hiring?</h2>
+            <ButtonLink href="/admin/login" className="inline-flex items-center rounded-full bg-brand px-8 py-3 text-white font-medium hover:bg-brand/90">
+              Start hiring
+              <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+            </ButtonLink>
+          </div>
+        </div>
+      </section>
 
       <footer className="border-t border-border bg-muted/30">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
