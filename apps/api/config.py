@@ -24,8 +24,14 @@ SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY") or os.getenv(
     "SUPABASE_SERVICE_ROLE_KEY", ""
 )
 
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM = os.getenv("RESEND_FROM", "")
+# — Email (Brevo / SendinBlue) ———————————————————————————————————————————
+_legacy_resend_key = os.getenv("RESEND_API_KEY", "")
+_legacy_resend_from = os.getenv("RESEND_FROM", "")
+
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "") or _legacy_resend_key
+BREVO_FROM = os.getenv("BREVO_FROM", "") or _legacy_resend_from
+BREVO_FROM_NAME = os.getenv("BREVO_FROM_NAME", "HireLoop")
+
 APP_URL = os.getenv("APP_URL") or os.getenv("NEXT_PUBLIC_APP_URL", "http://localhost:3000")
 
 # — Dev SQLite fallback ————————————————————————————————————————————————
@@ -52,7 +58,7 @@ def dev_sqlite_connection() -> sqlite3.Connection:
 
 
 def email_configured() -> bool:
-    return bool(RESEND_API_KEY and RESEND_FROM)
+    return bool(BREVO_API_KEY and BREVO_FROM)
 
 
 def supabase_enabled() -> bool:

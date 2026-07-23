@@ -1,4 +1,4 @@
-"""Interview notification emails via Resend."""
+"""Interview notification emails via Brevo (SendinBlue) API."""
 
 from __future__ import annotations
 
@@ -6,10 +6,12 @@ import logging
 
 import httpx
 
-from config import APP_URL, RESEND_API_KEY, RESEND_FROM, email_configured
+from config import APP_URL, BREVO_API_KEY, BREVO_FROM, BREVO_FROM_NAME, email_configured
 from utils.http_pool import get_http_client
 
 logger = logging.getLogger(__name__)
+
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
 
 
 async def send_interview_expired_email(
@@ -25,14 +27,13 @@ async def send_interview_expired_email(
 
     if not email_configured():
         logger.info(
-            "INTERVIEW EXPIRED EMAIL (Resend not configured) → %s <%s> for role %r",
+            "INTERVIEW EXPIRED EMAIL (Brevo not configured) → %s <%s> for role %r",
             candidate_name,
             candidate_email,
             job_title,
         )
         return
 
-    subject = f"Interview window ended — {job_title}"
     html = f"""
         <p>Hi {candidate_name},</p>
         <p>Your interview window for <strong>{job_title}</strong> has ended, so you can no longer continue the interview online.</p>
@@ -40,20 +41,23 @@ async def send_interview_expired_email(
         <p><a href="{APP_URL}">Visit HireLoop</a></p>
     """
 
+    payload = {
+        "sender": {"name": BREVO_FROM_NAME, "email": BREVO_FROM},
+        "to": [{"email": candidate_email, "name": candidate_name}],
+        "subject": f"Interview window ended — {job_title}",
+        "htmlContent": html,
+    }
+
     try:
         client = get_http_client()
         response = await client.post(
-            "https://api.resend.com/emails",
+            BREVO_API_URL,
             headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "api-key": BREVO_API_KEY,
                 "Content-Type": "application/json",
+                "Accept": "application/json",
             },
-            json={
-                "from": RESEND_FROM,
-                "to": candidate_email,
-                "subject": subject,
-                "html": html,
-            },
+            json=payload,
             timeout=30.0,
         )
         if response.status_code >= 400:
@@ -71,3 +75,4 @@ async def send_interview_expired_email(
         )
     except Exception as exc:
         logger.exception("Error sending expired interview email to %s: %s", candidate_email, exc)
+
