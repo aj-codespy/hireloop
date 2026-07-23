@@ -37,3 +37,24 @@ jobs:
 
       - name: Build
         run: npm run build --if-present
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Start dev server
+        run: npm run dev &
+        env:
+          CI_PLAYWRIGHT_BASE_URL: "http://localhost:3000"
+
+      - name: Wait for server
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:3000 > /dev/null && break
+            sleep 1
+          done
+
+      - name: Run visual regression tests
+        run: npx playwright test --config=scripts/visual-regression/playwright.config.ts --project=chromium --reporter=list
+        env:
+          CI: true
+          CI_PLAYWRIGHT_BASE_URL: "http://localhost:3000"
