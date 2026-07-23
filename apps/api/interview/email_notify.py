@@ -7,6 +7,7 @@ import logging
 import httpx
 
 from config import APP_URL, RESEND_API_KEY, RESEND_FROM, email_configured
+from utils.http_pool import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -40,20 +41,21 @@ async def send_interview_expired_email(
     """
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                "https://api.resend.com/emails",
-                headers={
-                    "Authorization": f"Bearer {RESEND_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "from": RESEND_FROM,
-                    "to": candidate_email,
-                    "subject": subject,
-                    "html": html,
-                },
-            )
+        client = get_http_client()
+        response = await client.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": RESEND_FROM,
+                "to": candidate_email,
+                "subject": subject,
+                "html": html,
+            },
+            timeout=30.0,
+        )
         if response.status_code >= 400:
             logger.error(
                 "Failed to send expired interview email to %s: %s",

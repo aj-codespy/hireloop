@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import type { QuestionInput } from "@/lib/store/provider";
 import type { QuestionSection } from "@/lib/types";
@@ -77,6 +77,28 @@ export function JobQuestionsEditor({
     setInterviewCount(initialCount != null ? String(initialCount) : "");
   }
 
+  // Refs for smooth scrolling
+  const questionContainerRef = useRef<HTMLDivElement>(null);
+  const questionRowRefs = useRef<Record<number, HTMLDivElement>>({});
+  
+  // Track the index of the newly added question to scroll to it
+  const [scrollToIndex, setScrollToIndex] = useState<number | null>(null);
+
+  // Refs for scroll-to-view functionality
+  const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const [newlyAddedIndex, setNewlyAddedIndex] = useState<number | null>(null);
+
+  // Scroll to newly added question when it expands
+  useEffect(() => {
+    if (newlyAddedIndex !== null) {
+      const element = questionRefs.current[newlyAddedIndex];
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      setNewlyAddedIndex(null);
+    }
+  }, [newlyAddedIndex]);
+
   const mandatoryCount = useMemo(() => countMandatoryQuestions(questions), [questions]);
   const activeCount = useMemo(() => countActiveQuestions(questions), [questions]);
   const variableCount = Math.max(0, activeCount - mandatoryCount);
@@ -142,6 +164,9 @@ export function JobQuestionsEditor({
     return (
       <div
         key={q.id ?? i}
+        ref={(el) => {
+          questionRefs.current[i] = el;
+        }}
         className={cn(
           "rounded-xl border border-border bg-card transition-colors",
           q.isMandatory && "border-brand/20 bg-brand-subtle/30"
@@ -346,8 +371,10 @@ export function JobQuestionsEditor({
             variant="outline"
             className="mt-2 w-full rounded-full"
             onClick={() => {
+              const newIndex = questions.length;
               setQuestions((prev) => [...prev, emptyQuestion(activeSection)]);
-              setExpanded((e) => ({ ...e, [questions.length]: true }));
+              setExpanded((e) => ({ ...e, [newIndex]: true }));
+              setNewlyAddedIndex(newIndex);
             }}
           >
             <Plus className="mr-1 h-4 w-4" aria-hidden />

@@ -13,7 +13,7 @@ from config import GEMINI_API_KEY, INTERVIEW_OVERALL_LIMIT_SECONDS, INTERVIEW_RE
 import base64
 import time
 
-from interview.proctoring import analyze_proctoring_snapshot, severity_from_analysis
+from interview.proctoring import analyze_proctoring_snapshot, severity_from_analysis, calculate_cheating_probability
 from interview.questions import load_demo_questions
 from interview.scoring import score_interview
 from interview.session import InterviewSession, SessionStatus
@@ -29,9 +29,16 @@ SUPPORTED_LANGUAGES = ("en", "hi")
 # recording it was capturing before force-advancing with an empty answer.
 TIMEOUT_ANSWER_GRACE_SECONDS = 60
 
+# Minimum seconds between server-side proctoring snapshot analyses. The client
+# may stream snapshots more often, but we only run the (paid) vision model at
+# this cadence to bound AI cost and DB snapshot writes.
+SNAPSHOT_MIN_INTERVAL_SECONDS = 10
+
+# Max proctoring snapshots allowed per session to prevent API spam costs
+MAX_SNAPSHOTS_PER_SESSION = 350
+
 
 class StructuredInterviewRelay:
-    """Server-driven question flow: TTS question → record answer → STT → save → score."""
 
     def __init__(
         self,
@@ -231,7 +238,7 @@ class StructuredInterviewRelay:
         if self._snapshot_analyzing:
             return
         now = time.monotonic()
-        if now - self._last_snapshot_at < 10:
+        if now - self._last_snapshot_at < SNAPSHOT_MIN_INTERVAL_SECONDS:
             return
         self._last_snapshot_at = now
 
@@ -261,10 +268,32 @@ class StructuredInterviewRelay:
             severity = severity_from_analysis(analysis)
             detail = analysis.get("explanation", "Snapshot analyzed")
 
+            # Track counts for dashboard
             if severity == "critical":
                 self._proctoring_critical += 1
             elif severity == "warning":
                 self._proctoring_warnings += 1
+
+            # Calculate cheating probability (0-100)
+            # This is the V1 approach: never auto-end, just compute probability
+            proctoring_log = getattr(self.session, 'proctoring_log', [])
+            cheating_probability = calculate_cheating_probability(
+                proctoring_log,
+                [{"at": time.time(), "analysis": analysis, "severity": severity}]
+            )
+
+            # Store probability in session for persistence
+            if not hasattr(self.session, 'proctoring_log'):
+                self.session.proctoring_log = []
+            self.session.proctoring_log.append({
+                "at": time.time(),
+                "type": "ai_snapshot",
+                "severity": severity,
+                "detail": detail,
+                "analysis": analysis,
+                "snapshot_path": snapshot_path,
+                "cheating_probability": cheating_probability,
+            })
 
             if self.store and self.db_session_id:
                 await self.store.append_proctoring_event(
@@ -286,11 +315,14 @@ class StructuredInterviewRelay:
                     "analysis": analysis,
                     "warning_count": self._proctoring_warnings,
                     "critical_count": self._proctoring_critical,
+                    "cheating_probability": cheating_probability,
                 }
             )
 
-            if severity == "critical":
-                await self._flag_proctoring_session(detail)
+            # V1: NEVER auto-flag/end interview based on probability
+            # Only explicit critical violations (phone, second person) could flag
+            # but even then, we just log - never end the interview
+
         except Exception as exc:
             logger.warning("Proctoring snapshot analysis failed: %s", exc)
         finally:
@@ -353,8 +385,11 @@ class StructuredInterviewRelay:
             chunk_count = message.get("chunk_count")
             if chunk_count and self.db_session_id:
                 try:
+                    chunk_count_int = int(chunk_count)
+                    if chunk_count_int <= 0 or chunk_count_int > 100:
+                        raise ValueError(f"Invalid chunk_count: {chunk_count_int}")
                     audio_bytes, mime_type = await assemble_answer_audio(
-                        self.db_session_id, index, int(chunk_count)
+                        self.db_session_id, index, chunk_count_int
                     )
                 except Exception as exc:
                     logger.error("Failed to assemble chunked answer: %s", exc, exc_info=True)
@@ -601,22 +636,28 @@ class StructuredInterviewRelay:
             }
         )
 
-        # Transcriptions may still be running in the background; scoring needs
-        # the final texts.
-        await self._await_pending_transcriptions()
+        async def _finish_and_score():
+            try:
+                # Transcriptions may still be running in the background; scoring needs
+                # the final texts.
+                await self._await_pending_transcriptions()
 
-        if self.store and self.db_session_id and self.ctx:
-            await self.store.finalize_session(
-                self.db_session_id,
-                status=self.session.status,
-                elapsed_seconds=self.session.elapsed_seconds,
-                entries=self.session.transcripts,
-                current_index=self.session.current_index,
-            )
-            if self.session.transcripts:
-                await self._run_scoring()
+                if self.store and self.db_session_id and self.ctx:
+                    await self.store.finalize_session(
+                        self.db_session_id,
+                        status=self.session.status,
+                        elapsed_seconds=self.session.elapsed_seconds,
+                        entries=self.session.transcripts,
+                        current_index=self.session.current_index,
+                    )
+                    if self.session.transcripts:
+                        await self._run_scoring()
+            except Exception as e:
+                logger.error("Error in background finalize/score: %s", e, exc_info=True)
+            finally:
+                self._done_event.set()
 
-        self._done_event.set()
+        asyncio.create_task(_finish_and_score())
 
     async def _run_scoring(self) -> None:
         if not self.store or not self.db_session_id or not self.ctx:
@@ -625,12 +666,14 @@ class StructuredInterviewRelay:
         await self._send_json({"type": "scoring_started"})
         try:
             loop = asyncio.get_running_loop()
+            custom_rules = getattr(self.ctx, "custom_scoring_rules", None)
             result = await loop.run_in_executor(
                 None,
                 lambda: score_interview(
                     self.session.questions,
                     self.session.transcripts,
                     self.ctx.passing_score,
+                    custom_rules,
                 ),
             )
             await self.store.save_scores(

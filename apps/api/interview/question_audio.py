@@ -8,6 +8,7 @@ import httpx
 
 from config import SUPABASE_SECRET_KEY, SUPABASE_URL
 from interview.tts import synthesize_question
+from utils.http_pool import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +33,11 @@ async def upload_question_audio(question_id: str, audio_bytes: bytes, *, mime_ty
         "Content-Type": mime_type,
         "x-upsert": "true",
     }
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        res = await client.post(upload_url, headers=headers, content=audio_bytes)
-        if res.status_code >= 400:
-            logger.warning("Question audio upload failed: %s %s", res.status_code, res.text)
-            return None
+    client = get_http_client()
+    res = await client.post(upload_url, headers=headers, content=audio_bytes, timeout=60.0)
+    if res.status_code >= 400:
+        logger.warning("Question audio upload failed: %s %s", res.status_code, res.text)
+        return None
     return _public_url(object_path)
 
 

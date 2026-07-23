@@ -294,7 +294,19 @@ export function InterviewStructured({
       return;
     }
     const stream = new MediaStream([audioTrack]);
-    const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    let recorder: MediaRecorder;
+    try {
+      recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    } catch (err) {
+      console.warn("Failed to initialize MediaRecorder with audio/webm:", err);
+      try {
+        recorder = new MediaRecorder(stream);
+      } catch (fallbackErr) {
+        console.error("Failed to initialize standard MediaRecorder:", fallbackErr);
+        setError("Your browser does not support audio recording. Please try a modern browser.");
+        return;
+      }
+    }
     chunks.current = [];
     chunkIndexRef.current = 0;
     recorder.ondataavailable = (e) => {
@@ -470,7 +482,13 @@ export function InterviewStructured({
 
     ws.onmessage = (event) => {
       if (disposed) return;
-      const payload = JSON.parse(event.data) as InterviewEvent;
+      let payload: InterviewEvent;
+      try {
+        payload = JSON.parse(event.data) as InterviewEvent;
+      } catch (err) {
+        console.error("Failed to parse WebSocket message:", event.data, err);
+        return;
+      }
       switch (payload.type) {
         case "bootstrap":
           setPhase("connecting");

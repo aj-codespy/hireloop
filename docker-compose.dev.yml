@@ -1,0 +1,63 @@
+# HireLoop — Development Docker Compose
+# Usage: docker compose -f docker-compose.dev.yml up -d
+#
+# Provides: local Supabase (Postgres + PostgREST + GoTrue) for full-stack dev.
+# The API and web apps run on the host (not containerized) so you get hot-reload.
+#
+# Prerequisites:
+#   1. Copy apps/api/.env.example → apps/api/.env and fill values
+#   2. Copy apps/web/.env.example → apps/web/.env.local and fill values
+#   3. docker compose -f docker-compose.dev.yml up -d
+#   4. npm run dev  (starts both API + web with hot reload)
+
+services:
+  # ─── PostgreSQL (Supabase-compatible) ─────────────────────────────────
+  db:
+    image: supabase/postgres:15.6.1.143
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - hireloop-db-data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d/migrations:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ─── PostgREST (auto REST API for Supabase tables) ─────────────────────
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    ports:
+      - "3001:3000"
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@db:5432/postgres
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_DB_SCHEMA: public
+      PGRST_JWT_SECRET: hireloop-dev-jwt-secret-do-not-use-in-production
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ─── GoTrue (Supabase Auth) ───────────────────────────────────────────
+  auth:
+    image: supabase/gotrue:v2.164.0
+    ports:
+      - "9999:9999"
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@db:5432/postgres?search_path=auth
+      GOTRUE_JWT_SECRET: hireloop-dev-jwt-secret-do-not-use-in-production
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  hireloop-db-data:

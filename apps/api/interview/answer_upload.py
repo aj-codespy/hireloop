@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 
 from config import SUPABASE_SECRET_KEY, SUPABASE_URL
+from utils.http_pool import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +36,10 @@ async def upload_answer_chunk(
         "Content-Type": mime_type,
         "x-upsert": "true",
     }
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        res = await client.post(upload_url, headers=headers, content=data)
-        if res.status_code >= 400:
-            raise RuntimeError(f"Chunk upload failed: {res.status_code} {res.text}")
+    client = get_http_client()
+    res = await client.post(upload_url, headers=headers, content=data, timeout=60.0)
+    if res.status_code >= 400:
+        raise RuntimeError(f"Chunk upload failed: {res.status_code} {res.text}")
     return object_path
 
 
@@ -48,11 +49,11 @@ async def download_object(object_path: str) -> bytes:
         "apikey": SUPABASE_SECRET_KEY,
         "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
     }
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        res = await client.get(url, headers=headers)
-        if res.status_code >= 400:
-            raise RuntimeError(f"Download failed: {res.status_code}")
-        return res.content
+    client = get_http_client()
+    res = await client.get(url, headers=headers, timeout=60.0)
+    if res.status_code >= 400:
+        raise RuntimeError(f"Download failed: {res.status_code}")
+    return res.content
 
 
 async def assemble_answer_audio(session_id: str, question_index: int, chunk_count: int) -> tuple[bytes, str]:

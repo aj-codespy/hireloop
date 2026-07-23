@@ -446,11 +446,15 @@ export async function fetchInterviewContextByToken(
     .select("*")
     .eq("interview_token", token)
     .maybeSingle();
-  if (appError || !appRow) return null;
+
+  if (appError) {
+    throw appError;
+  }
+  if (!appRow) return null;
 
   const application = mapApplication(appRow);
 
-  const { data: sessionRow } = await supabase
+  const { data: sessionRow, error: sessionError } = await supabase
     .from("interview_sessions")
     .select("id, reconnect_expires_at, status")
     .eq("application_id", application.id)
@@ -458,6 +462,10 @@ export async function fetchInterviewContextByToken(
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  if (sessionError) {
+    throw sessionError;
+  }
 
   const reconnectExpired =
     sessionRow?.reconnect_expires_at &&
@@ -478,19 +486,30 @@ export async function fetchInterviewContextByToken(
     return null;
   }
 
-  const [{ data: candRow }, { data: jobRow }] = await Promise.all([
+  const [{ data: candRow, error: candError }, { data: jobRow, error: jobError }] = await Promise.all([
     supabase.from("candidates").select("*").eq("id", application.candidateId).single(),
     supabase.from("job_roles").select("*").eq("id", application.jobRoleId).single(),
   ]);
 
+  if (candError) {
+    throw candError;
+  }
+  if (jobError) {
+    throw jobError;
+  }
+
   if (!candRow || !jobRow) return null;
 
   const job = mapJobRole(jobRow);
-  const { data: orgRow } = await supabase
+  const { data: orgRow, error: orgError } = await supabase
     .from("organizations")
     .select("*")
     .eq("id", job.orgId)
     .single();
+
+  if (orgError) {
+    throw orgError;
+  }
 
   return {
     application,
@@ -508,6 +527,7 @@ export async function fetchInterviewContextByToken(
     }),
   };
 }
+
 
 export async function updateOrganizationInDb(
   orgId: string,

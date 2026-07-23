@@ -6,13 +6,11 @@ import { toast } from "sonner";
 import { signOutAction, updateCandidateProfileAction } from "@/app/actions/auth";
 import type { Application, JobRole, Profile } from "@/lib/types";
 import { StatusBadge } from "@/components/patterns/status-badge";
-import { APPLICATION_STATUS_LABELS } from "@/lib/constants";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const STATUS_STEPS = [
   "interview_sent",

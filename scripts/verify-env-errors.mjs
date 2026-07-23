@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,20 +21,34 @@ if (!fs.existsSync(hireloopTsPath)) {
 }
 
 const content = fs.readFileSync(hireloopTsPath, "utf8");
-const startIdx = content.indexOf("export async function setJobQuestionsAction");
+
+// Transpile the source before extracting the function. The previous hand-rolled
+// parser treated object types in a return annotation as function-body braces,
+// producing an invalid, truncated JavaScript function as soon as the signature
+// became more expressive.
+const requireWeb = createRequire(path.resolve(__dirname, "../apps/web/package.json"));
+const ts = requireWeb("typescript");
+const transpiled = ts.transpileModule(content, {
+  compilerOptions: {
+    target: ts.ScriptTarget.ES2022,
+    module: ts.ModuleKind.ESNext,
+  },
+}).outputText;
+
+const startIdx = transpiled.indexOf("export async function setJobQuestionsAction");
 if (startIdx === -1) {
-  console.error("Error: Could not find setJobQuestionsAction in hireloop.ts");
+  console.error("Error: Could not find transpiled setJobQuestionsAction in hireloop.ts");
   process.exit(1);
 }
 
 let braceCount = 0;
 let endIdx = -1;
 let started = false;
-for (let i = startIdx; i < content.length; i++) {
-  if (content[i] === "{") {
+for (let i = startIdx; i < transpiled.length; i++) {
+  if (transpiled[i] === "{") {
     braceCount++;
     started = true;
-  } else if (content[i] === "}") {
+  } else if (transpiled[i] === "}") {
     braceCount--;
     if (started && braceCount === 0) {
       endIdx = i + 1;
@@ -47,17 +62,7 @@ if (endIdx === -1) {
   process.exit(1);
 }
 
-const funcText = content.substring(startIdx, endIdx);
-
-// Convert TS signature and types to valid JS
-let jsFuncText = funcText
-  .replace("export async function setJobQuestionsAction", "async function setJobQuestionsAction")
-  .replace("jobId: string", "jobId")
-  .replace("questions: QuestionInput[]", "questions")
-  .replace("interviewQuestionCount?: number | null", "interviewQuestionCount")
-  .replace("): Promise<void>", ")")
-  .replace("as string[]", "")
-  .replace(": Response", "");
+const jsFuncText = transpiled.substring(startIdx, endIdx).replace("export async function", "async function");
 
 // Compile function via factory
 const ORG_MANAGER_ROLES = ["org_admin", "org_manager"];
@@ -73,22 +78,22 @@ function createMockedAction({ requireOrgRole, setJobQuestionsInDb, fetch, proces
     "ORG_MANAGER_ROLES",
     "fetch",
     "process",
-    "console",
+    "logger",
+    "isRedirectError",
+    "isNotFoundError",
     factoryBody
   );
-  // Suppress expected console.error during tests
-  const silentConsole = {
-    log: () => {},
-    warn: () => {},
-    error: () => {},
-  };
+  // Suppress expected logs during tests.
+  const silentLogger = { info: () => {}, warn: () => {}, error: () => {} };
   return factory(
     requireOrgRole,
     setJobQuestionsInDb,
     ORG_MANAGER_ROLES,
     fetch,
     processMock,
-    silentConsole
+    silentLogger,
+    () => false,
+    () => false
   );
 }
 
@@ -147,12 +152,11 @@ async function main() {
       }
     });
 
-    await assert.rejects(
-      async () => {
-        await action("job-1", [{ id: "q-1" }]);
-      },
-      /Audio generation failed: Missing INTERVIEW_INTERNAL_SECRET environment variable/
-    );
+    const result = await action("job-1", [{ id: "q-1" }]);
+    assert.deepEqual(result, {
+      ok: false,
+      error: "Audio generation failed: Missing INTERVIEW_INTERNAL_SECRET environment variable.",
+    });
   });
 
   // Test 3: Handles simulated fetch network error
@@ -171,12 +175,11 @@ async function main() {
       }
     });
 
-    await assert.rejects(
-      async () => {
-        await action("job-1", [{ id: "q-1" }]);
-      },
-      /Audio generation failed: Network error - DNS lookup failed/
-    );
+    const result = await action("job-1", [{ id: "q-1" }]);
+    assert.deepEqual(result, {
+      ok: false,
+      error: "Audio generation failed: Network error - DNS lookup failed",
+    });
   });
 
   // Test 4: Handles simulated fetch status code error (ok: false, status 500)
@@ -197,12 +200,11 @@ async function main() {
       }
     });
 
-    await assert.rejects(
-      async () => {
-        await action("job-1", [{ id: "q-1" }]);
-      },
-      /Audio generation failed: API returned status 500 - Internal Server Error/
-    );
+    const result = await action("job-1", [{ id: "q-1" }]);
+    assert.deepEqual(result, {
+      ok: false,
+      error: "Audio generation failed: API returned status 500 - Internal Server Error",
+    });
   });
 
   // Test 5: Handles non-parsable body on fetch status code error
@@ -225,12 +227,11 @@ async function main() {
       }
     });
 
-    await assert.rejects(
-      async () => {
-        await action("job-1", [{ id: "q-1" }]);
-      },
-      /Audio generation failed: API returned status 400 - Could not parse response body/
-    );
+    const result = await action("job-1", [{ id: "q-1" }]);
+    assert.deepEqual(result, {
+      ok: false,
+      error: "Audio generation failed: API returned status 400 - Could not parse response body",
+    });
   });
 
   // Test 6: Runs successfully and passes parameters correctly under normal conditions

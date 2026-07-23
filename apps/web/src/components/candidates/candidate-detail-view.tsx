@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Mail, Phone, ExternalLink, FileText } from "lucide-react";
 import {
@@ -11,6 +11,7 @@ import {
   sendToFinalInterviewAction,
   submitScorecardAction,
 } from "@/app/actions/hireloop";
+import { isActionError } from "@/lib/action-error";
 import { FadeIn } from "@/components/motion/fade-in";
 import { ApplicationDocumentLink } from "@/components/candidates/application-document-link";
 import {
@@ -61,6 +62,11 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
     : undefined;
   const questions = useQuestionsForJob(job?.id ?? "");
 
+  // Always refresh state when viewing a candidate to ensure we have the latest AI scorecard
+  useEffect(() => {
+    void refreshState();
+  }, [refreshState]);
+
   const uploadedDocuments = application
     ? Object.entries(application.formResponse).filter(([, value]) =>
         isApplicationDocument(value)
@@ -72,7 +78,7 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
     return <p className="text-sm text-muted-foreground">Candidate not found.</p>;
   }
 
-  const interviewed = ["interviewed", "passed_ai", "rejected_ai", "partner_review", "hired"].includes(
+  const interviewed = ["interviewed", "shortlisted", "passed_ai", "rejected_ai", "partner_review", "hired"].includes(
     application.status
   );
   const showResendLink = canRegenerateInterviewLink(application);
@@ -84,7 +90,10 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
   ) {
     setActionLoading(key);
     try {
-      await fn();
+      const res = await fn();
+      if (isActionError(res)) {
+        throw new Error(res.error);
+      }
       await refreshState();
       toast.success("Updated");
     } catch (err) {
@@ -96,21 +105,26 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
 
   async function submitScorecard() {
     setActionLoading("scorecard");
-    const result = await submitScorecardAction({
-      applicationId,
-      recommendation,
-      overallScore: reviewScore ? Number(reviewScore) : null,
-      notes: reviewNotes,
-    });
-    setActionLoading(null);
-    if (result.error) {
-      toast.error(result.error);
-      return;
+    try {
+      const result = await submitScorecardAction({
+        applicationId,
+        recommendation,
+        overallScore: reviewScore ? Number(reviewScore) : null,
+        notes: reviewNotes,
+      });
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      setReviewNotes("");
+      setReviewScore("");
+      setRecommendation("hold");
+      toast.success("Scorecard submitted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "An unexpected error occurred");
+    } finally {
+      setActionLoading(null);
     }
-    setReviewNotes("");
-    setReviewScore("");
-    setRecommendation("hold");
-    toast.success("Scorecard submitted");
   }
 
   return (
@@ -138,7 +152,7 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
           </div>
           <p className="text-caption">Applied {formatDate(application.createdAt)}</p>
           <div className="flex flex-col gap-2 border-t border-border pt-4">
-            {application.status === "passed_ai" ? (
+            {application.status === "passed_ai" || application.status === "shortlisted" ? (
               <Button
                 className="w-full rounded-full bg-brand hover:bg-brand/90"
                 disabled={actionLoading != null}
@@ -190,9 +204,20 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
           </Badge>
         ) : null}
         {session?.status === "flagged" || session?.proctoringSummary?.flagged ? (
-          <Badge className="bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300">
-            Proctoring flagged
-          </Badge>
+          <div className="flex flex-col gap-1">
+            <Badge className="bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300 w-fit">
+              Proctoring flagged
+            </Badge>
+            {session.proctoringSummary?.reasons?.length ? (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                Issues: {session.proctoringSummary.reasons.join(" • ")}
+              </p>
+            ) : session.proctoringSummary?.reason ? (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                Issue: {session.proctoringSummary.reason}
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
       <Tabs defaultValue="application">
@@ -317,7 +342,10 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
                   onClick={async () => {
                     setActionLoading("resend-link");
                     try {
-                      await regenerateAndSendInterviewLinkAction(application.id);
+                      const res = await regenerateAndSendInterviewLinkAction(application.id);
+                      if (isActionError(res)) {
+                        throw new Error(res.error);
+                      }
                       await refreshState();
                       toast.success("Interview link sent to candidate");
                     } catch (err) {
@@ -421,6 +449,7 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
               overall={session.overallScore}
               questionScores={session.questionScores}
               passingScore={job.passingScore}
+              transcript={session.transcript}
             />
           </TabsContent>
         ) : null}

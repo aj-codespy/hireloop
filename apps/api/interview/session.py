@@ -35,6 +35,7 @@ class InterviewSession:
     _question_timer_forced: bool = False
     _overall_timer_forced: bool = False
     _paused_at: datetime | None = None
+    proctoring_log: list[dict] = field(default_factory=list)
 
     def start(self) -> None:
         now = datetime.now(timezone.utc)

@@ -1,4 +1,7 @@
 import os
+import sqlite3
+import threading
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -25,10 +28,35 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_FROM = os.getenv("RESEND_FROM", "")
 APP_URL = os.getenv("APP_URL") or os.getenv("NEXT_PUBLIC_APP_URL", "http://localhost:3000")
 
+# — Dev SQLite fallback ————————————————————————————————————————————————
+DEV_SQLITE = os.getenv("DEV_SQLITE", "").strip() in ("1", "true", "yes")
+DEV_SQLITE_PATH = os.getenv("DEV_SQLITE_PATH", str(Path(__file__).parent / "dev.sqlite"))
+_dev_sqlite_local = threading.local()
+
+
+def dev_sqlite_connection() -> sqlite3.Connection:
+    """Return a per-thread SQLite connection for dev mode.
+
+    When ``DEV_SQLITE=1`` is exported, ``supabase_enabled()`` returns true,
+    but ``get_store()`` hands back a lightweight SQLite-backed store so
+    developers can run the API without provisioning a Supabase project.
+    """
+    conn = getattr(_dev_sqlite_local, "conn", None)
+    if conn is None:
+        conn = sqlite3.connect(DEV_SQLITE_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        _dev_sqlite_local.conn = conn
+    return conn
+
 
 def email_configured() -> bool:
     return bool(RESEND_API_KEY and RESEND_FROM)
 
 
 def supabase_enabled() -> bool:
+    """True when either Supabase or dev SQLite is configured."""
+    if DEV_SQLITE:
+        return True
     return bool(SUPABASE_URL and SUPABASE_SECRET_KEY)

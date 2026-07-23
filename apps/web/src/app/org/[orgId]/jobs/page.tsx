@@ -1,13 +1,25 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadPublicOrgJobsAction } from "@/app/actions/hireloop";
+import { isActionError } from "@/lib/action-error";
 import { Logo } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default async function OrgJobsPage({ params }: { params: Promise<{ orgId: string }> }) {
   const { orgId } = await params;
-  const data = await loadPublicOrgJobsAction(orgId);
+  const res = await loadPublicOrgJobsAction(orgId);
+
+  if (isActionError(res)) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-2 px-4 text-center">
+        <h1 className="text-xl font-semibold text-red-600">Failed to load organization jobs</h1>
+        <p className="text-sm text-muted-foreground">{res.error}</p>
+      </div>
+    );
+  }
+
+  const data = res;
   if (!data) notFound();
 
   return (

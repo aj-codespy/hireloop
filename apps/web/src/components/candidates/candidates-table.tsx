@@ -7,7 +7,7 @@ import { APPLICATION_STATUS_LABELS } from "@/lib/constants";
 import { StatusBadge } from "@/components/patterns/status-badge";
 import { formatDate } from "@/lib/format";
 import { FadeIn } from "@/components/motion/fade-in";
-import { PipelineKanban } from "@/components/candidates/pipeline-kanban";
+import { InterviewPipeline } from "@/components/candidates/interview-pipeline";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -80,10 +80,10 @@ export function CandidatesTable() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search candidates"
-            className="w-[220px] rounded-full bg-card"
+            className="w-full sm:w-[220px] rounded-full bg-card"
           />
           <Select value={jobFilter} onValueChange={(v) => setJobFilter(v ?? "all")}>
-            <SelectTrigger className="w-[200px] rounded-full bg-card">
+            <SelectTrigger className="w-full sm:w-[200px] rounded-full bg-card">
               <SelectValue placeholder="All jobs" />
             </SelectTrigger>
             <SelectContent>
@@ -96,7 +96,7 @@ export function CandidatesTable() {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
-            <SelectTrigger className="w-[180px] rounded-full bg-card">
+            <SelectTrigger className="w-full sm:w-[180px] rounded-full bg-card">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -141,10 +141,10 @@ export function CandidatesTable() {
         </div>
       </div>
 
-      {view === "board" ? <PipelineKanban /> : null}
+      {view === "board" ? <InterviewPipeline /> : null}
 
       {view === "table" ? (
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-card">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">

@@ -2,30 +2,63 @@ import asyncio
 import json
 import logging
 import os
+import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from config import PORT
 from interview.answer_upload import upload_answer_chunk
 from interview.question_audio import render_questions_for_job
 from interview.structured_relay import StructuredInterviewRelay
 from interview.supabase_store import get_store
+from interview.webhooks import WebhookEventType, build_webhook_payload, sign_payload
+from interview.calendar import CalendarSyncService
+from routes.v1 import router as v1_router
+from utils.http_pool import close_http_client, init_http_client
+from utils.logger import setup_logger
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger("interview.structured_relay").setLevel(logging.DEBUG)
+setup_logger()
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="HireLoop Interview API", version="0.3.0")
+# Rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
+# CORS origins - set via environment variable
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("Starting HireLoop Interview API")
+    await init_http_client()
+    yield
+    # Shutdown
+    logger.info("Shutting down HireLoop Interview API")
+    await close_http_client()
+
+app = FastAPI(title="HireLoop Interview API", version="0.3.0", lifespan=lifespan)
+
+# Include v1 API routes
+app.include_router(v1_router)
+
+# Rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -47,8 +80,9 @@ class RenderAudioRequest(BaseModel):
     langs: list[str] | None = None
 
 
-@app.get("/interview/session/state")
-async def interview_session_state(token: str = Query(...)) -> JSONResponse:
+@app.post("/interview/session/state")
+@limiter.limit("30/minute")
+async def interview_session_state(request: Request, token: str = Query(...)) -> JSONResponse:
     """Reconnect endpoint — returns persisted session state without reinitializing."""
     store = get_store()
     if not store:
@@ -63,6 +97,7 @@ async def interview_session_state(token: str = Query(...)) -> JSONResponse:
 
 
 @app.post("/interview/answers/chunk")
+@limiter.limit("100/minute")
 async def upload_answer_chunk_route(
     request: Request,
     x_interview_token: str = Header(..., alias="X-Interview-Token"),
@@ -95,7 +130,9 @@ async def upload_answer_chunk_route(
 
 
 @app.post("/admin/questions/render-audio")
+@limiter.limit("10/minute")
 async def render_question_audio_route(
+    request: Request,
     body: RenderAudioRequest,
     x_internal_secret: str = Header(default="", alias="X-Internal-Secret"),
 ) -> JSONResponse:
@@ -117,8 +154,32 @@ async def interview_websocket(
     token: str | None = Query(default=None),
     lang: str = Query(default="en"),
 ) -> None:
+    # Validate token BEFORE accepting connection to prevent resource exhaustion
+    store = get_store()
+    if not store:
+        await websocket.close(code=1011, reason="Service unavailable")
+        return
+    
+    if not token:
+        await websocket.close(code=4001, reason="Interview token required")
+        return
+    
+    # Validate token exists and interview is accessible
+    try:
+        ctx = await store.load_application_for_interview(token)
+        if not ctx:
+            await websocket.close(code=4002, reason="Invalid or expired interview link")
+            return
+    except ValueError as exc:
+        await websocket.close(code=4002, reason=str(exc))
+        return
+    except Exception as exc:
+        logger.error("Token validation failed: %s", exc)
+        await websocket.close(code=1011, reason="Validation error")
+        return
+
     await websocket.accept()
-    logger.info("Interview WebSocket connected token=%s lang=%s", "yes" if token else "no", lang)
+    logger.info("Interview WebSocket connected token=yes lang=%s", lang)
 
     try:
         await websocket.send_json({"type": "bootstrap"})

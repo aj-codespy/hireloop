@@ -8,6 +8,8 @@ import {
   Settings,
   Users,
   ListChecks,
+  Key,
+  Webhook,
 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
@@ -17,6 +19,8 @@ const nav = [
   { href: "/admin/jobs", label: "Job roles", icon: Briefcase },
   { href: "/admin/candidates", label: "Pipeline", icon: Users },
   { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin/api-keys", label: "API Keys", icon: Key },
+  { href: "/admin/webhooks", label: "Webhooks", icon: Webhook },
 ];
 
 export function AdminSidebar() {

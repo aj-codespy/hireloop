@@ -17,6 +17,7 @@ import {
   updateJobAction,
   updateOrganizationAction,
 } from "@/app/actions/hireloop";
+import { isActionError } from "@/lib/action-error";
 import { evaluateEligibility } from "@/lib/eligibility";
 import { isDocumentFieldType } from "@/lib/form-fields";
 import { generateId, generateInterviewToken } from "@/lib/id";
@@ -97,14 +98,20 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
   const [usingSupabase, setUsingSupabase] = useState(false);
 
   const refreshState = useCallback(async () => {
-    const remote = await loadHireLoopStateAction();
-    if (remote) {
-      setState(remote);
-      setUsingSupabase(true);
-      return;
+    try {
+      const remote = await loadHireLoopStateAction();
+      if (remote && !isActionError(remote)) {
+        setState(remote);
+        setUsingSupabase(true);
+        return;
+      }
+      setUsingSupabase(false);
+      setState(loadLocalState());
+    } catch (err) {
+      console.error("Failed to refresh state from database:", err);
+      setUsingSupabase(false);
+      setState(loadLocalState());
     }
-    setUsingSupabase(false);
-    setState(loadLocalState());
   }, []);
 
   useEffect(() => {
@@ -130,10 +137,16 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
       try {
         const remote = await loadHireLoopStateAction();
         if (cancelled) return;
-        if (remote) {
+        if (remote && !isActionError(remote)) {
           setState(remote);
           setUsingSupabase(true);
         } else {
+          setState(loadLocalState());
+          setUsingSupabase(false);
+        }
+      } catch (err) {
+        console.error("Failed to hydrate state from database:", err);
+        if (!cancelled) {
           setState(loadLocalState());
           setUsingSupabase(false);
         }
@@ -159,9 +172,12 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
   const createJob = useCallback(
     async (input: CreateJobInput): Promise<JobRole> => {
       if (usingSupabase) {
-        const job = await createJobAction(input);
-        setState((prev) => ({ ...prev, jobs: [job, ...prev.jobs] }));
-        return job;
+        const res = await createJobAction(input);
+        if (isActionError(res)) {
+          throw new Error(res.error);
+        }
+        setState((prev) => ({ ...prev, jobs: [res, ...prev.jobs] }));
+        return res;
       }
 
       const now = new Date().toISOString();
@@ -187,12 +203,15 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
   const updateJob = useCallback(
     async (id: string, patch: Partial<JobRole>): Promise<JobRole | undefined> => {
       if (usingSupabase) {
-        const updated = await updateJobAction(id, patch);
+        const res = await updateJobAction(id, patch);
+        if (isActionError(res)) {
+          throw new Error(res.error);
+        }
         setState((prev) => ({
           ...prev,
-          jobs: prev.jobs.map((j) => (j.id === id ? updated : j)),
+          jobs: prev.jobs.map((j) => (j.id === id ? res : j)),
         }));
-        return updated;
+        return res;
       }
 
       let updated: JobRole | undefined;
@@ -216,7 +235,10 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
       interviewQuestionCount?: number | null
     ): Promise<void> => {
       if (usingSupabase) {
-        await setJobQuestionsAction(jobId, inputs, interviewQuestionCount);
+        const res = await setJobQuestionsAction(jobId, inputs, interviewQuestionCount);
+        if (isActionError(res)) {
+          throw new Error(res.error);
+        }
         const questions: Question[] = inputs.map((q, index) => ({
           id: q.id ?? generateId("q"),
           questionBankId: `bank-${q.section}`,
@@ -282,6 +304,9 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
       if (usingSupabase || isSupabaseClientEnabled()) {
         try {
           const result = await submitApplicationAction(jobId, formData);
+          if (isActionError(result)) {
+            throw new Error(result.error);
+          }
           setState((prev) => {
             const existingIdx = prev.candidates.findIndex((c) => c.id === result.candidate.id);
             const candidates =
@@ -396,9 +421,12 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
       >
     ): Promise<Organization> => {
       if (usingSupabase) {
-        const updated = await updateOrganizationAction(patch);
-        setState((prev) => ({ ...prev, organization: updated }));
-        return updated;
+        const res = await updateOrganizationAction(patch);
+        if (isActionError(res)) {
+          throw new Error(res.error);
+        }
+        setState((prev) => ({ ...prev, organization: res }));
+        return res;
       }
 
       let updated = { ...state.organization, ...patch };

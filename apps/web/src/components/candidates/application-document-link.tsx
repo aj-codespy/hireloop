@@ -21,6 +21,8 @@ export function ApplicationDocumentLink({ document }: { document: ApplicationDoc
       const { url, error } = await getApplicationDocumentUrlAction(document.storagePath);
       if (url) window.open(url, "_blank", "noopener,noreferrer");
       else toast.error(error ?? "Could not open document");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not open document");
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 
 from google import genai
 from google.genai import types
@@ -90,3 +91,64 @@ def severity_from_analysis(analysis: dict) -> str:
     if analysis.get("lookingAway") or analysis.get("riskLevel") == "medium":
         return "warning"
     return "info"
+
+
+def calculate_cheating_probability(events: list[dict], snapshots: list[dict]) -> int:
+    """
+    Calculate cheating probability (0-100) based on proctoring events and snapshot analyses.
+
+    Scoring logic:
+    - Critical events (phone, second person, secondary device): +25 each
+    - Critical snapshot findings: +15 each
+    - Warning events (gaze deviation, tab switch, face missing): +10 each
+    - Warning snapshot findings: +5 each
+    - Decay: older events weighted less (linear decay over 24h to 30%)
+    - Cap at 100
+    """
+    score = 0
+    now = time.time()
+
+    # Process events
+    for e in events:
+        age_hours = 0
+        if e.get("at"):
+            try:
+                age_hours = (now - time.mktime(time.strptime(e.get("at", "")[:19], "%Y-%m-%dT%H:%M:%S"))) / 3600
+            except (ValueError, TypeError):
+                pass
+        weight = max(0.3, 1 - age_hours / 24)  # Linear decay over 24h to 30%
+
+        severity = e.get("severity", "info")
+        event_type = e.get("event_type", "")
+
+        if severity == "critical":
+            score += 25 * weight
+        elif severity == "warning":
+            score += 10 * weight
+
+    # Process snapshot analyses
+    for s in snapshots:
+        age_hours = 0
+        if s.get("at"):
+            try:
+                age_hours = (now - time.mktime(time.strptime(s.get("at", "")[:19], "%Y-%m-%dT%H:%M:%S"))) / 3600
+            except (ValueError, TypeError):
+                pass
+        weight = max(0.3, 1 - age_hours / 24)
+
+        analysis = s.get("analysis", {})
+        if not analysis:
+            continue
+
+        if analysis.get("phoneVisible") or analysis.get("secondaryDeviceVisible"):
+            score += 15 * weight
+        elif analysis.get("secondPersonVisible") or analysis.get("notesVisible"):
+            score += 15 * weight
+        elif analysis.get("riskLevel") == "high":
+            score += 15 * weight
+        elif not analysis.get("faceVisible") or (analysis.get("faceCount") or 0) > 1:
+            score += 15 * weight
+        elif analysis.get("lookingAway") or analysis.get("riskLevel") == "medium":
+            score += 5 * weight
+
+    return min(100, int(score))

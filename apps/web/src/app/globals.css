@@ -296,3 +296,15 @@
   .reveal { opacity: 1; transform: none; transition: none; }
   .sheen::after { animation: none !important; transition: none; }
 }
+
+/* Confetti celebration animation */
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(-10vh) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(720deg);
+  }
+}

@@ -1,18 +1,36 @@
-import type { OverallScore, QuestionScore } from "@/lib/types";
+import type { OverallScore, QuestionScore, TranscriptEntry } from "@/lib/types";
 import { formatScore } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Quote } from "lucide-react";
 
 export function ScoreBreakdown({
   overall,
   questionScores,
   passingScore,
+  transcript,
 }: {
   overall: OverallScore;
   questionScores?: QuestionScore[];
   passingScore: number | null;
+  transcript?: TranscriptEntry[];
 }) {
+  const renderBullets = (text: string) => {
+    if (!text) return null;
+    const items = text.split(/(?<=\.)\s+/).filter((s) => s.trim().length > 0);
+    if (items.length <= 1) return <p className="mt-1 text-sm">{text}</p>;
+    return (
+      <ul className="mt-1 list-inside list-disc text-sm space-y-1">
+        {items.map((item, idx) => (
+          <li key={idx} className="leading-relaxed">
+            {item}
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -37,13 +55,13 @@ export function ScoreBreakdown({
           </div>
           <Progress value={(overall.totalScore / 10) * 100} className="h-2" />
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg bg-muted/50 p-3">
-              <p className="text-xs font-medium uppercase text-muted-foreground">Strengths</p>
-              <p className="mt-1 text-sm">{overall.strengths}</p>
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p className="text-xs font-medium uppercase text-muted-foreground mb-2">Strengths</p>
+              {renderBullets(overall.strengths)}
             </div>
-            <div className="rounded-lg bg-muted/50 p-3">
-              <p className="text-xs font-medium uppercase text-muted-foreground">Concerns</p>
-              <p className="mt-1 text-sm">{overall.concerns}</p>
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p className="text-xs font-medium uppercase text-muted-foreground mb-2">Concerns</p>
+              {renderBullets(overall.concerns)}
             </div>
           </div>
         </CardContent>
@@ -55,26 +73,46 @@ export function ScoreBreakdown({
             <CardTitle className="text-base">Per-question scores</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {questionScores.map((qs) => (
-              <div key={qs.questionId} className="rounded-lg border border-border p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <p className="text-sm font-medium">{qs.promptText}</p>
-                  <span className="shrink-0 font-semibold text-primary">
-                    {formatScore(qs.score)}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">{qs.rationale}</p>
-                {qs.redFlags.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {qs.redFlags.map((flag) => (
-                      <Badge key={flag} variant="destructive">
-                        {flag}
-                      </Badge>
-                    ))}
+            {questionScores.map((qs) => {
+              const answer = transcript?.find(
+                (t) => t.questionId === qs.questionId && t.speaker === "candidate"
+              )?.text;
+
+              return (
+                <div key={qs.questionId} className="rounded-lg border border-border overflow-hidden">
+                  <div className="p-4 bg-muted/30">
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="text-sm font-medium">{qs.promptText}</p>
+                      <span className="shrink-0 font-semibold text-primary text-lg">
+                        {formatScore(qs.score)}
+                      </span>
+                    </div>
                   </div>
-                ) : null}
-              </div>
-            ))}
+
+                  {answer && (
+                    <div className="px-4 py-3 border-t border-border/50 bg-background flex gap-3">
+                      <Quote className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
+                      <p className="text-sm italic text-muted-foreground/90">{answer}</p>
+                    </div>
+                  )}
+
+                  <div className="px-4 py-3 border-t border-border/50 bg-background">
+                    <p className="text-xs font-medium uppercase text-muted-foreground mb-1">AI Reasoning</p>
+                    {renderBullets(qs.rationale)}
+
+                    {qs.redFlags.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {qs.redFlags.map((flag) => (
+                          <Badge key={flag} variant="destructive" className="px-2 py-0.5 text-xs font-normal">
+                            {flag}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       ) : null}

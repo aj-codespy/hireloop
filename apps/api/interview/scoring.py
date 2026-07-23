@@ -25,7 +25,7 @@ def _format_transcript(entries: list[TranscriptEntry]) -> str:
     return "\n".join(lines) if lines else "(empty transcript)"
 
 
-def _build_prompt(questions: list[Question], entries: list[TranscriptEntry]) -> str:
+def _build_prompt(questions: list[Question], entries: list[TranscriptEntry], custom_rules: dict | None = None) -> str:
     q_blocks = []
     for i, q in enumerate(questions, 1):
         q_blocks.append(
@@ -35,6 +35,23 @@ def _build_prompt(questions: list[Question], entries: list[TranscriptEntry]) -> 
         )
     questions_text = "\n\n".join(q_blocks)
     transcript = _format_transcript(entries)
+
+    custom_section = ""
+    if custom_rules:
+        custom_section = "\n\nCUSTOM SCORING RULES (APPLY THESE IN ADDITION TO BASE RUBRIC):\n"
+        if custom_rules.get("weights"):
+            custom_section += f"Section Weights: {json.dumps(custom_rules['weights'])}\n"
+        if custom_rules.get("keywords"):
+            kw = custom_rules["keywords"]
+            if kw.get("required"):
+                custom_section += f"REQUIRED KEYWORDS (candidate MUST mention): {', '.join(kw['required'])}\n"
+            if kw.get("bonus"):
+                custom_section += f"BONUS KEYWORDS (adds points): {', '.join(kw['bonus'])}\n"
+            if kw.get("penalty"):
+                custom_section += f"PENALTY KEYWORDS (deducts points): {', '.join(kw['penalty'])}\n"
+        if custom_rules.get("rubric_overrides"):
+            custom_section += f"RUBRIC OVERRIDES: {json.dumps(custom_rules['rubric_overrides'])}\n"
+        custom_section += "Apply these rules when calculating scores. Note deviations in rationale."
 
     return f"""You are an expert hiring assessor. Score this structured voice interview.
 
@@ -69,28 +86,72 @@ Return ONLY valid JSON with this exact shape:
 }}
 
 Score fairly based on substance, not eloquence alone. Use the ideal answer notes as rubric guidance.
-Include one entry in questionScores per question listed above."""
+Include one entry in questionScores per question listed above.
+{custom_section}"""
+
+
+class ScoringError(RuntimeError):
+    """Raised when AI scoring fails or returns unusable data.
+
+    Callers must NOT fall back to a synthetic 0.0 score on this error — a
+    failed score is distinct from a genuine low score and must be surfaced
+    (and the interview flagged for manual review), not silently recorded.
+    """
+
+
+def _validate_result(data: dict[str, Any], questions: list[Question]) -> None:
+    overall = data.get("overallScore") or {}
+    if "totalScore" not in overall:
+        raise ScoringError("AI scoring response missing overallScore.totalScore")
+    try:
+        float(overall["totalScore"])
+    except (TypeError, ValueError) as exc:
+        raise ScoringError(f"AI scoring totalScore is not numeric: {overall.get('totalScore')!r}") from exc
+
+    scores = data.get("questionScores") or []
+    if not scores:
+        raise ScoringError("AI scoring returned zero questionScores")
+    qids = {q.id for q in questions}
+    for s in scores:
+        if s.get("questionId") not in qids:
+            raise ScoringError(f"AI scoring references unknown questionId: {s.get('questionId')!r}")
+        try:
+            float(s.get("score"))
+        except (TypeError, ValueError) as exc:
+            raise ScoringError(f"AI scoring score is not numeric: {s.get('score')!r}") from exc
 
 
 def score_interview(
     questions: list[Question],
     entries: list[TranscriptEntry],
     passing_score: float | None,
+    custom_rules: dict | None = None,
 ) -> dict[str, Any]:
     if not GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY is not set")
 
     client = genai.Client(api_key=GEMINI_API_KEY)
-    prompt = _build_prompt(questions, entries)
+    prompt = _build_prompt(questions, entries, custom_rules)
 
-    response = client.models.generate_content(
-        model=SCORING_MODEL,
-        contents=prompt,
-        config={"response_mime_type": "application/json"},
-    )
+    try:
+        response = client.models.generate_content(
+            model=SCORING_MODEL,
+            contents=prompt,
+            config={"response_mime_type": "application/json"},
+        )
+    except Exception as exc:  # noqa: BLE001 - surface as ScoringError, never fake a 0
+        raise ScoringError(f"Gemini scoring call failed: {exc}") from exc
 
     raw = response.text or "{}"
-    data = json.loads(raw)
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ScoringError(f"AI scoring returned non-JSON: {raw[:200]!r}") from exc
+
+    if not isinstance(data, dict):
+        raise ScoringError(f"AI scoring returned unexpected type: {type(data).__name__}")
+
+    _validate_result(data, questions)
 
     overall = data.get("overallScore") or {}
     if passing_score is not None:
@@ -107,3 +168,4 @@ def score_interview(
         "overall_score": overall,
         "passed": bool(overall.get("pass")),
     }
+

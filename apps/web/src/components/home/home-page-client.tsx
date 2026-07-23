@@ -237,9 +237,9 @@ export function HomePageClient({ userEmail }: { userEmail?: string | null }) {
               </div>
               {/* Placeholder for live interview preview orb */}
               <div className="mt-10">
-                <div className="relative mx-auto max-w-[280px] h-[280px] rounded-full border-4 border-primary flex items-center justify-center">
+                <div className="relative mx-auto max-w-[240px] sm:max-w-[280px] h-[240px] sm:h-[280px] rounded-full border-4 border-primary flex items-center justify-center">
                   {/* Orb fake */}
-                  <div className="w-72 h-72 rounded-full bg-gradient-to-r from-orange-200 to-orange-300 opacity-30" />
+                  <div className="w-60 h-60 sm:w-72 sm:h-72 rounded-full bg-gradient-to-r from-orange-200 to-orange-300 opacity-30" />
                 </div>
               </div>
             </motion.div>

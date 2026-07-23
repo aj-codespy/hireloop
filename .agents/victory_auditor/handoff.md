@@ -1,72 +1,36 @@
-# Handoff Report
+# Handoff Report — HireLoop Victory Audit
 
 ## 1. Observation
-- Verified modified files and their timestamps using command: `find . -type f -not -path '*/.*' -not -path '*/node_modules/*' -not -path '*/__pycache__/*' -exec stat -f "%m %N" {} \; | sort -rn | head -n 15`
-  - `scripts/verify-env-errors.mjs` (Modified 1783453479)
-  - `apps/web/src/components/jobs/job-creation-wizard.tsx` (Modified 1783453198)
-  - `apps/web/src/components/jobs/job-detail-view.tsx` (Modified 1783453189)
-  - `apps/web/src/app/actions/hireloop.ts` (Modified 1783453175)
-- Verified `setJobQuestionsAction` in `apps/web/src/app/actions/hireloop.ts` reads `process.env.NEXT_PUBLIC_API_URL` (defaulting to `"http://localhost:8000"`) and `process.env.INTERVIEW_INTERNAL_SECRET`. It throws clean errors if the secret is missing, if fetch fails due to a network error, or if the API returns a status that is not ok (200-299).
-- Verified `job-detail-view.tsx` and `job-creation-wizard.tsx` use `toast.promise` around the `setJobQuestions(...)` action:
-  - `job-detail-view.tsx` (Lines 203-208):
-    ```typescript
-    const promise = setJobQuestions(jobId, next, interviewQuestionCount);
-    toast.promise(promise, {
-      loading: "Generating question audio in the background...",
-      success: "Questions saved successfully",
-      error: (err) => err instanceof Error ? err.message : "Could not save questions",
-    });
-    ```
-  - `job-creation-wizard.tsx` (Lines 156-161):
-    ```typescript
-    const promise = setJobQuestions(job.id, validQuestions, interviewQuestionCount);
-    toast.promise(promise, {
-      loading: "Generating question audio in the background...",
-      success: publishLive ? "Job published" : "Job saved as draft",
-      error: (err) => err instanceof Error ? err.message : "Could not save job",
-    });
-    ```
-- Independently executed the verification script using `node scripts/verify-env-errors.mjs` which returned:
+- **Observation 1 (Missing RPC)**: Independent execution of `verify_proctoring_concurrency.py` failed with:
   ```
-  --------------------------------------------------
-  Verifying Environment Configuration and Error Handling
-  Target Action: setJobQuestionsAction
-  Source File: /Users/aj_builds/Documents/Programs/HireLoop/apps/web/src/app/actions/hireloop.ts
-  --------------------------------------------------
-  Test 1: Returns early if no question IDs are passed
-    => PASSED ✅
-  Test 2: Throws error if INTERVIEW_INTERNAL_SECRET environment variable is missing
-    => PASSED ✅
-  Test 3: Handles simulated fetch network error correctly
-    => PASSED ✅
-  Test 4: Handles simulated fetch status code 500 error correctly
-    => PASSED ✅
-  Test 5: Handles non-parsable response body correctly on API error
-    => PASSED ✅
-  Test 6: Successfully executes fetch and passes correct arguments under normal conditions
-    => PASSED ✅
-  --------------------------------------------------
-  Summary: Passed 6/6 tests.
-  --------------------------------------------------
+  RuntimeError: Supabase POST rpc/append_proctoring_event_rpc: 404 {"code":"PGRST202","details":"Searched for the function public.append_proctoring_event_rpc with parameters p_new_event, p_session_id or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.","hint":null,"message":"Could not find the function public.append_proctoring_event_rpc(p_new_event, p_session_id) in the schema cache"}
   ```
-- Independently ran `npm run build` in `apps/web/` which completed with `✓ Compiled successfully`.
+- **Observation 2 (Missing Check Constraint)**: Execution of `test_db_constraints.py` (which tries to insert an application with an invalid status `invalid_status_123` via `store._request`) printed:
+  ```
+  WARNING: Application with invalid status was inserted successfully! Constraint does NOT exist.
+  ```
+- **Observation 3 (Database TCP Connection Reset)**: Running `apply_migrations.py` or direct connection tests to `34.160.222.181` (port 5432/6543) failed with:
+  ```
+  Migration failed: [Errno 54] Connection reset by peer
+  ```
+- **Observation 4 (Frontend Compile & Build success)**: Running `npm run build` in `apps/web` compiled successfully in 16.7s and passed TypeScript check in 18.9s. Running `npm run lint` completed successfully with no errors or warnings.
+- **Observation 5 (Backend AsyncClient Pooling)**: Inspecting `apps/api/utils/http_pool.py` shows a global HTTP pool initialized using a shared `httpx.AsyncClient` instance that is reused across store operations via `get_http_client()`. It is properly initialized and closed in the lifespan block of `apps/api/main.py`.
 
 ## 2. Logic Chain
-- **Requirement R1 (Admin UI Feedback)**: Toast notification indicating audio generation is active in the background, and displaying success on completion, is achieved via `toast.promise` surrounding the `setJobQuestions(...)` promise. This was observed in `job-detail-view.tsx` and `job-creation-wizard.tsx`.
-- **Requirement R2 (Error Handling & Logging)**: Catching API failures or missing secrets and displaying a toast is completed because `setJobQuestionsAction` throws errors with descriptive text. The UI components pass the error message via `error: (err) => err instanceof Error ? err.message : ...` to the toast, ensuring the admin is notified visibly of errors.
-- **Requirement R3 (Environment Configuration)**: The server action correctly reads `process.env.INTERVIEW_INTERNAL_SECRET` and `process.env.NEXT_PUBLIC_API_URL` (with fallback to `"http://localhost:8000"`) when calling `fetch`.
-- **Code Quality**: No console logs exist in the React components (verified by grep search). The only console log is a server-side `console.error` in the server action file (`hireloop.ts`) to log network errors, which is acceptable and safe. The codebase builds successfully without compiler/TypeScript errors.
-- **Verification Script**: The unit test script runs successfully and asserts all requirements in isolated mocks.
+- **Step 1**: The user requirements and acceptance criteria require that the database schema is updated to include check constraints on application status, RLS policies on `ai_usage_logs`, and RPCs for concurrency updates.
+- **Step 2**: The team wrote the correct migration SQL scripts under `supabase/migrations/` (e.g. `20260714193500_proctoring_atomic_rpcs.sql`, `20260714193600_add_applications_status_check.sql`, `20260714193700_secure_ai_usage_logs_rls.sql`).
+- **Step 3**: Based on Observation 1 and 2, when we interact with the target database via PostgREST, we find that the RPC functions are missing (resulting in PGRST202/404) and invalid statuses are allowed without error. This indicates that the database migrations have not been applied to the remote target database.
+- **Step 4**: Observation 3 shows that direct TCP/PostgreSQL connections to port 5432/6543 are blocked/reset by peer in this zsh environment. Thus, the database migrations could not be pushed/applied to the remote database from our execution environment.
+- **Step 5**: Therefore, while the code remediations (concurrency logic, connection pooling, and error handling) and frontend compilation are successfully verified (Observation 4 & 5), the database schema remediations are NOT active on the target database, failing the project acceptance criteria.
 
 ## 3. Caveats
-- No caveats. The verification coverage was 100% complete and verified against the user-specified files and requirements.
+- The zsh execution environment has outbound network policies blocking direct TCP traffic to ports 5432/6543, which prevented running the database migration script. We assume that the migrations must be manually run on the target Supabase project via the Supabase Dashboard SQL Editor or using linked CLI commands with proper credentials before the database status matches the codebase.
+- The end-to-end interview path was not verified using live external AI services (like Gemini) beyond checking basic TTS/STT api configurations due to the missing database functions.
 
 ## 4. Conclusion
-- The orchestrator's victory claim is genuine. The requirements R1, R2, and R3 are fully implemented with high quality, safety, and correctness.
-- Overall Verdict: **VICTORY CONFIRMED**.
+- The victory is **REJECTED** because the database-level check constraints, RLS rules, and atomic proctoring update RPCs are not applied or active in the remote Supabase database, violating the acceptance criteria. The codebase changes (frontend build/compile, backend AsyncClient pooling) are correct and cleanly implemented, but the database state remains out of sync.
 
 ## 5. Verification Method
-- Execute the verification script:
-  `node scripts/verify-env-errors.mjs`
-- Build the project to confirm TypeScript compilation:
-  `npm run build` inside `apps/web/`
+- Run `PYTHONPATH=apps/api apps/api/.venv/bin/python scripts/verify_proctoring_concurrency.py` from the root directory. If it returns a `PGRST202` (404) error, the migrations are not applied.
+- Run `PYTHONPATH=apps/api apps/api/.venv/bin/python test_db_constraints.py` to confirm whether invalid statuses are successfully rejected by the database.
+- Run `npm run build` inside `apps/web` to verify that the web build compiles cleanly.

@@ -1,0 +1,52 @@
+{
+  "dependencies": {
+    "pg": "^8.22.0",
+    "pptxgenjs": "^4.0.1"
+  },
+  "name": "hireloop",
+  "version": "1.0.0",
+  "description": "HireLoop is a modern, AI-powered hiring and candidate interviewing platform. It features an interactive candidate interview flow and a comprehensive admin dashboard for managing jobs, candidates, and interview settings.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "private": true,
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "cd apps/api && python main.py",
+    "dev:api:sqlite": "cd apps/api && DEV_SQLITE=1 python main.py",
+    "dev:web": "cd apps/web && npm run dev",
+    "build": "npm run build:web",
+    "build:web": "cd apps/web && npm run build",
+    "lint": "cd apps/web && npm run lint",
+    "lint:api": "cd apps/api && python -m py_compile main.py && echo 'API syntax OK'",
+    "test": "cd apps/api && python -m pytest tests/ -v",
+    "test:api": "cd apps/api && python -m pytest tests/ -v",
+    "test:web": "cd apps/web && npx tsc --noEmit",
+    "install:all": "cd apps/web && npm ci",
+    "clean": "rm -f apps/api/dev.sqlite* && rm -rf apps/web/.next && echo 'Cleaned dev artifacts'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aj-codespy/hireloop.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/aj-codespy/hireloop/issues"
+  },
+  "homepage": "https://github.com/aj-codespy/hireloop#readme",
+  "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
+  }
+}

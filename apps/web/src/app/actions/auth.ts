@@ -11,7 +11,7 @@ import type { AccountType, OrgMemberRole, Profile } from "@/lib/types";
 import { createClient } from "@/utils/supabase/server";
 import { getAuthUserId } from "@/lib/auth/session";
 
-export type AuthResult = { error?: string; ok?: boolean };
+export type AuthResult = { error?: string; ok?: boolean; data?: any };
 
 async function ensureProfileAccountType(userId: string, accountType: AccountType) {
   const admin = createAdminClient();

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { AdminAuthForm } from "@/components/auth/admin-auth-form";
+import { AdminSignInForm } from "@/components/auth/admin-signin-form";
 import { Logo } from "@/components/brand/logo";
 import { LogoMark } from "@/components/brand/logo-mark";
 import {
@@ -27,6 +27,13 @@ const highlights = [
   },
 ];
 
+// Mini workflow strip: Apply → Interview → Score
+const workflowSteps = [
+  { icon: "📝", label: "Apply", color: "bg-zinc-700" },
+  { icon: "🎙️", label: "Interview", color: "bg-brand/50" },
+  { icon: "📊", label: "Score", color: "bg-zinc-700" },
+];
+
 export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen">
@@ -35,9 +42,9 @@ export default function AdminLoginPage() {
         <div className="relative">
           <Logo href="/" className="[&_span]:text-white [&_span_span]:text-brand" />
         </div>
-        <div className="relative space-y-10">
+        <div className="relative space-y-10 reveal">
           <div>
-            <h1 className="text-3xl font-bold leading-tight tracking-tight">
+            <h1 className="text-3xl font-bold leading-tight tracking-tight text-gradient">
               Structured hiring from application to decision.
             </h1>
             <p className="mt-4 max-w-md text-zinc-400">
@@ -48,7 +55,7 @@ export default function AdminLoginPage() {
           <ul className="space-y-5">
             {highlights.map((item) => (
               <li key={item.title} className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-brand">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-muted text-brand shadow-lg">
                   <item.icon className="h-5 w-5" />
                 </div>
                 <div>
@@ -58,6 +65,23 @@ export default function AdminLoginPage() {
               </li>
             ))}
           </ul>
+          
+          {/* Mini workflow strip */}
+          <div className="relative pt-8 border-t border-zinc-800">
+            <div className="flex items-center justify-center gap-6 text-sm">
+              {workflowSteps.map((step, index) => (
+                <div key={step.label} className="flex flex-col items-center gap-2">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-xl ${step.color}`}>
+                    {step.icon}
+                  </div>
+                  <span className="font-medium text-zinc-300">{step.label}</span>
+                  {index < workflowSteps.length - 1 && (
+                    <div className="w-10 h-0.5 bg-zinc-800" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="relative flex items-center gap-3 text-sm text-zinc-500">
           <LogoMark size={24} />
@@ -74,16 +98,16 @@ export default function AdminLoginPage() {
             Candidate portal
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-center bg-muted/30 px-4 py-12">
-        <Suspense
-          fallback={
-            <p className="text-sm text-muted-foreground" role="status">
-              Loading…
-            </p>
-          }
-        >
-          <AdminAuthForm />
-        </Suspense>
+        <div className="flex flex-1 items-center justify-center bg-muted/30 px-4 py-12 reveal">
+          <Suspense
+            fallback={
+              <p className="text-sm text-muted-foreground" role="status">
+                Loading...
+              </p>
+            }
+          >
+            <AdminSignInForm />
+          </Suspense>
         </div>
       </div>
     </div>

@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import random
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
+import sqlite3
 
-from config import SUPABASE_SECRET_KEY, SUPABASE_URL, supabase_enabled
+from config import DEV_SQLITE, SUPABASE_SECRET_KEY, SUPABASE_URL, supabase_enabled
+from utils.http_pool import get_http_client
 from interview.questions import Question
 from interview.session import SessionStatus, TranscriptEntry
 
@@ -30,6 +34,11 @@ class ApplicationContext:
     candidate_email: str = ""
     candidate_name: str = ""
     job_title: str = ""
+    custom_scoring_rules: dict | None = None
+
+    def __post_init__(self):
+        if self.custom_scoring_rules is None:
+            self.custom_scoring_rules = {}
 
 
 class SupabaseInterviewStore:
@@ -55,19 +64,19 @@ class SupabaseInterviewStore:
         headers = dict(self._headers)
         if prefer:
             headers["Prefer"] = prefer
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            res = await client.request(
-                method,
-                f"{self._base}/{path}",
-                headers=headers,
-                params=params,
-                json=json,
-            )
-            if res.status_code >= 400:
-                raise RuntimeError(f"Supabase {method} {path}: {res.status_code} {res.text}")
-            if res.status_code == 204 or not res.content:
-                return None
-            return res.json()
+        client = get_http_client()
+        res = await client.request(
+            method,
+            f"{self._base}/{path}",
+            headers=headers,
+            params=params,
+            json=json,
+        )
+        if res.status_code >= 400:
+            raise RuntimeError(f"Supabase {method} {path}: {res.status_code} {res.text}")
+        if res.status_code == 204 or not res.content:
+            return None
+        return res.json()
 
     async def load_application_for_interview(self, token: str) -> ApplicationContext:
         rows = await self._request(
@@ -132,9 +141,10 @@ class SupabaseInterviewStore:
         job_rows = await self._request(
             "GET",
             "job_roles",
-            params={"id": f"eq.{row['job_role_id']}", "select": "id,passing_score,title"},
+            params={"id": f"eq.{row['job_role_id']}", "select": "id,passing_score,title,custom_scoring_rules"},
         )
         passing_score = job_rows[0].get("passing_score") if job_rows else None
+        custom_scoring_rules = job_rows[0].get("custom_scoring_rules") if job_rows else None
         job_title = job_rows[0].get("title", "") if job_rows else ""
 
         cand_rows = await self._request(
@@ -154,6 +164,7 @@ class SupabaseInterviewStore:
             candidate_email=candidate_email or "",
             candidate_name=candidate_name or "",
             job_title=job_title or "",
+            custom_scoring_rules=custom_scoring_rules or {},
         )
 
     async def load_application_by_token(self, token: str) -> ApplicationContext:
@@ -529,11 +540,11 @@ class SupabaseInterviewStore:
             "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
             "Content-Type": mime_type,
         }
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            res = await client.post(upload_url, headers=headers, content=image_bytes)
-            if res.status_code >= 400:
-                logger.warning("Snapshot upload failed: %s %s", res.status_code, res.text)
-                return None
+        client = get_http_client()
+        res = await client.post(upload_url, headers=headers, content=image_bytes, timeout=30.0)
+        if res.status_code >= 400:
+            logger.warning("Snapshot upload failed: %s %s", res.status_code, res.text)
+            return None
         return object_path
 
     async def append_proctoring_event(
@@ -547,12 +558,6 @@ class SupabaseInterviewStore:
         analysis: dict | None = None,
         snapshot_path: str | None = None,
     ) -> None:
-        rows = await self._request(
-            "GET",
-            "interview_sessions",
-            params={"id": f"eq.{session_id}", "select": "proctoring_log"},
-        )
-        log: list[dict] = (rows[0].get("proctoring_log") if rows else None) or []
         entry: dict[str, Any] = {
             "at": datetime.now(timezone.utc).isoformat(),
             "type": event_type,
@@ -565,12 +570,10 @@ class SupabaseInterviewStore:
             entry["analysis"] = analysis
         if snapshot_path:
             entry["snapshotPath"] = snapshot_path
-        log.append(entry)
         await self._request(
-            "PATCH",
-            "interview_sessions",
-            params={"id": f"eq.{session_id}"},
-            json={"proctoring_log": log},
+            "POST",
+            "rpc/append_proctoring_event_rpc",
+            json={"p_session_id": session_id, "p_new_event": entry},
             prefer="return=minimal",
         )
 
@@ -581,10 +584,14 @@ class SupabaseInterviewStore:
         summary: dict,
     ) -> None:
         await self._request(
-            "PATCH",
-            "interview_sessions",
-            params={"id": f"eq.{session_id}"},
-            json={"status": "flagged", "proctoring_summary": summary},
+            "POST",
+            "rpc/flag_session_proctoring_rpc",
+            json={
+                "p_session_id": session_id,
+                "p_new_reason": summary.get("reason"),
+                "p_warnings_count": summary.get("warnings", 0),
+                "p_critical_count": summary.get("critical", 0),
+            },
             prefer="return=minimal",
         )
 
@@ -635,8 +642,594 @@ class SupabaseInterviewStore:
             prefer="return=minimal",
         )
 
+    # ------------------------------------------------------------------
+    # API keys (scoped REST API access)
+    # ------------------------------------------------------------------
+    async def create_api_key(
+        self,
+        *,
+        org_id: str,
+        name: str,
+        key_hash: str,
+        prefix: str,
+        scopes: list[str],
+        created_by: str | None = None,
+        expires_at: str | None = None,
+    ) -> str:
+        """Insert a new API key row; returns the generated id."""
+        kid = f"key-{uuid.uuid4().hex[:12]}"
+        await self._request(
+            "POST",
+            "api_keys",
+            json={
+                "id": kid,
+                "org_id": org_id,
+                "name": name,
+                "key_hash": key_hash,
+                "prefix": prefix,
+                "scopes": scopes,
+                "active": True,
+                "expires_at": expires_at,
+                "created_by": created_by,
+            },
+            prefer="return=minimal",
+        )
+        return kid
 
-def get_store() -> SupabaseInterviewStore | None:
+    async def get_api_key_by_hash(self, key_hash: str) -> dict | None:
+        """Lookup active key by its bcrypt hash (indexed column)."""
+        rows = await self._request(
+            "GET",
+            "api_keys",
+            params={
+                "key_hash": f"eq.{key_hash}",
+                "active": "eq.true",
+                "select": "id,org_id,scopes,expires_at",
+            },
+        )
+        return rows[0] if rows else None
+
+    async def list_api_keys(self, org_id: str) -> list[dict]:
+        rows = await self._request(
+            "GET",
+            "api_keys",
+            params={
+                "org_id": f"eq.{org_id}",
+                "order": "created_at.desc",
+                "select": "id,name,prefix,scopes,active,last_used_at,expires_at,created_at",
+            },
+        )
+        return rows or []
+
+    async def update_api_key(self, key_id: str, org_id: str, updates: dict) -> None:
+        await self._request(
+            "PATCH",
+            "api_keys",
+            params={"id": f"eq.{key_id}", "org_id": f"eq.{org_id}"},
+            json=updates,
+            prefer="return=minimal",
+        )
+
+    async def mark_api_key_used(self, key_id: str) -> None:
+        await self._request(
+            "PATCH",
+            "api_keys",
+            params={"id": f"eq.{key_id}"},
+            json={"last_used_at": datetime.now(timezone.utc).isoformat()},
+            prefer="return=minimal",
+        )
+
+    # ------------------------------------------------------------------
+    # Webhook subscriptions (full CRUD)
+    # ------------------------------------------------------------------
+    async def create_webhook_subscription(
+        self, *, org_id: str, url: str, secret: str, events: list[str], description: str | None = None
+    ) -> str:
+        sub_id = f"wh-{uuid.uuid4().hex[:12]}"
+        await self._request(
+            "POST",
+            "webhook_subscriptions",
+            json={
+                "id": sub_id,
+                "org_id": org_id,
+                "url": url,
+                "secret": secret,
+                "events": events,
+                "version": "2026-07-18",
+                "active": True,
+                "description": description,
+            },
+            prefer="return=minimal",
+        )
+        return sub_id
+
+    async def list_webhook_subscriptions(self, org_id: str) -> list[dict]:
+        rows = await self._request(
+            "GET",
+            "webhook_subscriptions",
+            params={
+                "org_id": f"eq.{org_id}",
+                "order": "created_at.desc",
+                "select": "id,url,events,version,active,description,created_at,updated_at",
+            },
+        )
+        return rows or []
+
+    async def get_webhook_subscription(self, sub_id: str, org_id: str) -> dict | None:
+        rows = await self._request(
+            "GET",
+            "webhook_subscriptions",
+            params={
+                "id": f"eq.{sub_id}",
+                "org_id": f"eq.{org_id}",
+                "select": "id,url,secret,events,version,active,description,created_at,updated_at",
+            },
+        )
+        return rows[0] if rows else None
+
+    async def update_webhook_subscription(self, sub_id: str, org_id: str, updates: dict) -> None:
+        updates = {**updates, "updated_at": datetime.now(timezone.utc).isoformat()}
+        await self._request(
+            "PATCH",
+            "webhook_subscriptions",
+            params={"id": f"eq.{sub_id}", "org_id": f"eq.{org_id}"},
+            json=updates,
+            prefer="return=minimal",
+        )
+
+    async def delete_webhook_subscription(self, sub_id: str, org_id: str) -> None:
+        await self._request(
+            "DELETE",
+            "webhook_subscriptions",
+            params={"id": f"eq.{sub_id}", "org_id": f"eq.{org_id}"},
+            prefer="return=minimal",
+        )
+
+    async def get_webhook_deliveries(self, sub_id: str, org_id: str, limit: int = 50) -> list[dict]:
+        rows = await self._request(
+            "GET",
+            "webhook_events",
+            params={
+                "org_id": f"eq.{org_id}",
+                "payload->>subscription_id": f"eq.{sub_id}",
+                "order": "created_at.desc",
+                "limit": str(limit),
+                "select": "id,event_type,status,attempts,response_code,created_at",
+            },
+        )
+        return rows or []
+
+    # ------------------------------------------------------------------
+    # Calendar connections + slots
+    # ------------------------------------------------------------------
+    async def create_calendar_connection(
+        self,
+        *,
+        org_id: str,
+        user_id: str,
+        provider: str,
+        access_token_encrypted: str,
+        refresh_token_encrypted: str,
+        expires_at: str,
+        calendars: list[dict] | None = None,
+    ) -> str:
+        cid = f"cal-{uuid.uuid4().hex[:12]}"
+        await self._request(
+            "POST",
+            "calendar_connections",
+            json={
+                "id": cid,
+                "org_id": org_id,
+                "user_id": user_id,
+                "provider": provider,
+                "access_token_encrypted": access_token_encrypted,
+                "refresh_token_encrypted": refresh_token_encrypted,
+                "expires_at": expires_at,
+                "calendars": calendars or [],
+                "active": True,
+            },
+            prefer="return=minimal",
+        )
+        return cid
+
+    async def list_calendar_connections(self, org_id: str, user_id: str | None = None) -> list[dict]:
+        params = {
+            "org_id": f"eq.{org_id}",
+            "order": "created_at.desc",
+            "select": "id,provider,calendars,active,created_at",
+        }
+        if user_id:
+            params["user_id"] = f"eq.{user_id}"
+        rows = await self._request("GET", "calendar_connections", params=params)
+        return rows or []
+
+    async def delete_calendar_connection(self, conn_id: str, org_id: str) -> None:
+        await self._request(
+            "DELETE",
+            "calendar_connections",
+            params={"id": f"eq.{conn_id}", "org_id": f"eq.{org_id}"},
+            prefer="return=minimal",
+        )
+
+    async def create_interview_slots(self, org_id: str, slots: list[dict]) -> list[str]:
+        if not slots:
+            return []
+        for s in slots:
+            s["id"] = f"slot-{uuid.uuid4().hex[:12]}"
+        await self._request("POST", "interview_slots", json=slots, prefer="return=minimal")
+        return [s["id"] for s in slots]
+
+    async def list_interview_slots(self, schedule_id: str, org_id: str) -> list[dict]:
+        rows = await self._request(
+            "GET",
+            "interview_slots",
+            params={
+                "schedule_id": f"eq.{schedule_id}",
+                "order": "starts_at.asc",
+                "select": "id,starts_at,ends_at,interviewer_ids,max_candidates,status,booked_by",
+            },
+        )
+        return rows or []
+
+    async def book_interview_slot(self, slot_id: str, candidate_id: str) -> None:
+        await self._request(
+            "PATCH",
+            "interview_slots",
+            params={"id": f"eq.{slot_id}"},
+            json={
+                "status": "booked",
+                "booked_by": candidate_id,
+                "booked_at": datetime.now(timezone.utc).isoformat(),
+            },
+            prefer="return=minimal",
+        )
+
+    # ------------------------------------------------------------------
+    # Proctoring dashboard
+    # ------------------------------------------------------------------
+    async def get_proctoring_sessions(
+        self, org_id: str, *, job_id: str | None = None, flagged_only: bool = False, limit: int = 50
+    ) -> list[dict]:
+        params = {
+            "order": "created_at.desc",
+            "limit": str(limit),
+            "select": (
+                "id,application_id,status,cheating_probability,proctoring_summary,"
+                "created_at,applications(job_role_id,status)"
+            ),
+        }
+        if job_id:
+            params["applications"] = f"job_role_id=eq.{job_id}"
+        if flagged_only:
+            params["cheating_probability"] = "gte.50"
+        rows = await self._request("GET", "interview_sessions", params=params)
+        return rows or []
+
+    async def set_proctoring_override(self, session_id: str, *, flagged: bool, note: str, actor_id: str) -> None:
+        await self._request(
+            "PATCH",
+            "interview_sessions",
+            params={"id": f"eq.{session_id}"},
+            json={
+                "cheating_probability": 100 if flagged else 0,
+                "proctoring_ended_interview": flagged,
+                "proctoring_summary": {"manual_override": True, "note": note, "actor_id": actor_id},
+            },
+            prefer="return=minimal",
+        )
+
+    async def dispatch_candidate_qualified_webhook(
+        self,
+        application_id: str,
+        candidate: dict,
+        job: dict,
+        ai_score: float,
+        human_scorecards: list,
+        proctoring_flagged: bool,
+        cheating_probability: int,
+    ) -> None:
+        """Dispatch candidate.qualified webhook when candidate becomes qualified."""
+        from interview.webhooks import build_webhook_payload, WebhookEventType
+
+        # Get org_id from job
+        org_id = job.get("org_id")
+        if not org_id:
+            return
+
+        # Build webhook payload
+        payload = build_webhook_payload(
+            WebhookEventType.CANDIDATE_QUALIFIED,
+            application={"id": application_id},
+            candidate=candidate,
+            job=job,
+            ai_score=ai_score,
+            human_scorecards=human_scorecards,
+            proctoring_flagged=proctoring_flagged,
+            cheating_probability=cheating_probability,
+        )
+
+        # Get active subscriptions for this org and event
+        subs = await self._request(
+            "GET",
+            "webhook_subscriptions",
+            params={
+                "org_id": f"eq.{org_id}",
+                "active": "eq.true",
+                "events": f"cs.{{candidate.qualified}}",
+            },
+        )
+
+        # Dispatch to each subscription
+        for sub in subs or []:
+            if "candidate.qualified" in sub.get("events", []):
+                await self._deliver_webhook(
+                    url=sub["url"],
+                    secret=sub["secret"],
+                    payload=payload,
+                    org_id=org_id,
+                    event_type="candidate.qualified",
+                )
+
+    async def _deliver_webhook(
+        self,
+        url: str,
+        secret: str,
+        payload: dict,
+        org_id: str,
+        event_type: str,
+    ) -> None:
+        """Deliver webhook with HMAC signature."""
+        import hmac
+        import hashlib
+
+        body = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
+        signature = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+
+        headers = {
+            "Content-Type": "application/json",
+            "X-HireLoop-Signature": f"sha256={signature}",
+            "X-HireLoop-Timestamp": str(int(time.time())),
+            "X-HireLoop-Version": "2026-07-18",
+        }
+
+        try:
+            client = get_http_client()
+            response = await client.post(url, content=body, headers=headers, timeout=10.0)
+            logger.info(f"Webhook delivered: {event_type} - {response.status_code}")
+        except Exception as exc:
+            logger.error(f"Webhook delivery failed: {exc}")
+
+
+def get_store() -> Any | None:  # → SupabaseInterviewStore | DevSqliteStore | None
     if not supabase_enabled():
         return None
+    if DEV_SQLITE:
+        return DevSqliteStore()
     return SupabaseInterviewStore()
+
+
+# ---------------------------------------------------------------------------
+# Dev SQLite store — lightweight local fallback when DEV_SQLITE=1
+# ---------------------------------------------------------------------------
+
+class DevSqliteStore:
+    """Minimal in-process SQLite store for local development.
+
+    Implements the subset of ``SupabaseInterviewStore`` needed to run the
+    interview relay without provisioning a Supabase project.  Tables are
+    created lazily on first use.
+    """
+
+    def __init__(self) -> None:
+        from config import dev_sqlite_connection
+        self._conn = dev_sqlite_connection()
+        self._ensure_tables()
+
+    def _ensure_tables(self) -> None:
+        self._conn.executescript("""
+            CREATE TABLE IF NOT EXISTS applications (
+                id TEXT PRIMARY KEY,
+                candidate_id TEXT,
+                job_role_id TEXT,
+                status TEXT DEFAULT 'applied',
+                interview_token TEXT,
+                token_expires_at TEXT,
+                current_stage_id TEXT,
+                created_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS interview_sessions (
+                id TEXT PRIMARY KEY,
+                application_id TEXT,
+                started_at TEXT,
+                ended_at TEXT,
+                status TEXT DEFAULT 'in_progress',
+                question_scores TEXT,  -- json
+                overall_score TEXT,     -- json
+                proctoring_log TEXT,    -- json array
+                proctoring_summary TEXT, -- json
+                answer_chunks TEXT,     -- json
+                question_started_at TEXT,
+                created_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS questions (
+                id TEXT PRIMARY KEY,
+                job_role_id TEXT,
+                section TEXT,
+                prompt_text TEXT,
+                ideal_answer_notes TEXT,
+                time_limit_seconds INTEGER,
+                score_threshold REAL,
+                order_index INTEGER,
+                is_active INTEGER DEFAULT 1,
+                is_mandatory INTEGER DEFAULT 0,
+                audio_url TEXT,
+                audio_url_hi TEXT,
+                created_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS job_roles (
+                id TEXT PRIMARY KEY,
+                org_id TEXT,
+                title TEXT,
+                description TEXT,
+                status TEXT DEFAULT 'draft',
+                passing_score REAL,
+                interview_question_count INTEGER,
+                custom_scoring_rules TEXT,  -- json
+                created_at TEXT
+            );
+            CREATE TABLE IF NOT EXISTS candidates (
+                id TEXT PRIMARY KEY,
+                org_id TEXT,
+                profile_id TEXT,
+                name TEXT,
+                email TEXT,
+                created_at TEXT
+            );
+        """)
+
+    def _row_to_dict(self, row: sqlite3.Row | None) -> dict | None:
+        if row is None:
+            return None
+        return dict(row)
+
+    def _rows_to_dicts(self, rows: list[sqlite3.Row]) -> list[dict]:
+        return [dict(r) for r in rows]
+
+    async def _request(self, method: str, path: str, *, params=None, json=None, prefer=None) -> Any:
+        """Stub — not used by the relay path."""
+        return None
+
+    async def load_application_for_interview(self, token: str) -> ApplicationContext:
+        cur = self._conn.execute(
+            "SELECT * FROM applications WHERE interview_token = ?",
+            (token,),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise ValueError("Invalid or expired interview link")
+        d = dict(row)
+        # Parse custom_scoring_rules from job
+        job_cur = self._conn.execute(
+            "SELECT custom_scoring_rules FROM job_roles WHERE id = ?",
+            (d["job_role_id"],),
+        )
+        job_row = job_cur.fetchone()
+        custom_rules = None
+        if job_row and job_row["custom_scoring_rules"]:
+            import json
+            custom_rules = json.loads(job_row["custom_scoring_rules"])
+
+        return ApplicationContext(
+            application_id=d["id"],
+            candidate_id=d.get("candidate_id", ""),
+            job_role_id=d.get("job_role_id", ""),
+            passing_score=None,
+            token=token,
+            custom_scoring_rules=custom_rules,
+        )
+
+    async def load_questions_for_session(self, session_id: str) -> list:
+        cur = self._conn.execute(
+            "SELECT job_role_id, question_started_at FROM interview_sessions WHERE id = ?",
+            (session_id,),
+        )
+        row = cur.fetchone()
+        if not row:
+            return []
+        job_id = row["job_role_id"]
+        cur = self._conn.execute(
+            "SELECT * FROM questions WHERE job_role_id = ? AND is_active = 1 ORDER BY order_index",
+            (job_id,),
+        )
+        rows = cur.fetchall()
+        return [Question(**dict(r)) for r in rows]
+
+    async def create_session(self, application_id: str, questions: list, question_ids: list, session_id: str) -> None:
+        import json
+        self._conn.execute(
+            "INSERT INTO interview_sessions (id, application_id, status, question_started_at, created_at) VALUES (?, ?, 'in_progress', ?, datetime('now'))",
+            (session_id, application_id, json.dumps({qid: None for qid in question_ids})),
+        )
+        self._conn.commit()
+
+    async def save_question_answer(self, session_id: str, question_id: str, text: str) -> None:
+        pass  # no-op for dev mode
+
+    async def finalize_session(self, session_id: str, status: str, duration_seconds: float, answer_chunks: dict, application_id: str) -> None:
+        import json
+        self._conn.execute(
+            "UPDATE interview_sessions SET status = ?, ended_at = datetime('now'), answer_chunks = ? WHERE id = ?",
+            (status, json.dumps(answer_chunks), session_id),
+        )
+        self._conn.commit()
+
+    async def save_scores(self, application_id: str, session_id: str, question_scores: list, overall_score: dict) -> None:
+        import json
+        self._conn.execute(
+            "UPDATE interview_sessions SET question_scores = ?, overall_score = ? WHERE id = ?",
+            (json.dumps(question_scores), json.dumps(overall_score), session_id),
+        )
+        self._conn.commit()
+
+    async def find_resumable_session(self, application_id: str) -> dict | None:
+        cur = self._conn.execute(
+            "SELECT * FROM interview_sessions WHERE application_id = ? AND status = 'in_progress' ORDER BY created_at DESC LIMIT 1",
+            (application_id,),
+        )
+        row = cur.fetchone()
+        return self._row_to_dict(row)
+
+    async def get_session_state(self, token: str) -> dict | None:
+        cur = self._conn.execute(
+            "SELECT a.interview_token, s.* FROM applications a JOIN interview_sessions s ON s.application_id = a.id WHERE a.interview_token = ? LIMIT 1",
+            (token,),
+        )
+        row = cur.fetchone()
+        return self._row_to_dict(row)
+
+    async def validate_interview_upload(self, token: str, session_id: str, question_index: int) -> None:
+        cur = self._conn.execute(
+            "SELECT 1 FROM applications WHERE interview_token = ?",
+            (token,),
+        )
+        if not cur.fetchone():
+            raise ValueError("Invalid interview token")
+
+    async def select_questions_for_interview(self, job_role_id: str) -> tuple[list, list]:
+        cur = self._conn.execute(
+            "SELECT * FROM questions WHERE job_role_id = ? AND is_active = 1 ORDER BY is_mandatory DESC, order_index",
+            (job_role_id,),
+        )
+        rows = cur.fetchall()
+        qs = [Question(**dict(r)) for r in rows]
+        return qs, [q.id for q in qs]
+
+    # Stub methods — no-op for dev mode
+    async def save_transcript(self, *args, **kwargs) -> None: pass
+    async def expire_session(self, *args, **kwargs) -> None: pass
+    async def upload_proctoring_snapshot(self, *args, **kwargs) -> None: pass
+    async def append_proctoring_event(self, *args, **kwargs) -> None: pass
+    async def flag_session_proctoring(self, *args, **kwargs) -> None: pass
+    async def notify_interview_expired(self, *args, **kwargs) -> None: pass
+    async def create_api_key(self, *args, **kwargs) -> Any: return None
+    async def list_api_keys(self, *args, **kwargs) -> list: return []
+    async def update_api_key(self, *args, **kwargs) -> None: pass
+    async def mark_api_key_used(self, *args, **kwargs) -> None: pass
+    async def create_webhook_subscription(self, *args, **kwargs) -> Any: return None
+    async def list_webhook_subscriptions(self, *args, **kwargs) -> list: return []
+    async def get_webhook_subscription(self, *args, **kwargs) -> Any: return None
+    async def update_webhook_subscription(self, *args, **kwargs) -> None: pass
+    async def delete_webhook_subscription(self, *args, **kwargs) -> None: pass
+    async def get_webhook_deliveries(self, *args, **kwargs) -> list: return []
+    async def create_calendar_connection(self, *args, **kwargs) -> Any: return None
+    async def list_calendar_connections(self, *args, **kwargs) -> list: return []
+    async def delete_calendar_connection(self, *args, **kwargs) -> None: pass
+    async def create_interview_slots(self, *args, **kwargs) -> list: return []
+    async def list_interview_slots(self, *args, **kwargs) -> list: return []
+    async def book_interview_slot(self, *args, **kwargs) -> None: pass
+    async def get_proctoring_sessions(self, *args, **kwargs) -> list: return []
+    async def set_proctoring_override(self, *args, **kwargs) -> None: pass
+    async def dispatch_candidate_qualified_webhook(self, *args, **kwargs) -> None: pass
+    async def _deliver_webhook(self, *args, **kwargs) -> None: pass
+    async def load_questions_for_job(self, *args, **kwargs) -> list: return []
+    async def save_answer_chunks_meta(self, *args, **kwargs) -> None: pass

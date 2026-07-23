@@ -38,7 +38,6 @@ const testPassword = "TestPass123!";
 let orgId;
 let jobId;
 let candidateUserId;
-let candidateRecordId;
 let profileId;
 
 console.log("\n=== HireLoop Supabase Integration Tests ===\n");
