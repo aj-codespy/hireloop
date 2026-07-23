@@ -70,7 +70,7 @@ export function GlanceBar() {
         return (
           <div
             key={m.label}
-            className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-muted/30"
+            className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-muted/30 dark:hover:bg-muted/10"
           >
             {/* Top row: icon + value */}
             <div className="flex items-center justify-between">

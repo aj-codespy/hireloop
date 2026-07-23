@@ -88,8 +88,8 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand/10 via-brand-muted/20 to-background p-6 sm:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,107,0,0.08),transparent_50%)]" />
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand/10 via-brand-muted/20 to-background p-6 sm:p-8 dark:from-brand/5 dark:via-brand-muted/10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,107,0,0.08),transparent_50%)] dark:bg-[radial-gradient(circle_at_30%_20%,rgba(255,107,0,0.12),transparent_50%)]" />
         <div className="relative flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-caption">{state.organization.name}</p>

@@ -108,7 +108,7 @@ export function ActivityFeed({ initial = MOCK_ACTIVITIES }: ActivityFeedProps) {
             >
               <Link
                 href={a.href ?? "#"}
-                className="flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors group"
+                className="flex items-start gap-3 px-4 py-3 hover:bg-muted/30 dark:hover:bg-muted/10 transition-colors group"
               >
                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${COLOR_MAP[a.type]}`}>
                   {ICON_MAP[a.type]}

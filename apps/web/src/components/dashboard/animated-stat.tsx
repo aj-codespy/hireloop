@@ -46,10 +46,10 @@ export function AnimatedStat({ value, label, icon, href, hint }: AnimatedStatPro
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-200 group-hover:shadow-md group-hover:-translate-y-0.5"
+        className="relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-200 group-hover:shadow-md group-hover:-translate-y-0.5 dark:group-hover:shadow-brand/10"
       >
         {/* Gradient accent bar */}
-        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand/60 via-brand to-brand/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand/60 via-brand to-brand/60 opacity-0 group-hover:opacity-100 transition-opacity dark:from-brand/40 dark:via-brand dark:to-brand/40" />
 
         <div className="flex items-start justify-between">
           <p className="text-sm text-muted-foreground">{label}</p>
