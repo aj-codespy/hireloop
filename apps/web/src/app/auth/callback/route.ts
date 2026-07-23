@@ -5,7 +5,7 @@ import { generateId } from "@/lib/id";
 import { createClient } from "@/utils/supabase/server";
 
 type Portal = "admin" | "candidate";
-type Intent = "signin" | "signup";
+type Intent = "signin" | "signup" | "invite";
 
 function loginUrl(portal: Portal, message: string) {
   const base = portal === "admin" ? "/admin/login" : "/candidate/login";
@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const portal = (searchParams.get("portal") ?? "candidate") as Portal;
   const intent = (searchParams.get("intent") ?? "signin") as Intent;
+  const isInvite = intent === "invite";
   const accountType = portal === "admin" ? "org_admin" : "candidate";
 
   if (!code) {
@@ -34,6 +35,12 @@ export async function GET(request: NextRequest) {
 
   const userId = data.user.id;
   const admin = createAdminClient();
+
+  // For invite flow: profile + org membership are already created.
+  // Just redirect to admin.
+  if (isInvite) {
+    return NextResponse.redirect(new URL("/admin", origin));
+  }
 
   const { data: profile } = await admin
     .from("profiles")
