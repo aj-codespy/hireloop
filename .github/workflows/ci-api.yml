@@ -46,3 +46,8 @@ jobs:
         run: python -m pytest tests/ -v --tb=short
         env:
           DEV_SQLITE: 1
+
+      - name: Run security tests
+        run: python -m pytest tests/test_security_scopes.py tests/test_webhook_dispatch.py -v --tb=short
+        env:
+          DEV_SQLITE: 1
