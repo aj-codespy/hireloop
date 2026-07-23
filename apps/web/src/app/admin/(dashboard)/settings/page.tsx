@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { RoleGate } from "@/components/auth/role-gate";
 import {
   getCurrentProfileAction,
   updateAdminProfileAction,
