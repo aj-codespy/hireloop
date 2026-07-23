@@ -14,6 +14,8 @@ import types
 cfg = types.ModuleType("config")
 cfg.SUPABASE_URL = "http://localhost"
 cfg.SUPABASE_SECRET_KEY = "x"
+cfg.DEV_SQLITE = False
+cfg.DEV_SQLITE_PATH = "/tmp/test.sqlite"
 cfg.supabase_enabled = lambda: False
 cfg.PORT = 8000
 sys.modules["config"] = cfg
