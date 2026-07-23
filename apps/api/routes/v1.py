@@ -174,7 +174,7 @@ async def list_jobs(
 
 
 @router.post("/jobs", status_code=201)
-async def create_job(job: JobCreate, org_id: str = Depends(get_org_id)):
+async def create_job(job: JobCreate, auth: AuthenticatedKey = Depends(require_scopes("jobs", mode="write"))):
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -182,7 +182,7 @@ async def create_job(job: JobCreate, org_id: str = Depends(get_org_id)):
     job_id = f"job-{uuid4().hex[:12]}"
     payload = {
         "id": job_id,
-        "org_id": org_id,
+        "org_id": auth.org_id,
         "title": job.title,
         "description": job.description,
         "department_id": job.department_id,
@@ -214,7 +214,7 @@ async def get_job(job_id: str, org_id: str = Depends(get_org_id)):
 
 
 @router.patch("/jobs/{job_id}")
-async def update_job(job_id: str, job: JobUpdate, org_id: str = Depends(get_org_id)):
+async def update_job(job_id: str, job: JobUpdate, auth: AuthenticatedKey = Depends(require_scopes("jobs", mode="write"))):
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -222,18 +222,19 @@ async def update_job(job_id: str, job: JobUpdate, org_id: str = Depends(get_org_
     update_data = job.model_dump(exclude_unset=True)
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     await store._request(
         "PATCH",
         "job_roles",
-        params={"id": f"eq.{job_id}", "org_id": f"eq.{org_id}"},
+        params={"id": f"eq.{job_id}", "org_id": f"eq.{auth.org_id}"},
         json=update_data,
     )
     return {"id": job_id, **update_data}
 
 
 @router.delete("/jobs/{job_id}")
-async def delete_job(job_id: str, org_id: str = Depends(get_org_id)):
+async def delete_job(job_id: str, auth: AuthenticatedKey = Depends(require_scopes("jobs", mode="write"))):
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -241,7 +242,7 @@ async def delete_job(job_id: str, org_id: str = Depends(get_org_id)):
     await store._request(
         "DELETE",
         "job_roles",
-        params={"id": f"eq.{job_id}", "org_id": f"eq.{org_id}"},
+        params={"id": f"eq.{job_id}", "org_id": f"eq.{auth.org_id}"},
     )
     return {"success": True}
 
@@ -313,7 +314,7 @@ async def get_application(app_id: str, org_id: str = Depends(get_org_id)):
 
 @router.post("/applications/{app_id}/transition")
 async def transition_application(
-    app_id: str, transition: ApplicationTransition, org_id: str = Depends(get_org_id)
+    app_id: str, transition: ApplicationTransition, auth: AuthenticatedKey = Depends(require_scopes("applications", mode="write"))
 ):
     store = get_store()
     if not store:
@@ -321,7 +322,7 @@ async def transition_application(
 
     # Get current application
     rows = await store._request(
-        "GET", "applications", params={"id": f"eq.{app_id}", "org_id": f"eq.{org_id}"}
+        "GET", "applications", params={"id": f"eq.{app_id}", "org_id": f"eq.{auth.org_id}"}
     )
     if not rows:
         raise HTTPException(status_code=404, detail="Application not found")
@@ -347,7 +348,7 @@ async def transition_application(
     await store._request(
         "PATCH",
         "applications",
-        params={"id": f"eq.{app_id}", "org_id": f"eq.{org_id}"},
+        params={"id": f"eq.{app_id}", "org_id": f"eq.{auth.org_id}"},
         json={"status": transition.to_status},
     )
 
@@ -371,7 +372,7 @@ async def transition_application(
         "activity_log",
         json={
             "id": str(uuid4()),
-            "org_id": org_id,
+            "org_id": auth.org_id,
             "entity_type": "application",
             "entity_id": app_id,
             "action": "stage_transition",
@@ -467,7 +468,7 @@ async def list_scorecards(app_id: str, org_id: str = Depends(get_org_id)):
 
 
 @router.post("/applications/{app_id}/scorecards")
-async def create_scorecard(app_id: str, scorecard: ScorecardCreate, org_id: str = Depends(get_org_id)):
+async def create_scorecard(app_id: str, scorecard: ScorecardCreate, auth: AuthenticatedKey = Depends(require_scopes("scorecards", mode="write"))):
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
