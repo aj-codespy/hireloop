@@ -24,11 +24,14 @@ SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY") or os.getenv(
     "SUPABASE_SERVICE_ROLE_KEY", ""
 )
 
-# — Email (Brevo / SendinBlue) ———————————————————————————————————————————
+# — Email (Brevo SMTP) ————————————————————————————————————————————————
 _legacy_resend_key = os.getenv("RESEND_API_KEY", "")
 _legacy_resend_from = os.getenv("RESEND_FROM", "")
 
-BREVO_API_KEY = os.getenv("BREVO_API_KEY", "") or _legacy_resend_key
+BREVO_SMTP_HOST = os.getenv("BREVO_SMTP_HOST", "smtp-relay.brevo.com")
+BREVO_SMTP_PORT = int(os.getenv("BREVO_SMTP_PORT", "587"))
+BREVO_SMTP_LOGIN = os.getenv("BREVO_SMTP_LOGIN", "")
+BREVO_SMTP_KEY = os.getenv("BREVO_SMTP_KEY", "")
 BREVO_FROM = os.getenv("BREVO_FROM", "") or _legacy_resend_from
 BREVO_FROM_NAME = os.getenv("BREVO_FROM_NAME", "HireLoop")
 
@@ -58,7 +61,7 @@ def dev_sqlite_connection() -> sqlite3.Connection:
 
 
 def email_configured() -> bool:
-    return bool(BREVO_API_KEY and BREVO_FROM)
+    return bool(BREVO_SMTP_KEY and BREVO_FROM)
 
 
 def supabase_enabled() -> bool:
