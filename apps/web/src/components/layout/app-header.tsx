@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Building2 } from "lucide-react";
 import { getAdminRouteMeta } from "@/lib/navigation/admin-routes";
 import { useOrgPermissions } from "@/hooks/use-org-permissions";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Input } from "@/components/ui/input";
+import { OrgSwitcher } from "@/components/layout/org-switcher";
 
 export function AppHeader({
   showSearch = true,
@@ -56,6 +57,7 @@ export function AppHeader({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        <OrgSwitcher />
         {showCreateJob && canManageJobs ? (
           <ButtonLink
             href="/admin/jobs/new"
