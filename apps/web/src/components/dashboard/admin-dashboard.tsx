@@ -10,6 +10,7 @@ import { PipelineLineChart } from "@/components/charts/pipeline-line-chart";
 import { PipelineFunnelChart } from "@/components/charts/pipeline-funnel-chart";
 import { SourcesDonutChart } from "@/components/charts/sources-donut-chart";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
+import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { SectionCard } from "@/components/patterns/section-card";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { StatusBadge } from "@/components/patterns/status-badge";
@@ -147,16 +148,19 @@ export function AdminDashboard() {
         ))}
       </FadeInStagger>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-4">
         <FadeIn className="lg:col-span-2">
           <SectionCard title="Applications over time" description="Monthly applications and completed interviews">
             <PipelineLineChart />
           </SectionCard>
         </FadeIn>
-        <FadeIn delay={0.1}>
+        <FadeIn delay={0.1} className="lg:col-span-1">
           <SectionCard title="Sources" description="Where applicants are coming from">
             <SourcesDonutChart compact />
           </SectionCard>
+        </FadeIn>
+        <FadeIn delay={0.15} className="lg:col-span-1">
+          <ActivityFeed />
         </FadeIn>
       </div>
 
