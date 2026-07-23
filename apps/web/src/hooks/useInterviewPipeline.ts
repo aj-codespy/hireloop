@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useApplicationRows, useHireLoop } from "@/lib/store/provider";
 import { PIPELINE_COLUMNS, APPLICATION_STATUS_LABELS } from "@/lib/constants";
 import type { ApplicationStatus } from "@/lib/types";
+import { api } from "@/lib/api/client";
 import { toast } from "sonner";
 
 function initials(name: string) {
@@ -121,6 +122,60 @@ export function useInterviewPipeline() {
     handleDragEnd,
     staleCounts,
     totalCandidates: rows.length,
+    organizationName: state.organization.name,
+  };
+}
+
+// ─── API-backed hook (replaces store data with REST API data) ────────
+
+const ORG_ID = "demo-org";
+
+export function useApiPipeline() {
+  const [columns, setColumns] = useState<PipelineColumn[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { state } = useHireLoop();
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const { data: applications } = await api.listApplications(ORG_ID);
+        const grouped = PIPELINE_COLUMNS.map((status) => ({
+          status,
+          label: APPLICATION_STATUS_LABELS[status],
+          candidates: ((applications as Array<Record<string, unknown>>) ?? [])
+            .filter((a) => a.status === status)
+            .map((a) => ({
+              applicationId: String(a.id),
+              candidateName: String((a as { candidate?: { name: string } }).candidate?.name ?? (a as { candidate_name?: string }).candidate_name ?? "Unknown"),
+              candidateInitials: initials(String((a as { candidate?: { name: string } }).candidate?.name ?? "??")),
+              jobTitle: String((a as { job?: { title: string } }).job?.title ?? "—"),
+              status: status as ApplicationStatus,
+              createdAt: String(a.created_at ?? new Date().toISOString()),
+              score: (a as Record<string, unknown>).score as number | null ?? null,
+              hasResume: false,
+            })),
+        }));
+        setColumns(grouped);
+      } catch {
+        // Fall back silently
+      } finally {
+        setLoading(false);
+      }
+    }
+    void load();
+  }, []);
+
+  return {
+    columns,
+    loading,
+    searchQuery: "",
+    setSearchQuery: () => {},
+    selectedJobId: null,
+    setSelectedJobId: () => {},
+    availableJobs: [],
+    handleDragEnd: () => {},
+    staleCounts: {},
+    totalCandidates: columns.reduce((s, c) => s + c.candidates.length, 0),
     organizationName: state.organization.name,
   };
 }
