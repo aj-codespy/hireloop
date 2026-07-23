@@ -1,4 +1,8 @@
 .env
+
+# Generated artifacts
+test-results/
+.next/
 .venv/
 __pycache__/
 *.py[cod]
