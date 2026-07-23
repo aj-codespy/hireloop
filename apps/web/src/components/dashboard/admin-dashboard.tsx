@@ -11,6 +11,7 @@ import { PipelineFunnelChart } from "@/components/charts/pipeline-funnel-chart";
 import { SourcesDonutChart } from "@/components/charts/sources-donut-chart";
 import { AnimatedStat } from "@/components/dashboard/animated-stat";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { GlanceBar } from "@/components/dashboard/glance-bar";
 import { SectionCard } from "@/components/patterns/section-card";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { StatusBadge } from "@/components/patterns/status-badge";
@@ -107,6 +108,8 @@ export function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      <GlanceBar />
 
       {insights.actionItems.length > 0 ? (
         <SectionCard
