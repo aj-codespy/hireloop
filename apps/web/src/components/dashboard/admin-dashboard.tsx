@@ -9,7 +9,7 @@ import { FadeIn, FadeInItem, FadeInStagger } from "@/components/motion/fade-in";
 import { PipelineLineChart } from "@/components/charts/pipeline-line-chart";
 import { PipelineFunnelChart } from "@/components/charts/pipeline-funnel-chart";
 import { SourcesDonutChart } from "@/components/charts/sources-donut-chart";
-import { MetricCard } from "@/components/patterns/metric-card";
+import { AnimatedStat } from "@/components/dashboard/animated-stat";
 import { SectionCard } from "@/components/patterns/section-card";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { StatusBadge } from "@/components/patterns/status-badge";
@@ -86,21 +86,24 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-caption">{state.organization.name}</p>
-          <h2 className="text-title">{insights.greeting}</h2>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/admin/jobs/new" variant="outline" className="rounded-full">
-            Create job
-          </ButtonLink>
-          <ButtonLink href="/admin/candidates" variant="outline" className="rounded-full">
-            View pipeline
-          </ButtonLink>
-          <ButtonLink href="/admin/reports" className="rounded-full bg-brand text-brand-foreground hover:bg-brand/90">
-            Reports
-          </ButtonLink>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand/10 via-brand-muted/20 to-background p-6 sm:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,107,0,0.08),transparent_50%)]" />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-caption">{state.organization.name}</p>
+            <h2 className="text-title">{insights.greeting}</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href="/admin/jobs/new" variant="outline" className="rounded-full">
+              Create job
+            </ButtonLink>
+            <ButtonLink href="/admin/candidates" variant="outline" className="rounded-full">
+              View pipeline
+            </ButtonLink>
+            <ButtonLink href="/admin/reports" className="rounded-full bg-brand text-brand-foreground hover:bg-brand/90">
+              Reports
+            </ButtonLink>
+          </div>
         </div>
       </div>
 
@@ -133,7 +136,7 @@ export function AdminDashboard() {
       <FadeInStagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map((s) => (
           <FadeInItem key={s.label}>
-            <MetricCard
+            <AnimatedStat
               label={s.label}
               value={s.value}
               hint={s.hint}
