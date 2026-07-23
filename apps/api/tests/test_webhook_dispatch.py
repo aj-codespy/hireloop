@@ -182,3 +182,61 @@ def test_v1_health_endpoint():
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "ok"
+
+
+# ---------------------------------------------------------------------------
+# HMAC signature edge cases
+# ---------------------------------------------------------------------------
+def test_sign_and_verify_tampered_body():
+    """Tampering the payload after signing must cause verification to fail."""
+    import copy
+    payload = {"event_id": "evt_1", "data": {"score": 8.0}}
+    secret = "whsec_test_secret_32chars_long_enough"
+    sig = sign_payload(payload, secret)
+
+    tampered = copy.deepcopy(payload)
+    tampered["data"]["score"] = 9.0
+    assert verify_signature(tampered, secret, sig) is False
+    assert verify_signature(payload, secret, sig) is True  # original still valid
+
+
+def test_verify_rejects_wrong_secret():
+    """Verification with a different secret must fail."""
+    payload = {"event_id": "evt_2", "data": {"hello": "world"}}
+    sig = sign_payload(payload, "correct_secret")
+    assert verify_signature(payload, "wrong_secret", sig) is False
+
+
+def test_signature_is_deterministic():
+    """Same payload + secret always produces the same signature."""
+    payload = {"a": 1, "b": 2}
+    secret = "deterministic_secret"
+    assert sign_payload(payload, secret) == sign_payload(payload, secret)
+
+
+def test_signature_changes_with_payload():
+    """Different payloads produce different signatures (same secret)."""
+    secret = "s"
+    sig1 = sign_payload({"x": 1}, secret)
+    sig2 = sign_payload({"x": 2}, secret)
+    assert sig1 != sig2
+
+
+def test_event_id_uniqueness():
+    """Each built webhook payload gets a unique event_id."""
+    seen: set[str] = set()
+    for _ in range(100):
+        payload = build_webhook_payload(
+            WebhookEventType.APPLICATION_CREATED,
+            application={"id": "a"}, candidate={"id": "c"}, job={"id": "j"},
+        )
+        assert payload["event_id"] not in seen
+        seen.add(payload["event_id"])
+
+
+def test_verify_empty_payload():
+    """Empty payload must produce a valid signature that self-verifies."""
+    payload: dict = {}
+    secret = "s"
+    sig = sign_payload(payload, secret)
+    assert verify_signature(payload, secret, sig) is True
