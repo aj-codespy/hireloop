@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/auth";
 import { FadeIn } from "@/components/motion/fade-in";
 import { InviteTeamMemberForm } from "@/components/admin/invite-team-member-form";
+import { CalendarConnect } from "@/components/scheduling/calendar-connect";
 import { useOrgPermissions } from "@/hooks/use-org-permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -221,15 +222,9 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="integrations">
-          <Card className="max-w-2xl border-border shadow-card">
-            <CardHeader>
-              <CardTitle className="text-base">Integrations</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>Production integrations should be configured here: Google/Microsoft calendar, SSO, ATS sync, and job-board distribution.</p>
-              <p>For this MVP, Supabase Auth, Supabase Storage, Resend, and the interview API are configured with environment variables.</p>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <CalendarConnect />
+          </div>
         </TabsContent>
 
         <TabsContent value="billing">
