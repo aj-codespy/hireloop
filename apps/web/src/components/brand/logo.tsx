@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/brand/logo-mark";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export function Logo({
   className,

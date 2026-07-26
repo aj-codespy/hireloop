@@ -8,10 +8,15 @@ export default async function ApplyPage({ params }: { params: Promise<{ jobId: s
 
   if (isActionError(publicJob)) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-2 px-4 text-center">
-        <h1 className="text-xl font-semibold text-red-600">Failed to load job details</h1>
-        <p className="text-sm text-muted-foreground">{publicJob.error}</p>
-      </div>
+      <main className="flex min-h-[100dvh] items-center justify-center bg-stone-50 px-5 py-12">
+        <div className="w-full max-w-md rounded-3xl border border-red-100 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)]">
+          <p className="text-sm font-semibold text-red-700">Role unavailable</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+            We couldn&apos;t load this job
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-slate-600">{publicJob.error}</p>
+        </div>
+      </main>
     );
   }
 

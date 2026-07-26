@@ -7,7 +7,11 @@ import { passwordsMatch, validatePassword } from "@/lib/auth/validation"
 import { generateId } from "@/lib/id"
 import { createAdminClient } from "@/lib/supabase/admin"
 
-export type AuthResult = { error?: string; ok?: boolean; data?: any };
+export type AuthResult<T extends Record<string, unknown> = Record<string, unknown>> = {
+  error?: string;
+  ok?: boolean;
+  data?: T;
+};
 
 // Server action to store company details temporarily
 export async function storeCompanyDetailsAction(input: {
@@ -15,7 +19,7 @@ export async function storeCompanyDetailsAction(input: {
   orgSlug?: string;
   logoUrl?: string;
   defaultDepartment?: string;
-}): Promise<AuthResult> {
+}): Promise<AuthResult<{ orgSlug: string }>> {
   try {
     // Generate org slug if not provided
     const orgSlug = input.orgSlug || 
@@ -38,7 +42,12 @@ export async function storeAdminUserDetailsAction(input: {
   fullName: string;
   confirmPassword: string;
   orgSlug: string;
-}): Promise<AuthResult> {
+}): Promise<AuthResult<{
+  email: string;
+  password: string;
+  fullName: string;
+  orgSlug: string;
+}>> {
   try {
     const passwordError = validatePassword(input.password);
     if (passwordError) return { error: passwordError };
@@ -68,7 +77,12 @@ export async function storePlanSelectionAction(input: {
   planName: string;
   price: number;
   billingCycle: "monthly" | "yearly";
-}): Promise<AuthResult> {
+}): Promise<AuthResult<{
+  planId: string;
+  planName: string;
+  price: number;
+  billingCycle: "monthly" | "yearly";
+}>> {
   try {
     return {
       ok: true,
@@ -95,7 +109,7 @@ export async function completeAdminSignupAction(input: {
   planName: string;
   price: number;
   billingCycle: "monthly" | "yearly";
-}): Promise<AuthResult> {
+}): Promise<AuthResult<{ orgId: string; userId: string }>> {
   try {
     const admin = createAdminClient();
     const now = new Date().toISOString();

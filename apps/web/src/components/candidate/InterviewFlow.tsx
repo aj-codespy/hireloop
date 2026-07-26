@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { InterviewPhase, InterviewStep } from "./InterviewPhase";
+import { InterviewPhase } from "./InterviewPhase";
 import { useInterviewFlow } from "@/hooks/useInterviewFlow";
 import { cn } from "@/lib/utils";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 type InterviewFlowProps = {
   interviewToken: string;
@@ -19,28 +20,21 @@ export function InterviewFlow({
   candidateName,
   jobTitle,
   organizationName,
-  introVideoUrl,
   onComplete,
 }: InterviewFlowProps) {
   const {
     currentStep,
     steps,
-    phase,
-    isLoading,
     error,
     mediaStream,
     language,
-    canProceed,
     startInterview,
     resumeInterview,
     pauseInterview,
     skipQuestion,
-    nextStep,
     completeInterview,
     saveProgress,
-    restoreProgress,
     getProgressSnapshot,
-    updateProgress,
     isProgressSaving,
     lastSaved,
     sessionId,
@@ -139,10 +133,10 @@ export function InterviewFlow({
   // Render different stages
   if (!isInitialized) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-stone-50 px-5">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Initializing interview...</p>
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-stone-200 border-t-[#F97316] motion-reduce:animate-none"></div>
+          <p className="text-muted-foreground" role="status">Initializing interview…</p>
         </div>
       </div>
     );
@@ -150,14 +144,14 @@ export function InterviewFlow({
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-stone-50 px-5">
         <div className="text-center max-w-md">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="rounded-3xl border border-red-100 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)]">
             <h2 className="text-lg font-semibold text-red-900 mb-2">Error</h2>
             <p className="text-red-700 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+              className="min-h-11 rounded-full bg-[#F97316] px-6 text-sm font-semibold text-white hover:bg-[#EA6B2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2"
             >
               Retry
             </button>
@@ -168,7 +162,7 @@ export function InterviewFlow({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100dvh] bg-stone-50">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
         <div className="mx-auto max-w-6xl px-6 py-4">
@@ -187,7 +181,7 @@ export function InterviewFlow({
               <div className="hidden md:flex items-center gap-2">
                 <div className="text-xs text-muted-foreground">Progress:</div>
                 <div className="flex gap-1">
-                  {steps.map((step, index) => {
+                  {steps.map((step) => {
                     const isActive = step.id === currentStep;
                     const isCompleted = steps.some((s) => s.status === "completed");
                     return (
@@ -210,7 +204,7 @@ export function InterviewFlow({
                 {isProgressSaving && (
                   <div className="flex items-center gap-1 text-xs text-amber-600">
                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-600"></div>
-                    Saving...
+                    Saving…
                   </div>
                 )}
                 {lastSaved && (
@@ -241,7 +235,7 @@ export function InterviewFlow({
         {flagged && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex items-start gap-3">
-              <div className="text-red-600">⚠️</div>
+                <PhosphorIcon name="AlertTriangle" />
               <div>
                 <h3 className="font-medium text-red-900">Interview Flagged</h3>
                 <p className="text-sm text-red-700 mt-1">{lockReason}</p>
@@ -251,7 +245,7 @@ export function InterviewFlow({
         )}
 
         {/* Interview phase content */}
-        <div className="grid gap-6 lg:grid-cols-[1fr_300px]]">
+        <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
           <div>
             <InterviewPhase
               step={currentStep}
@@ -312,8 +306,8 @@ export function InterviewFlow({
               <div className="space-y-2">
                 {canResume && (
                   <button
-                    onClick={() => resumeInterview()}
-                    className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors"
+                    onClick={() => void resumeInterview()}
+                    className="min-h-11 w-full rounded-xl px-3 text-left text-sm transition-colors hover:bg-muted"
                   >
                     Resume from saved progress
                   </button>
@@ -322,16 +316,16 @@ export function InterviewFlow({
                   onClick={() => {
                     const snapshot = getProgressSnapshot();
                     if (snapshot) {
-                      navigator.clipboard.writeText(JSON.stringify(snapshot, null, 2));
+                      void navigator.clipboard.writeText(JSON.stringify(snapshot, null, 2));
                     }
                   }}
-                  className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors"
+                  className="min-h-11 w-full rounded-xl px-3 text-left text-sm transition-colors hover:bg-muted"
                 >
                   Copy progress
                 </button>
                 <button
-                  onClick={() => saveProgress()}
-                  className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors"
+                  onClick={() => void saveProgress()}
+                  className="min-h-11 w-full rounded-xl px-3 text-left text-sm transition-colors hover:bg-muted"
                 >
                   Save current progress
                 </button>
@@ -343,18 +337,19 @@ export function InterviewFlow({
 
       {/* Skip confirmation modal */}
       {showSkipConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-card rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-foreground mb-2">Skip Question</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5" role="dialog" aria-modal="true" aria-labelledby="skip-question-title">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.16)]">
+            <h2 id="skip-question-title" className="mb-2 text-lg font-semibold text-foreground">Skip question</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Please provide a reason for skipping this question. Your reason will be recorded for review.
             </p>
             <textarea
+              aria-label="Reason for skipping"
               value={skipReason}
               onChange={(e) => setSkipReason(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-lg text-sm mb-4"
+              className="mb-4 w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none focus-visible:border-[#F97316] focus-visible:ring-2 focus-visible:ring-[#F97316]/20"
               rows={3}
-              placeholder="Reason for skipping..."
+              placeholder="Reason for skipping…"
             />
             <div className="flex gap-3">
               <button
@@ -362,16 +357,16 @@ export function InterviewFlow({
                   setShowSkipConfirm(false);
                   setSkipReason("");
                 }}
-                className="flex-1 px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted"
+                className="min-h-11 flex-1 rounded-full border border-stone-200 px-4 text-sm font-semibold hover:bg-stone-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSkip}
                 disabled={!skipReason.trim()}
-                className="flex-1 px-4 py-2 text-sm rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-11 flex-1 rounded-full bg-[#F97316] px-4 text-sm font-semibold text-white hover:bg-[#EA6B2D] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Skip Question
+                Skip question
               </button>
             </div>
           </div>

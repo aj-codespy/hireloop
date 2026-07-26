@@ -12,7 +12,7 @@ import {
   DragOverlay,
   closestCenter,
 } from "@dnd-kit/core";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { useInterviewPipeline } from "@/hooks/useInterviewPipeline";
 import { PipelineColumn } from "./pipeline-column";
 import { CandidateCard } from "./candidate-card";
@@ -76,10 +76,7 @@ export function InterviewPipeline() {
         <div className="flex flex-wrap items-center gap-2">
           {/* Search */}
           <div className="relative">
-            <Search
-              className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
+            <PhosphorIcon name="Search" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -91,7 +88,7 @@ export function InterviewPipeline() {
           {/* Job filter */}
           {availableJobs.length > 0 && (
             <div className="flex items-center gap-1.5">
-              <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+              <PhosphorIcon name="SlidersHorizontal" />
               <select
                 value={selectedJobId ?? ""}
                 onChange={(e) => setSelectedJobId(e.target.value || null)}
@@ -182,8 +179,8 @@ export function InterviewPipeline() {
                       </span>
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
-                      {c.score != null ? c.score.toFixed(1) : "—"}
-                    </td>
+                                          {c.score != null ? c.score.toFixed(1) : "&mdash;"}
+                                        </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {Math.floor((Date.now() - new Date(c.createdAt).getTime()) / 86400000)}d
                     </td>

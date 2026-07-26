@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Mail, Phone, ExternalLink, FileText } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import {
   markCandidateHiredAction,
   regenerateAndSendInterviewLinkAction,
@@ -20,9 +20,11 @@ import {
 } from "@/components/candidates/proctoring-log-view";
 import { TranscriptView } from "@/components/reports/transcript-view";
 import { ScoreBreakdown } from "@/components/reports/score-breakdown";
+import { ScorecardList } from "@/components/candidates/scorecard-list";
 import {
   useHireLoop,
   useQuestionsForJob,
+  useScorecardsForApplication,
 } from "@/lib/store/provider";
 import { isApplicationDocument } from "@/lib/form-fields";
 import { canRegenerateInterviewLink } from "@/lib/interview-link";
@@ -35,10 +37,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 
 function renderFormValue(value: FormResponseValue | undefined) {
-  if (value === undefined || value === "") return "—";
+  if (value === undefined || value === "") return "&mdash;";
   if (isApplicationDocument(value)) {
     if (!value.storagePath) return value.originalName;
     return <ApplicationDocumentLink document={value} />;
@@ -135,12 +138,12 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
             <h2 className="text-lg font-bold">{candidate.name}</h2>
             <div className="mt-2 space-y-1 text-sm text-muted-foreground">
               <p className="flex items-center gap-1">
-                <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <PhosphorIcon name="Mail" />
                 {candidate.email}
               </p>
               {candidate.phone ? (
                 <p className="flex items-center gap-1">
-                  <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <PhosphorIcon name="Phone" className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   {candidate.phone}
                 </p>
               ) : null}
@@ -282,39 +285,49 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
 
         <TabsContent value="documents" className="mt-6">
           <Card className="border-border shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="h-4 w-4" />
-                Uploaded documents
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Resumes, marksheets, and other files from the application form.
-              </p>
-            </CardHeader>
-            <CardContent>
-              {uploadedDocuments.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No documents uploaded.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {uploadedDocuments.map(([fieldKey, doc]) => {
-                    const field = job.formFields.find((f) => f.fieldKey === fieldKey);
-                    const document = doc as ApplicationDocument;
-                    return (
-                      <li
-                        key={fieldKey}
-                        className="flex flex-col gap-2 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div>
-                          <p className="text-sm font-medium">{field?.label ?? fieldKey}</p>
-                          <p className="text-xs text-muted-foreground">{document.mimeType}</p>
-                        </div>
-                        <ApplicationDocumentLink document={document} />
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </CardContent>
+            <Collapsible defaultOpen={false}>
+              <CollapsibleTrigger className="flex w-full items-center justify-between p-6 text-left hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
+                <CardHeader className="p-0">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <PhosphorIcon name="FileText" className="h-4 w-4" />
+                    Uploaded documents
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Resumes, marksheets, and other files from the application form.
+                  </p>
+                </CardHeader>
+                <PhosphorIcon
+                  name="ChevronDown"
+                  className="h-5 w-5 shrink-0 transition-transform duration-200"
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent>
+                  {uploadedDocuments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No documents uploaded.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {uploadedDocuments.map(([fieldKey, doc]) => {
+                        const field = job.formFields.find((f) => f.fieldKey === fieldKey);
+                        const document = doc as ApplicationDocument;
+                        return (
+                          <li
+                            key={fieldKey}
+                            className="flex flex-col gap-2 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div>
+                              <p className="text-sm font-medium">{field?.label ?? fieldKey}</p>
+                              <p className="text-xs text-muted-foreground">{document.mimeType}</p>
+                            </div>
+                            <ApplicationDocumentLink document={document} />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
         </TabsContent>
 
@@ -371,7 +384,7 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
                   target="_blank"
                 >
                   Open candidate interview
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <PhosphorIcon name="ExternalLink" className="h-3.5 w-3.5" />
                 </Link>
                 {application.tokenExpiresAt ? (
                   <p className="mt-2 text-xs text-muted-foreground">
@@ -424,37 +437,88 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
         {session ? (
           <TabsContent value="proctoring" className="mt-6">
             <Card className="border-border shadow-card">
-              <CardHeader>
-                <CardTitle className="text-base">Proctoring audit log</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Continuous webcam monitoring, AI snapshot analysis, and browser integrity events.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <ProctoringLogView session={session} />
-              </CardContent>
+              <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger className="flex w-full items-center justify-between p-6 text-left hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
+                  <CardHeader className="p-0">
+                    <CardTitle className="text-base">Proctoring audit log</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Continuous webcam monitoring, AI snapshot analysis, and browser integrity events.
+                    </p>
+                  </CardHeader>
+                  <PhosphorIcon
+                    name="ChevronDown"
+                    className="h-5 w-5 shrink-0 transition-transform duration-200"
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent>
+                    <ProctoringLogView session={session} />
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
             </Card>
           </TabsContent>
         ) : null}
 
         {session?.transcript?.length ? (
           <TabsContent value="transcript" className="mt-6">
-            <TranscriptView entries={session.transcript} />
+            <Card className="border-border shadow-card">
+              <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger className="flex w-full items-center justify-between p-6 text-left hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
+                  <CardHeader className="p-0">
+                    <CardTitle className="text-base">Interview transcript</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Full text of the candidate&apos;s interview responses.
+                    </p>
+                  </CardHeader>
+                  <PhosphorIcon
+                    name="ChevronDown"
+                    className="h-5 w-5 shrink-0 transition-transform duration-200"
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent>
+                    <TranscriptView entries={session.transcript} />
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
           </TabsContent>
         ) : null}
 
         {session?.overallScore ? (
           <TabsContent value="scores" className="mt-6">
-            <ScoreBreakdown
-              overall={session.overallScore}
-              questionScores={session.questionScores}
-              passingScore={job.passingScore}
-              transcript={session.transcript}
-            />
+            <Card className="border-border shadow-card">
+              <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger className="flex w-full items-center justify-between p-6 text-left hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
+                  <CardHeader className="p-0">
+                    <CardTitle className="text-base">Score breakdown</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      AI evaluation of candidate responses across all questions.
+                    </p>
+                  </CardHeader>
+                  <PhosphorIcon
+                    name="ChevronDown"
+                    className="h-5 w-5 shrink-0 transition-transform duration-200"
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent>
+                    <ScoreBreakdown
+                      overall={session.overallScore}
+                      questionScores={session.questionScores}
+                      passingScore={job.passingScore}
+                      transcript={session.transcript}
+                    />
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
           </TabsContent>
         ) : null}
 
-        <TabsContent value="scorecard" className="mt-6">
+        <TabsContent value="scorecard" className="mt-6 space-y-6">
+          <ScorecardList applicationId={applicationId} />
           <Card className="border-border shadow-card">
             <CardHeader>
               <CardTitle className="text-base">Human review scorecard</CardTitle>

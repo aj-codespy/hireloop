@@ -14,6 +14,7 @@ import {
 } from "@/components/candidate/interview-structured";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 type Step = "intro" | "consent" | "proctoring" | "mic" | "live" | "done" | "flagged";
 
@@ -57,8 +58,8 @@ export function CandidateInterviewFlow({
   const normalizedIntroVideoUrl = normalizeInterviewIntroVideoUrl(introVideoUrl);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border px-6 py-4">
+    <div className="min-h-[100dvh] bg-stone-50 text-slate-900">
+      <header className="border-b border-stone-200 bg-white px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-8">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between">
           <Logo />
           {organizationName ? (
@@ -67,24 +68,25 @@ export function CandidateInterviewFlow({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-6 py-12">
+      <main className="mx-auto w-full max-w-5xl px-5 pb-[max(4rem,env(safe-area-inset-bottom))] pt-8 sm:px-8 sm:pt-10">
         <InterviewStepper current={step} />
 
         {step === "intro" ? (
-          <div className="mx-auto max-w-xl space-y-6 text-center">
-            <h1 className="text-2xl font-semibold text-foreground">
+          <section className="mx-auto max-w-2xl rounded-3xl border border-stone-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)] sm:p-8">
+            <p className="text-sm font-semibold text-[#F97316]">Structured interview</p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-slate-900">
               Hi {candidateName.split(" ")[0]}, welcome to your interview
             </h1>
-            <p className="text-muted-foreground">
-              Role: <strong className="text-foreground">{jobTitle}</strong>
+            <p className="mt-3 text-sm text-slate-600">
+              Role: <strong className="font-semibold text-slate-900">{jobTitle}</strong>
             </p>
-            <p className="text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-6 text-sm leading-7 text-slate-600">
               We record video and audio to ensure a fair process for every candidate. Your webcam
-              stays on throughout. You will hear each question read aloud — tap Record, speak, then
-              Stop and Next.
+              stays on throughout. You will hear each question read aloud. Select Record, speak,
+              then stop and continue.
             </p>
 
-            <div className="flex justify-center gap-2" role="group" aria-label="Interview language">
+            <div className="mt-6 flex gap-2" role="group" aria-label="Interview language">
               {(["en", "hi"] as const).map((lang) => (
                 <button
                   key={lang}
@@ -92,8 +94,8 @@ export function CandidateInterviewFlow({
                   onClick={() => setLanguage(lang)}
                   className={
                     language === lang
-                      ? "rounded-full bg-brand px-4 py-2 text-sm font-medium text-brand-foreground focus-ring"
-                      : "rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted focus-ring"
+                      ? "min-h-11 rounded-full bg-slate-900 px-5 text-sm font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2"
+                      : "min-h-11 rounded-full border border-stone-200 px-5 text-sm text-slate-600 transition-colors duration-200 hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2"
                   }
                   aria-pressed={language === lang}
                 >
@@ -103,7 +105,7 @@ export function CandidateInterviewFlow({
             </div>
 
             {normalizedIntroVideoUrl ? (
-              <div className="aspect-video overflow-hidden rounded-xl border border-border bg-muted">
+              <div className="mt-6 aspect-video overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
                 <iframe
                   src={normalizedIntroVideoUrl}
                   title="Company introduction video"
@@ -115,11 +117,11 @@ export function CandidateInterviewFlow({
             <Button
               type="button"
               onClick={() => setStep("consent")}
-              className="h-11 rounded-full bg-brand px-8 text-brand-foreground hover:bg-brand/90"
+              className="mt-8 h-11 rounded-full bg-[#F97316] px-7 font-semibold text-white hover:bg-[#EA6B2D]"
             >
               Continue to consent
             </Button>
-          </div>
+          </section>
         ) : null}
 
         {step === "consent" ? <ConsentScreen onAccept={() => setStep("proctoring")} /> : null}
@@ -153,7 +155,7 @@ export function CandidateInterviewFlow({
                 toast.error("Interview ended due to proctoring violation");
               } else {
                 setStep("done");
-                toast.success("Interview complete — your answers have been submitted");
+                toast.success("Interview complete. Your answers have been submitted.");
               }
               await refreshState();
             }}
@@ -161,15 +163,16 @@ export function CandidateInterviewFlow({
         ) : null}
 
         {step === "done" ? (
-          <div className="mx-auto max-w-xl space-y-6 text-center">
-            <h2 className="text-2xl font-semibold">Thank you for completing your interview</h2>
-            <p className="text-sm leading-relaxed text-muted-foreground">
+          <section className="mx-auto max-w-xl rounded-3xl border border-stone-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)] sm:p-8">
+            <p className="text-sm font-semibold text-emerald-700">Interview submitted</p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Thank you for your time</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
               Your responses have been submitted securely. We&apos;ll contact you if you are
               selected for the next round.
             </p>
-            <div className="rounded-xl border border-border bg-muted/30 p-4 text-left text-sm">
+            <div className="mt-6 rounded-2xl bg-stone-50 p-5 text-sm">
               <p className="font-medium">What happens next</p>
-              <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted-foreground">
+              <ol className="mt-3 list-decimal space-y-2 pl-4 text-slate-600">
                 <li>The hiring team reviews your interview</li>
                 <li>If you&apos;re selected, we&apos;ll reach out with next steps</li>
                 <li>Keep an eye on your email for updates</li>
@@ -177,25 +180,26 @@ export function CandidateInterviewFlow({
             </div>
             <Link
               href="/candidate/profile"
-              className="inline-flex text-sm font-medium text-brand hover:underline focus-ring rounded-sm"
+              className="mt-6 inline-flex min-h-11 items-center rounded-full border border-stone-200 px-5 text-sm font-semibold text-slate-900 transition-colors duration-200 hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2"
             >
               View your application status
             </Link>
-          </div>
+          </section>
         ) : null}
 
         {step === "flagged" ? (
-          <div className="mx-auto max-w-xl space-y-6 text-center">
-            <h2 className="text-2xl font-semibold text-red-900">Interview Ended</h2>
-            <p className="text-sm leading-relaxed text-muted-foreground">
+          <section className="mx-auto max-w-xl rounded-3xl border border-red-100 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)] sm:p-8">
+            <p className="text-sm font-semibold text-red-700">Session ended</p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Interview ended</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
               Your interview was automatically terminated due to a proctoring violation.
               {flagReason ? (
-                <span className="block mt-2 font-medium text-red-800">
+                <span className="mt-2 block font-medium text-red-800">
                   Reason: {flagReason}
                 </span>
               ) : null}
             </p>
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-left text-sm text-red-800">
+            <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 p-5 text-sm text-red-800">
               <p className="font-medium">What happens next</p>
               <p className="mt-2 text-red-700">
                 This incident has been logged and your partial interview will be reviewed by the hiring team.
@@ -204,11 +208,11 @@ export function CandidateInterviewFlow({
             </div>
             <Link
               href="/candidate/profile"
-              className="inline-flex text-sm font-medium text-brand hover:underline focus-ring rounded-sm"
+              className="mt-6 inline-flex min-h-11 items-center rounded-full border border-stone-200 px-5 text-sm font-semibold text-slate-900 transition-colors duration-200 hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2"
             >
               View your application status
             </Link>
-          </div>
+          </section>
         ) : null}
       </main>
     </div>

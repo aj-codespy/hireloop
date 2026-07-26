@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { toast } from "sonner";
 import { getApplicationDocumentUrlAction } from "@/app/actions/hireloop";
 import { formatFileSize } from "@/lib/form-fields";
@@ -38,9 +38,9 @@ export function ApplicationDocumentLink({ document }: { document: ApplicationDoc
       disabled={loading || !document.storagePath}
     >
       {loading ? (
-        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+        <PhosphorIcon name="Loader2" className="h-4 w-4 shrink-0 animate-spin" />
       ) : (
-        <Download className="h-4 w-4 shrink-0" />
+        <PhosphorIcon name="Download" className="h-4 w-4 shrink-0" />
       )}
       <span className="min-w-0 truncate">
         {document.originalName}

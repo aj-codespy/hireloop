@@ -17,7 +17,7 @@ export function AdminPageFrame({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <PageTransition className="mx-auto w-full max-w-[1440px] space-y-6">
+    <PageTransition className="mx-auto w-full max-w-[1440px] space-y-8">
       {meta.breadcrumbs ? <AppBreadcrumbs items={meta.breadcrumbs} /> : null}
       {pathname !== "/admin" ? (
         <PageHeader title={meta.title} description={meta.description} />

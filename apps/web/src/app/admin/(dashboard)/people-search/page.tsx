@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { FadeIn } from "@/components/motion/fade-in";
 import { useHireLoop } from "@/lib/store/provider";
 import { APPLICATION_STATUS_LABELS, STATUS_COLORS } from "@/lib/constants";
@@ -68,16 +68,20 @@ export default function PeopleSearchPage() {
 
   return (
     <FadeIn className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">People search</h1>
-        <p className="text-sm text-muted-foreground">
+      <header className="border-b border-slate-200 pb-6">
+        <h1>People search</h1>
+        <p className="mt-2 text-sm text-slate-600">
           Search your talent pool by name, email, job, or stage.
         </p>
-      </div>
+      </header>
 
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+        <PhosphorIcon name="Search" className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+        <label htmlFor="people-search" className="sr-only">
+          Search people
+        </label>
         <Input
+          id="people-search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name, email, job, or status..."
@@ -87,19 +91,43 @@ export default function PeopleSearchPage() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {filtered.length} of {rows.length} people
-        {query.trim() ? ` matching “${query.trim()}”` : ""}
-      </p>
+                    {filtered.length} of {rows.length} people
+                    {query.trim() ? ` matching &ldquo;${query.trim()}&rdquo;` : ""}
+                  </p>
 
-      <div className="space-y-3">
+      <div className="divide-y divide-slate-200 border-y border-slate-200">
         {filtered.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {query.trim() ? "No matches. Try a different search." : "No candidates yet."}
-          </p>
+          <div className="py-12 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <PhosphorIcon name="Users" className="h-6 w-6 text-muted-foreground" />
+            </div>
+            {query.trim() ? (
+              <>
+                <p className="font-medium">No matches for &ldquo;{query.trim()}&rdquo;</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Try searching by name, email, job title, or application status.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="mt-4 text-sm font-medium text-brand hover:underline focus-ring rounded-sm"
+                >
+                  Clear search
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">No candidates yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Create a job and share the apply link to start building your pipeline.
+                </p>
+              </>
+            )}
+          </div>
         ) : (
           filtered.map(({ candidate, application, job }) => (
             <Link key={candidate.id} href={`/admin/candidates/${candidate.id}`}>
-              <Card className="border-border shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
+              <Card className="rounded-none border-0 bg-transparent transition-colors duration-200 hover:bg-slate-50 motion-reduce:transition-none">
                 <CardContent className="flex items-center justify-between gap-4 p-4">
                   <div className="flex min-w-0 items-center gap-3">
                     <Avatar>

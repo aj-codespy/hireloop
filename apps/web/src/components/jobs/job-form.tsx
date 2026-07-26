@@ -96,8 +96,8 @@ export function JobForm({ job }: { job?: JobRole }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Hard filters applied on application submit. No AI call — pure rule evaluation.
-          </p>
+                      Hard filters applied on application submit. No AI call &mdash; pure rule evaluation.
+                    </p>
           {rules.map((rule, i) => (
             <div key={i} className="grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-4">
               <Input

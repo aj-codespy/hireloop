@@ -52,61 +52,78 @@
 }
 
 :root {
+  color-scheme: light;
   --background: #ffffff;
-  --foreground: #111827;
+  --foreground: #020617;
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #020617;
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #ff6b00;
+  --popover-foreground: #020617;
+  --primary: #f97316;
   --primary-foreground: #ffffff;
-  --brand: #ff6b00;
+  --brand: #f97316;
   --brand-foreground: #ffffff;
-  --brand-muted: #fff4eb;
-  --brand-subtle: #fff9f5;
+  --brand-muted: #fff7ed;
+  --brand-subtle: #fffbf7;
   --surface-elevated: #ffffff;
-  --focus-ring: #ff6b00;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #374151;
-  --muted: #f9fafb;
+  --color-surface-card: #ffffff;
+  --focus-ring: #f97316;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #334155;
+  --muted: #f8fafc;
   --muted-foreground: #6b7280;
-  --accent: #fff4eb;
+  --accent: #fff7ed;
   --accent-foreground: #c2410c;
-  --destructive: #ef4444;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #ff6b00;
-  --chart-1: #ff6b00;
-  --chart-2: #3b82f6;
-  --chart-3: #8b5cf6;
-  --chart-4: #10b981;
-  --chart-5: #f59e0b;
-  --radius: 0.75rem;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #f97316;
+  --chart-1: #f97316;
+  --chart-2: #020617;
+  --chart-3: #475569;
+  --chart-4: #94a3b8;
+  --chart-5: #cbd5e1;
+  --radius: 1rem;
+  --radius-marketing: 1.5rem;
+  --radius-dashboard: 1.25rem;
+  --radius-control: 1rem;
+  --shadow-card: 0 1px 3px rgb(15 23 42 / 0.05), 0 1px 2px rgb(15 23 42 / 0.03);
+  --shadow-soft: 0 12px 40px rgb(15 23 42 / 0.08);
+  --duration-ui: 250ms;
+  --ease-ui: cubic-bezier(0.16, 1, 0.3, 1);
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
   --sidebar: #fafafa;
-  --sidebar-foreground: #374151;
-  --sidebar-primary: #ff6b00;
+  --sidebar-foreground: #334155;
+  --sidebar-primary: #f97316;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #fff4eb;
+  --sidebar-accent: #fff7ed;
   --sidebar-accent-foreground: #c2410c;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #ff6b00;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #f97316;
 }
 
 .dark {
+  color-scheme: dark;
   --background: #09090b;
   --foreground: #fafafa;
   --card: #111113;
   --card-foreground: #fafafa;
   --popover: #111113;
   --popover-foreground: #fafafa;
-  --primary: #ff7a1a;
+  --primary: #f97316;
   --primary-foreground: #ffffff;
-  --brand: #ff7a1a;
+  --brand: #f97316;
   --brand-foreground: #ffffff;
   --brand-muted: #2a1a0d;
   --brand-subtle: #1a1208;
   --surface-elevated: #18181b;
-  --focus-ring: #ff7a1a;
+  --focus-ring: #f97316;
   --secondary: #1c1c1f;
   --secondary-foreground: #e4e4e7;
   --muted: #18181b;
@@ -116,20 +133,20 @@
   --destructive: #f87171;
   --border: #27272a;
   --input: #27272a;
-  --ring: #ff7a1a;
-  --chart-1: #ff7a1a;
-  --chart-2: #60a5fa;
-  --chart-3: #a78bfa;
-  --chart-4: #34d399;
-  --chart-5: #fbbf24;
+  --ring: #f97316;
+  --chart-1: #f97316;
+  --chart-2: #fafafa;
+  --chart-3: #a1a1aa;
+  --chart-4: #71717a;
+  --chart-5: #3f3f46;
   --sidebar: #0f0f11;
   --sidebar-foreground: #d4d4d8;
-  --sidebar-primary: #ff7a1a;
+  --sidebar-primary: #f97316;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #2a1a0d;
   --sidebar-accent-foreground: #fdba74;
   --sidebar-border: #27272a;
-  --sidebar-ring: #ff7a1a;
+  --sidebar-ring: #f97316;
 }
 
 @layer base {
@@ -137,10 +154,30 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply min-h-dvh bg-background text-foreground antialiased;
+    overflow-wrap: break-word;
+    overscroll-behavior-y: none;
   }
   html {
     @apply font-sans;
+    min-height: 100%;
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  ::selection {
+    background: rgb(249 115 22 / 0.18);
   }
 }
 
@@ -149,7 +186,7 @@
     @apply text-4xl font-bold tracking-tight md:text-5xl;
   }
   .text-title {
-    @apply text-2xl font-semibold tracking-tight;
+    @apply text-2xl font-semibold tracking-[-0.025em] md:text-3xl;
   }
   .text-body {
     @apply text-sm leading-relaxed;
@@ -160,9 +197,18 @@
   .focus-ring {
     @apply outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
+  .skip-link {
+    @apply fixed left-4 z-[100] rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-lg;
+    top: calc(env(safe-area-inset-top) + 0.75rem);
+    transform: translateY(-180%);
+    transition: transform var(--duration-ui) var(--ease-ui);
+  }
+  .skip-link:focus {
+    transform: translateY(0);
+  }
   .interactive-card {
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: box-shadow var(--duration-ui) var(--ease-ui), transform var(--duration-ui) var(--ease-ui);
   }
   @media (hover: hover) {
     .interactive-card:hover {
@@ -203,8 +249,8 @@
 /* ─── Design System: Elevation, Gradients, Texture, Reveal ─── */
 
 :root {
-  --brand-gradient: linear-gradient(120deg, #ff6b00 0%, #ff7a1a 100%);
-  --brand-gradient-soft: linear-gradient(135deg, rgba(255, 107, 0, .16) 0%, rgba(255, 122, 26, .16) 100%);
+  --brand-gradient: linear-gradient(135deg, #f97316 0%, #ea6b2d 100%);
+  --brand-gradient-soft: linear-gradient(135deg, rgb(249 115 22 / .12) 0%, rgb(234 107 45 / .12) 100%);
 }
 
 /* Elevation tokens */
@@ -232,8 +278,32 @@
 
 /* Texture overlays */
 .texture-dots {
-  background-image: radial-gradient(circle, rgba(255, 107, 0, .08) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(249, 115, 22, .08) 1px, transparent 1px);
   background-size: 14px 14px;
+}
+
+/* Marketing motion surfaces: textures stay restrained so the product remains the focal point. */
+.hero-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / .045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / .045) 1px, transparent 1px);
+  background-position: center;
+  background-size: 64px 64px;
+  mask-image: linear-gradient(90deg, black 0%, black 48%, transparent 82%);
+}
+
+.landing-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: 10rem;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, rgb(21 18 15 / .72));
+}
+
+.hero-orb {
+  animation: hero-drift 12s ease-in-out infinite alternate;
 }
 
 /* Eyebrow label (gradient tick + mono text) */
@@ -293,6 +363,15 @@
 
 /* Reduced motion: disable all reveal/sheen animations */
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
   .reveal { opacity: 1; transform: none; transition: none; }
   .sheen::after { animation: none !important; transition: none; }
 }
@@ -307,4 +386,18 @@
     opacity: 0;
     transform: translateY(100vh) rotate(720deg);
   }
+}
+
+/* Ambient gradient pulse for dark sections */
+@keyframes pulse-ambient {
+  0% { opacity: 0.03; transform: scale(1); }
+  100% { opacity: 0.07; transform: scale(1.05); }
+}
+.animate-pulse-ambient {
+  animation: pulse-ambient 8s ease-in-out infinite alternate;
+}
+
+@keyframes hero-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(7rem, -2rem, 0) scale(1.16); }
 }

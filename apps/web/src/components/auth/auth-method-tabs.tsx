@@ -23,19 +23,23 @@ export function AuthMethodTabs({
   onChange: (method: "password" | "otp") => void;
 }) {
   return (
-    <div className="mb-4 grid grid-cols-2 gap-2 rounded-full bg-muted p-1">
+    <div className="mb-4 grid grid-cols-2 gap-1 rounded-full bg-[#FAFAF9] p-1" role="tablist" aria-label="Authentication method">
       <Button
         type="button"
+        role="tab"
+        aria-selected={method === "password"}
         variant={method === "password" ? "default" : "ghost"}
-        className="h-9 rounded-full"
+        className="h-11 rounded-full data-[selected=true]:bg-white"
         onClick={() => onChange("password")}
       >
         Password
       </Button>
       <Button
         type="button"
+        role="tab"
+        aria-selected={method === "otp"}
         variant={method === "otp" ? "default" : "ghost"}
-        className="h-9 rounded-full"
+        className="h-11 rounded-full data-[selected=true]:bg-white"
         onClick={() => onChange("otp")}
       >
         Email code

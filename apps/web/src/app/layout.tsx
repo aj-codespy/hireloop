@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { HireLoopProvider } from "@/lib/store/provider";
 import "./globals.css";
@@ -27,6 +28,15 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,19 +44,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full font-sans">
+      <body className="min-h-dvh font-sans">
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <ThemeProvider>
           <HireLoopProvider>
-            {children}
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
           </HireLoopProvider>
           <Toaster position="top-right" />
         </ThemeProvider>
-        <script dangerouslySetInnerHTML={{ __html:
-          `(()=>{try{var els=document.querySelectorAll('.reveal');`
-          + `if(!('IntersectionObserver'in window)){els.forEach(function(e){e.classList.add('is-visible')});return;}`
-          + `var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('is-visible');io.unobserve(en.target);}});},{rootMargin:'0px 0px -10% 0px',threshold:0.08});`
-          + `els.forEach(function(e){io.observe(e);});}catch(e){}})();`
-        }} />
       </body>
     </html>
   );

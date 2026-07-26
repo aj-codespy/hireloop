@@ -36,6 +36,7 @@ import type {
   Organization,
   Question,
   QuestionSection,
+  Scorecard,
 } from "@/lib/types";
 
 export interface HireLoopState {
@@ -45,6 +46,7 @@ export interface HireLoopState {
   candidates: Candidate[];
   applications: Application[];
   interviewSessions: InterviewSession[];
+  scorecards: Scorecard[];
 }
 
 type HireLoopContextValue = {
@@ -516,6 +518,13 @@ export function useCandidate(id: string) {
 export function useInterviewSession(applicationId: string) {
   const { state } = useHireLoop();
   return state.interviewSessions.find((s) => s.applicationId === applicationId);
+}
+
+export function useScorecardsForApplication(applicationId: string) {
+  const { state } = useHireLoop();
+  return state.scorecards
+    .filter((s) => s.applicationId === applicationId)
+    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
 }
 
 export function useDashboardMetrics() {

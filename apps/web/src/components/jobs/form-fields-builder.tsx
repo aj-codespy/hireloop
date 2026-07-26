@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import type { ApplicationFormField, FormFieldType } from "@/lib/types";
 import {
   DOCUMENT_FIELD_PRESETS,
@@ -59,7 +59,7 @@ export function FormFieldsBuilder({ fields: initial }: { fields: ApplicationForm
           </p>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={addField}>
-          <Plus className="mr-1 h-4 w-4" />
+          <PhosphorIcon name="Plus" className="mr-1 h-4 w-4" />
           Add field
         </Button>
       </CardHeader>
@@ -154,7 +154,7 @@ export function FormFieldsBuilder({ fields: initial }: { fields: ApplicationForm
                   size="icon"
                   onClick={() => removeField(field.id)}
                 >
-                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                  <PhosphorIcon name="Trash2" className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </div>
             </div>

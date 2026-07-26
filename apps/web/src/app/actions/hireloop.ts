@@ -792,4 +792,42 @@ export async function submitApplicationLegacyAction(
   }
 }
 
+export async function renderQuestionAudioAction(
+  jobId: string,
+  questionId: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const { orgId } = await requireOrgRole(ORG_MANAGER_ROLES);
+    
+    const supabase = createAdminClient();
+    const { data: question, error: qErr } = await supabase
+      .from("questions")
+      .select("prompt_text, job_role_id")
+      .eq("id", questionId)
+      .single();
+    
+    if (qErr || !question) return { error: "Question not found" };
+    if (question.job_role_id !== jobId) return { error: "Access denied" };
+    
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    const res = await fetch(`${apiUrl}/admin/questions/render-audio`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": process.env.INTERVIEW_INTERNAL_SECRET!,
+      },
+      body: JSON.stringify({ job_id: jobId, question_id: questionId }),
+    });
+    
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: "Failed to render audio" }));
+      return { error: err.detail || "Failed to render audio" };
+    }
+    
+    return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to render audio" };
+  }
+}
+
 export { isApplicationDocument };

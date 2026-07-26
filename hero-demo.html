@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireLoop — Hero Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(160deg, #1c0f0b 0%, #2d1610 30%, #3d1f14 50%, #2d1610 70%, #1c0f0b 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Subtle grid pattern overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* Rust orb glow */
+    .glow {
+      position: fixed;
+      top: -15%;
+      right: -10%;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, rgba(249,115,22,0.04) 40%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-2 {
+      position: fixed;
+      bottom: -20%;
+      left: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(249,115,22,0.08) 0%, rgba(249,115,22,0.02) 40%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 32px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #F97316, #EA6B2D);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+    .logo-text span { color: #F97316; }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover { color: #fff; }
+
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .nav-actions a {
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s;
+    }
+    .nav-actions a:hover { color: #fff; }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #F97316, #EA6B2D);
+      color: #fff;
+      padding: 10px 22px 10px 26px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 16px rgba(249,115,22,0.25);
+      transition: all 0.4s cubic-bezier(0.32,0.72,0,1);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 8px 28px rgba(249,115,22,0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    .btn-primary:hover .btn-circle {
+      background: rgba(255,255,255,0.25);
+      transform: translateX(2px);
+    }
+
+    .hero {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1200px;
+      padding: 60px 32px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      padding: 6px 16px;
+      border-radius: 999px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.045em;
+      line-height: 1.05;
+      max-width: 860px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, #F97316 0%, #EA6B2D 50%, #ff8a4d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 17px;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.6);
+      max-width: 580px;
+      margin-bottom: 36px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 50px;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    .trust-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-bottom: 56px;
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+    }
+
+    .trust-item .check {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #F97316;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* Product image card */
+    .image-card {
+      position: relative;
+      width: 100%;
+      max-width: 1080px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #1a0e0a;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 28px 80px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3);
+      transition: transform 0.7s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .image-card:hover {
+      transform: scale(1.008);
+    }
+
+    .image-card .top-glow {
+      position: absolute;
+      inset: 0;
+      height: 80px;
+      background: linear-gradient(180deg, rgba(249,115,22,0.05) 0%, transparent 100%);
+      z-index: 1;
+    }
+
+    .image-card img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* Feature grid */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      width: 100%;
+      max-width: 1080px;
+      margin-top: 40px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .feature {
+      padding: 28px 18px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      text-align: left;
+    }
+    .feature:last-child { border-right: none; }
+
+    .feature-icon {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 14px;
+      background: rgba(249,115,22,0.1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #F97316;
+      font-size: 15px;
+    }
+
+    .feature h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .feature p {
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.45);
+    }
+
+    /* Tagline */
+    .tagline {
+      margin-top: 48px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .features { grid-template-columns: 1fr; }
+      .feature { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+      .feature:last-child { border-bottom: none; }
+      nav { padding: 16px 20px; }
+      .hero { padding: 40px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="glow-2"></div>
+
+  <nav>
+    <a href="#" class="logo">
+      <div class="logo-mark">H</div>
+      <span class="logo-text">Hire<span>Loop</span></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#">Product</a></li>
+      <li><a href="#">How it works</a></li>
+      <li><a href="#">Security</a></li>
+      <li><a href="#">Pricing</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="#">Sign in</a>
+      <a href="#" class="btn-primary">
+        Start Hiring
+        <span class="btn-circle">→</span>
+      </a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <span class="eyebrow">The hiring operating system</span>
+    <h1>
+      Structured interviews.<br>
+      Reviewable <span class="gradient-text">evidence</span>.<br>
+      Defensible decisions.
+    </h1>
+    <p>
+      Record structured voice interviews, get AI-generated transcripts and scores,
+      and see every signal in one dashboard. Your team makes the call.
+    </p>
+    <div class="hero-actions">
+      <a href="#" class="btn-primary" style="font-size:15px; padding:12px 28px 12px 32px;">
+        Start Hiring
+        <span class="btn-circle" style="width:32px;height:32px;">→</span>
+      </a>
+      <a href="#" class="btn-secondary">See how it works</a>
+    </div>
+    <div class="trust-row">
+      <span class="trust-item">
+        <span class="check">✓</span> Proctored integrity
+      </span>
+      <span class="trust-item">
+        <span class="check">✓</span> Bilingual transcription
+      </span>
+      <span class="trust-item">
+        <span class="check">✓</span> Audit‑ready timeline
+      </span>
+      <span class="trust-item">
+        <span class="check">✓</span> Team review portal
+      </span>
+    </div>
+
+    <div class="image-card">
+      <div class="top-glow"></div>
+      <img src="./demo-hero-image.png" alt="HireLoop dashboard preview">
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">✦</div>
+        <h3>Define what matters</h3>
+        <p>Set eligibility rules, questions, and scorecard rubrics per role. Every candidate meets the same bar.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">▶</div>
+        <h3>Run consistent interviews</h3>
+        <p>Candidates complete timed, proctored voice interviews on their schedule, with bilingual transcription.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">☰</div>
+        <h3>Review the full record</h3>
+        <p>Scores, answers, documents, and integrity signals arrive in a single reviewable timeline.</p>
+      </div>
+    </div>
+
+    <p class="tagline">Built for reviewable hiring decisions</p>
+  </section>
+
+</body>
+</html>

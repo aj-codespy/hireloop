@@ -4,13 +4,30 @@ import { useHireLoop } from "@/lib/store/provider";
 import type { Application, JobRole, Candidate } from "@/lib/types";
 import { generateId } from "@/lib/id";
 import { logger } from "@/lib/logger";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 interface InterviewStep {
   id: string;
   label: string;
   status: "pending" | "active" | "completed" | "skipped" | "paused";
   order: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
+}
+
+interface InterviewSocketPayload {
+  type: string;
+  session_id?: string;
+  question_count?: number;
+  current_index?: number;
+  index?: number;
+  question_remaining_seconds?: number;
+  overall_remaining_seconds?: number;
+  overall_limit_seconds?: number;
+  overall_score?: number;
+  proctoring_flagged?: boolean;
+  cheating_probability?: number;
+  reason?: string;
+  message?: string;
 }
 
 interface InterviewProgress {
@@ -43,7 +60,7 @@ interface InterviewProgress {
   lastSaved: {
     questionIndex: number;
     timestamp: string;
-    data: any;
+    data: InterviewProgress;
   } | null;
   isProgressSaving: boolean;
 }
@@ -58,7 +75,7 @@ interface UseInterviewFlowReturn extends InterviewProgress {
   completeInterview: () => Promise<void>;
   saveProgress: () => Promise<void>;
   restoreProgress: () => Promise<void>;
-  getProgressSnapshot: () => any;
+  getProgressSnapshot: () => InterviewProgress;
   updateProgress: (updates: Partial<InterviewProgress>) => void;
   
   // Utilities
@@ -167,13 +184,13 @@ export function useInterviewFlow(interviewToken: string): UseInterviewFlowReturn
     }
   }, []);
 
-  const sendWebSocketMessage = useCallback((message: any) => {
+  const sendWebSocketMessage = useCallback((message: Record<string, unknown>) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     }
   }, []);
 
-  const handleWebSocketMessage = useCallback((payload: any) => {
+  const handleWebSocketMessage = useCallback((payload: InterviewSocketPayload) => {
     switch (payload.type) {
       case "bootstrap":
         setProgress(prev => ({ ...prev, phase: "connecting" }));
@@ -181,7 +198,7 @@ export function useInterviewFlow(interviewToken: string): UseInterviewFlowReturn
       case "session_started":
         setProgress(prev => ({
           ...prev,
-          sessionId: payload.session_id,
+          sessionId: payload.session_id ?? prev.sessionId,
           questionCount: payload.question_count || 0,
           currentQuestionIndex: payload.current_index || 0,
           timeRemaining: payload.question_remaining_seconds,
@@ -237,7 +254,7 @@ export function useInterviewFlow(interviewToken: string): UseInterviewFlowReturn
           ...prev,
           proctoringStatus: "flagged",
           flagged: true,
-          lockReason: payload.reason,
+          lockReason: payload.reason ?? null,
         }));
         break;
       case "timer":
@@ -302,11 +319,11 @@ export function useInterviewFlow(interviewToken: string): UseInterviewFlowReturn
     }
   }, [interviewToken]);
 
-  const loadProgressFromStorage = useCallback(() => {
+  const loadProgressFromStorage = useCallback((): InterviewProgress | null => {
     try {
       const saved = localStorage.getItem(`interview-progress-${interviewToken}`);
       if (saved) {
-        const parsed = JSON.parse(saved);
+        const parsed = JSON.parse(saved) as InterviewProgress;
         setProgress(parsed);
         return parsed;
       }
@@ -358,7 +375,7 @@ export function useInterviewFlow(interviewToken: string): UseInterviewFlowReturn
       // Check for saved progress
       const saved = loadProgressFromStorage();
       const canRestore = saved && saved.phase === "idle" && 
-        saved.steps.some((step: any) => step.status === "completed") &&
+        saved.steps.some((step) => step.status === "completed") &&
         !saved.interviewMetadata?.proctoringFlagged;
 
       if (canRestore) {
@@ -576,10 +593,12 @@ export function useInterviewFlow(interviewToken: string): UseInterviewFlowReturn
   // Compute derived state
   const canResume = useCallback(() => {
     const saved = loadProgressFromStorage();
-    return saved && 
-      saved.phase === "idle" && 
-      saved.steps.some((step: any) => step.status === "completed") &&
-      !saved.interviewMetadata?.proctoringFlagged;
+    return Boolean(
+      saved &&
+        saved.phase === "idle" &&
+        saved.steps.some((step) => step.status === "completed") &&
+        !saved.interviewMetadata?.proctoringFlagged,
+    );
   }, [loadProgressFromStorage]);
 
   const steps = progress.steps;

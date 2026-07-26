@@ -16,19 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import {
-  Plus,
-  Trash2,
-  Webhook,
-  Check,
-  X,
-  Send,
-  RefreshCw,
-  Power,
-  PowerOff,
-  ExternalLink,
-  Clock,
-} from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 function maskUrl(url: string) {
   try {
@@ -40,7 +28,7 @@ function maskUrl(url: string) {
 }
 
 function formatDate(d: string | null) {
-  if (!d) return "—";
+  if (!d) return "&mdash;";
   return new Date(d).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -72,7 +60,7 @@ function WebhookRow({
           {/* Left: info */}
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <Webhook className="h-4 w-4 text-muted-foreground shrink-0" />
+              <PhosphorIcon name="Webhook" className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="font-medium text-sm">{webhook.description}</span>
               <Badge
                 className={`text-[10px] ${
@@ -104,16 +92,16 @@ function WebhookRow({
             {/* Meta */}
             <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
+                <PhosphorIcon name="Clock" className="h-3 w-3" />
                 Created {formatDate(webhook.createdAt)}
               </span>
               <span className="flex items-center gap-1">
                 {webhook.lastDeliveryStatus === "success" ? (
-                  <Check className="h-3 w-3 text-emerald-500" />
+                  <PhosphorIcon name="Check" className="h-3 w-3 text-emerald-500" />
                 ) : webhook.lastDeliveryStatus === "failed" ? (
-                  <X className="h-3 w-3 text-red-500" />
+                  <PhosphorIcon name="X" className="h-3 w-3 text-red-500" />
                 ) : (
-                  <Clock className="h-3 w-3" />
+                  <PhosphorIcon name="Clock" className="h-3 w-3" />
                 )}
                 Last delivery: {formatDate(webhook.lastDeliveryAt)}
               </span>
@@ -134,7 +122,7 @@ function WebhookRow({
               onClick={() => onTest(webhook.id)}
               title="Send test payload"
             >
-              <Send className="h-3.5 w-3.5" />
+              <PhosphorIcon name="Send" className="h-3.5 w-3.5" />
               <span className="text-xs hidden sm:inline">Test</span>
             </Button>
             <Button
@@ -145,9 +133,9 @@ function WebhookRow({
               title={isActive ? "Disable" : "Enable"}
             >
               {isActive ? (
-                <PowerOff className="h-3.5 w-3.5 text-amber-500" />
+                <PhosphorIcon name="Power" className="h-3.5 w-3.5 text-amber-500" />
               ) : (
-                <Power className="h-3.5 w-3.5 text-emerald-500" />
+                <PhosphorIcon name="Power" className="h-3.5 w-3.5 text-emerald-500" />
               )}
               <span className="text-xs hidden sm:inline">
                 {isActive ? "Disable" : "Enable"}
@@ -164,7 +152,7 @@ function WebhookRow({
                     setConfirmDelete(false);
                   }}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <PhosphorIcon name="Trash2" className="h-3.5 w-3.5" />
                   <span className="text-xs">Confirm</span>
                 </Button>
                 <Button
@@ -183,7 +171,7 @@ function WebhookRow({
                 className="h-8 text-muted-foreground"
                 onClick={() => setConfirmDelete(true)}
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <PhosphorIcon name="Trash2" className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
@@ -392,7 +380,7 @@ export function WebhooksManager() {
           }}
           className="rounded-full bg-brand hover:bg-brand/90"
         >
-          <Plus className="mr-1.5 h-4 w-4" />
+          <PhosphorIcon name="Plus" className="mr-1.5 h-4 w-4" />
           Add endpoint
         </Button>
       </div>
@@ -400,7 +388,7 @@ export function WebhooksManager() {
       {/* Info card */}
       <Card className="border-brand/30 bg-brand-muted/50">
         <CardContent className="flex items-start gap-3 p-4 text-sm">
-          <ExternalLink className="h-5 w-5 shrink-0 text-brand mt-0.5" />
+          <PhosphorIcon name="ExternalLink" className="h-5 w-5 shrink-0 text-brand mt-0.5" />
           <div className="space-y-1">
             <p className="font-medium">How webhooks work</p>
             <p className="text-xs text-muted-foreground">
@@ -422,7 +410,7 @@ export function WebhooksManager() {
       {webhooks.length === 0 && !loading ? (
         <Card className="border-border">
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Webhook className="h-10 w-10 text-muted-foreground/50" />
+            <PhosphorIcon name="Webhook" className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm font-medium">No webhook endpoints</p>
             <p className="text-xs text-muted-foreground max-w-xs">
               Configure endpoints to receive candidate lifecycle events in your external systems.
@@ -436,7 +424,7 @@ export function WebhooksManager() {
               }}
               className="mt-2"
             >
-              <Plus className="mr-1 h-4 w-4" />
+              <PhosphorIcon name="Plus" className="mr-1 h-4 w-4" />
               Add endpoint
             </Button>
           </CardContent>

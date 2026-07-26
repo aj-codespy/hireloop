@@ -40,14 +40,21 @@ export default function CompliancePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <header className="border-b border-slate-200 pb-6">
+        <h1>Compliance</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Export or erase candidate records and review data controls.
+        </p>
+      </header>
       <Card className="border-border shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Candidate data request</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Candidate email</Label>
+            <Label htmlFor="compliance-candidate-email">Candidate email</Label>
             <Input
+              id="compliance-candidate-email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"

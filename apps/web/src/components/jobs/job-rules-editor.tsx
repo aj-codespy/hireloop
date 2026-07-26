@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import {
   Select,
   SelectContent,
@@ -63,7 +64,7 @@ export function JobRulesEditor({
         <div className="flex items-center justify-between">
           <div>
             <p className="font-medium">Eligibility rules</p>
-            <p className="text-sm text-muted-foreground">Optional — auto-reject on apply if rules fail.</p>
+            <p className="text-sm text-muted-foreground">Optional &mdash; auto-reject on apply if rules fail.</p>
           </div>
           <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={addRule}>
             Add rule

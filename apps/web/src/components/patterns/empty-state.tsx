@@ -24,7 +24,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-6 py-14 text-center",
+        "flex flex-col items-center justify-center rounded-[var(--radius-dashboard)] border border-dashed border-border bg-muted/30 px-6 py-14 text-center",
         className
       )}
     >
@@ -36,13 +36,12 @@ export function EmptyState({
       {actionLabel && (actionHref || onAction) ? (
         <div className="mt-6">
           {actionHref ? (
-            <ButtonLink href={actionHref} className="bg-brand text-brand-foreground hover:bg-brand/90">
+            <ButtonLink href={actionHref}>
               {actionLabel}
             </ButtonLink>
           ) : (
             <Button
               type="button"
-              className="bg-brand text-brand-foreground hover:bg-brand/90"
               onClick={onAction}
             >
               {actionLabel}

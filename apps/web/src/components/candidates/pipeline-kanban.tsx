@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/patterns/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { HoverLift } from "@/components/motion/interactions";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 function initials(name: string) {
   return name

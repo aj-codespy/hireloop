@@ -1,10 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useHireLoop } from "@/lib/store/provider";
 
 export function PipelineFunnelChart({ showConversion = false }: { showConversion?: boolean }) {
   const { state } = useHireLoop();
+  const reduceMotion = useReducedMotion();
   const total = state.applications.length;
   const count = (statuses: string[]) =>
     state.applications.filter((app) => statuses.includes(app.status)).length;
@@ -42,9 +43,9 @@ export function PipelineFunnelChart({ showConversion = false }: { showConversion
           </div>
           <div className="h-3 overflow-hidden rounded-full bg-muted">
             <motion.div
-              initial={{ width: 0 }}
+              initial={reduceMotion ? false : { width: 0 }}
               animate={{ width: `${stage.pct}%` }}
-              transition={{ duration: 0.7, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.25, delay: reduceMotion ? 0 : i * 0.06, ease: "easeOut" }}
               className="h-full rounded-full bg-brand"
             />
           </div>

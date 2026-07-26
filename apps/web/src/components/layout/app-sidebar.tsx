@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/brand/logo";
@@ -23,6 +24,20 @@ import { cn } from "@/lib/utils";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { signOutAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type NavItem = {
   href: string;
@@ -61,14 +76,14 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   },
 ];
 
-export function AppSidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { state } = useHireLoop();
   const { role, canManageOrg } = useOrgPermissions();
 
   return (
-    <aside className="flex h-full w-[248px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
-      <div className="border-b border-sidebar-border px-4 py-5">
+    <>
+      <div className="border-b border-sidebar-border px-5 py-5">
         <Logo href="/admin" size="sm" />
         <p className="mt-3 truncate text-xs font-medium text-muted-foreground">
           {state.organization.name}
@@ -99,8 +114,9 @@ export function AppSidebar() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      onClick={onNavigate}
                       className={cn(
-                        "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-ring",
+                        "group relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-[color,background-color] duration-250 ease-out focus-ring motion-reduce:transition-none",
                         active
                           ? "bg-sidebar-accent text-sidebar-accent-foreground"
                           : "text-muted-foreground hover:bg-card hover:text-foreground"
@@ -137,6 +153,53 @@ export function AppSidebar() {
           </Button>
         </form>
       </div>
+    </>
+  );
+}
+
+export function AppSidebar() {
+  return (
+    <aside className="hidden h-full w-[248px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+      <SidebarContent />
     </aside>
+  );
+}
+
+export function MobileAppSidebar() {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <SheetTrigger
+          render={
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  aria-label="Open navigation"
+                />
+              }
+            >
+              <PhosphorIcon name="List" aria-hidden />
+            </TooltipTrigger>
+          }
+        />
+        <TooltipContent side="right">Navigation menu</TooltipContent>
+      </Tooltip>
+      <SheetContent
+        side="left"
+        className="w-[min(88vw,320px)] gap-0 bg-sidebar p-0 text-sidebar-foreground"
+      >
+        <SheetHeader className="sr-only">
+          <SheetTitle>Admin navigation</SheetTitle>
+          <SheetDescription>Navigate the HireLoop workspace</SheetDescription>
+        </SheetHeader>
+        <SidebarContent onNavigate={() => setOpen(false)} />
+      </SheetContent>
+    </Sheet>
   );
 }

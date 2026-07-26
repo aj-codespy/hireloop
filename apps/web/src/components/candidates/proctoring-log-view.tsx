@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldAlert } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { ProctoringSnapshotGallery } from "@/components/candidates/proctoring-snapshot-gallery";
 import { ProctoringSnapshotThumb } from "@/components/candidates/proctoring-snapshot-gallery";
 import type { InterviewSession, ProctoringLogEntry } from "@/lib/types";
@@ -30,7 +30,7 @@ export function ProctoringLogView({ session }: { session: InterviewSession }) {
     <div className="space-y-6">
       {flagged ? (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
-          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <PhosphorIcon name="ShieldAlert" className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <p className="font-semibold">Session flagged for proctoring violations</p>
             {summary?.reason ? <p className="mt-1">{summary.reason}</p> : null}
@@ -109,7 +109,7 @@ export function ProctoringSummaryCard({ session }: { session: InterviewSession }
     <Card className={flagged ? "border-red-200 dark:border-red-900" : "border-border"}>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <ShieldAlert className="h-4 w-4" />
+          <PhosphorIcon name="ShieldAlert" className="h-4 w-4" />
           Proctoring
           {flagged ? (
             <Badge className="bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300">

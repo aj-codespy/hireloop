@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { MapPin, Building2 } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { FadeInItem, FadeInStagger } from "@/components/motion/fade-in";
 import { useHireLoop } from "@/lib/store/provider";
 import { Badge } from "@/components/ui/badge";
@@ -30,16 +30,18 @@ export default function JobsPage() {
   if (!hydrated) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
   return (
-    <div className="space-y-5">
-      {/* Header with department filter */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="min-w-0 space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <h2 className="text-title">Job roles</h2>
-          <p className="text-caption text-muted-foreground">{state.jobs.length} role{state.jobs.length !== 1 ? "s" : ""}</p>
+          <h1>Jobs</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            {state.jobs.length} role{state.jobs.length !== 1 ? "s" : ""} across your workspace.
+          </p>
         </div>
-        {departments.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-2">
+          {departments.length > 0 && (
+            <>
+            <PhosphorIcon name="Building2" className="h-4 w-4 text-muted-foreground" />
             <Select value={departmentFilter} onValueChange={(v: string | null) => v && setDepartmentFilter(v)}>
               <SelectTrigger className="w-[160px] rounded-full bg-card h-8 text-sm">
                 <SelectValue placeholder="All departments" />
@@ -51,11 +53,18 @@ export default function JobsPage() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        )}
-      </div>
+            </>
+          )}
+          <Link
+            href="/admin/jobs/new"
+            className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-[#EA6B2D] focus-ring"
+          >
+            Create job
+          </Link>
+        </div>
+      </header>
 
-      <FadeInStagger className="space-y-4">
+      <FadeInStagger className="divide-y divide-slate-200 border-y border-slate-200">
         {filteredJobs.length === 0 ? (
           <FadeInItem>
             <EmptyState
@@ -86,20 +95,20 @@ export default function JobsPage() {
               <FadeInItem key={job.id}>
                 <Link
                   href={`/admin/jobs/${job.id}`}
-                  className="block rounded-xl border border-border bg-card p-5 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-hover"
+                  className="block min-w-0 px-1 py-5 transition-colors hover:bg-slate-50 sm:px-4 motion-reduce:transition-none"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h3 className="font-semibold">{job.title}</h3>
                       <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5" />
+                        <PhosphorIcon name="MapPin" className="h-3.5 w-3.5" />
                         {applicantCount} applicant{applicantCount !== 1 ? "s" : ""}
                       </p>
                     </div>
                     <Badge
                       className={
                         job.status === "live"
-                          ? "bg-emerald-50 text-emerald-700"
+                          ? "bg-green-50 text-green-700"
                           : "bg-muted text-muted-foreground"
                       }
                     >
@@ -109,7 +118,7 @@ export default function JobsPage() {
                   <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-6">
                     {stages.map((stage, i) => (
                       <div key={stage} className="text-center">
-                        <p className="text-lg font-semibold">{values[i]}</p>
+                        <p className="text-lg font-semibold tabular-nums">{values[i]}</p>
                         <p className="text-xs text-muted-foreground">{stage}</p>
                       </div>
                     ))}

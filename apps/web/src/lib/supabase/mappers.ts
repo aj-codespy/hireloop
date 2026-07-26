@@ -15,6 +15,7 @@ import type {
   Profile,
   Question,
   QuestionSection,
+  Scorecard,
   TranscriptEntry,
 } from "@/lib/types";
 
@@ -113,6 +114,19 @@ export interface InterviewSessionRow {
   proctoring_log: InterviewSession["proctoringLog"] | null;
   proctoring_summary: InterviewSession["proctoringSummary"] | null;
   created_at: string;
+}
+
+export interface ScorecardRow {
+  id: string;
+  application_id: string;
+  reviewer_id: string;
+  recommendation: Scorecard["recommendation"];
+  overall_score: number | null;
+  competencies: Record<string, number> | null;
+  notes: string | null;
+  submitted_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export function mapOrganization(row: OrganizationRow): Organization {
@@ -222,6 +236,21 @@ export function mapInterviewSession(row: InterviewSessionRow): InterviewSession 
     overallScore: row.overall_score ?? undefined,
     proctoringLog: row.proctoring_log ?? undefined,
     proctoringSummary: row.proctoring_summary ?? undefined,
+  };
+}
+
+export function mapScorecard(row: ScorecardRow): Scorecard {
+  return {
+    id: row.id,
+    applicationId: row.application_id,
+    reviewerId: row.reviewer_id,
+    recommendation: row.recommendation,
+    overallScore: row.overall_score,
+    competencies: row.competencies ?? {},
+    notes: row.notes,
+    submittedAt: row.submitted_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 

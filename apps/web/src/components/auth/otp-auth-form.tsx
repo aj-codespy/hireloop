@@ -14,6 +14,7 @@ import type { AccountType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export function OtpAuthForm({
   mode,
@@ -33,10 +34,14 @@ export function OtpAuthForm({
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function sendCode() {
+    setError("");
     if (!email.trim()) {
-      toast.error("Enter your email address.");
+      const message = "Enter your email address.";
+      setError(message);
+      toast.error(message);
       return;
     }
     if (mode === "signup") {
@@ -54,6 +59,7 @@ export function OtpAuthForm({
     try {
       const result = await browserSendOtp(email.trim(), mode);
       if (result.error) {
+        setError(result.error);
         toast.error(result.error);
         return;
       }
@@ -66,8 +72,10 @@ export function OtpAuthForm({
 
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
     const codeError = validateOtpCode(code);
     if (codeError) {
+      setError(codeError);
       toast.error(codeError);
       return;
     }
@@ -76,6 +84,7 @@ export function OtpAuthForm({
     try {
       const result = await browserVerifyOtp(email.trim(), code.trim(), accountType);
       if (result.error) {
+        setError(result.error);
         toast.error(result.error);
         return;
       }
@@ -88,6 +97,7 @@ export function OtpAuthForm({
           orgName: signupFields?.orgName,
         });
         if (finalize?.error) {
+          setError(finalize.error);
           toast.error(finalize.error);
           return;
         }
@@ -97,7 +107,9 @@ export function OtpAuthForm({
       router.push(accountType === "org_admin" ? "/admin" : "/candidate/profile");
     } catch (err) {
       if (isNextRedirectError(err)) throw err;
-      toast.error("Could not verify the code.");
+      const message = "Could not verify the code.";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -114,16 +126,23 @@ export function OtpAuthForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="h-11"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "otp-error" : undefined}
+            className="h-12 rounded-xl border-[#ECECEC] focus-visible:border-[#F97316] focus-visible:ring-[#F97316]/20"
           />
         </div>
+        {error ? <p id="otp-error" className="text-sm text-[#DC2626]" role="alert">{error}</p> : null}
         <Button
           type="button"
           disabled={loading}
-          className="h-11 w-full rounded-full bg-brand text-brand-foreground hover:bg-brand/90"
+          className="h-12 w-full rounded-full bg-[#F97316] font-semibold text-white hover:bg-[#EA6B2D]"
           onClick={sendCode}
         >
-          {loading ? "Sending…" : "Send sign-in code"}
+          {loading ? <PhosphorIcon name="Loader2" /> : null}
+          <span>Send sign-in code</span>
         </Button>
       </div>
     );
@@ -135,7 +154,7 @@ export function OtpAuthForm({
         We sent a code to <strong>{email}</strong>.{" "}
         <button
           type="button"
-          className="text-brand hover:underline"
+          className="min-h-11 rounded-full px-2 text-[#F97316] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-[#F97316]"
           onClick={() => setStep("email")}
         >
           Change email
@@ -151,20 +170,24 @@ export function OtpAuthForm({
           onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
           placeholder="123456"
           required
-          className="h-11 text-center text-lg tracking-widest"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "otp-code-error" : undefined}
+          className="h-12 rounded-xl border-[#ECECEC] text-center text-lg tracking-widest focus-visible:border-[#F97316] focus-visible:ring-[#F97316]/20"
         />
       </div>
+      {error ? <p id="otp-code-error" className="text-sm text-[#DC2626]" role="alert">{error}</p> : null}
       <Button
         type="submit"
         disabled={loading}
-        className="h-11 w-full rounded-full bg-brand text-brand-foreground hover:bg-brand/90"
+        className="h-12 w-full rounded-full bg-[#F97316] font-semibold text-white hover:bg-[#EA6B2D]"
       >
-        {loading ? "Verifying…" : "Verify & continue"}
+        {loading ? <PhosphorIcon name="Loader2" /> : null}
+        <span>Verify and continue</span>
       </Button>
       <Button
         type="button"
         variant="ghost"
-        className="w-full"
+        className="h-11 w-full rounded-full"
         disabled={loading}
         onClick={sendCode}
       >

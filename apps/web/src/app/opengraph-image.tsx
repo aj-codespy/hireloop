@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "HireLoop — Structured hiring from application to decision";
+export const alt = "HireLoop &mdash; Structured hiring from application to decision";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

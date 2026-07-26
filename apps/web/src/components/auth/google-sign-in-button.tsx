@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { getAppOrigin } from "@/lib/auth/app-url";
 import { Button } from "@/components/ui/button";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export function GoogleSignInButton({
   portal,
@@ -50,11 +51,14 @@ export function GoogleSignInButton({
     <Button
       type="button"
       variant="outline"
-      className="h-11 w-full rounded-full"
+      className="h-12 w-full rounded-full border-[#ECECEC] bg-white font-semibold hover:bg-[#FAFAF9]"
       disabled={disabled || loading}
       onClick={handleGoogle}
     >
-      {loading ? "Redirecting…" : "Continue with Google"}
+      {loading ? (
+        <PhosphorIcon name="Loader2" />
+      ) : null}
+      <span>Continue with Google</span>
     </Button>
   );
 }

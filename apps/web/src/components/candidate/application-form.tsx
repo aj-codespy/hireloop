@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 import { useHireLoop } from "@/lib/store/provider";
 import { isDocumentFieldType } from "@/lib/form-fields";
@@ -10,16 +10,8 @@ import type { JobRole } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EligibilityPreview } from "@/components/candidate/eligibility-preview";
-import {
-  CheckCircle2,
-  Copy,
-  Clock,
-  ExternalLink,
-  Sparkles,
-  ArrowRight,
-} from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 const DOCUMENT_ACCEPT =
   ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.gif,.rtf,.odt,.ods,application/*,image/*,text/*";
@@ -31,10 +23,12 @@ type SubmissionResult = {
 };
 
 export function ApplicationForm({ job }: { job: JobRole }) {
+  const reduceMotion = useReducedMotion();
   const router = useRouter();
   const { submitApplication } = useHireLoop();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<SubmissionResult | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string | number | File | null>>({});
 
   const eligibilityRules = job.eligibilityRules ?? [];
@@ -46,6 +40,7 @@ export function ApplicationForm({ job }: { job: JobRole }) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true);
+    setSubmitError(null);
 
     const form = e.currentTarget;
     const formData = new FormData(form);
@@ -63,12 +58,14 @@ export function ApplicationForm({ job }: { job: JobRole }) {
       });
 
       if (result.eligibilityPassed) {
-        toast.success("Application submitted — you're shortlisted!");
+        toast.success("Application submitted. Your interview is ready.");
       } else {
         toast.info("Application received.");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not submit application");
+      const message = err instanceof Error ? err.message : "Could not submit application";
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -78,172 +75,120 @@ export function ApplicationForm({ job }: { job: JobRole }) {
   if (done) {
     return (
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="rounded-3xl border border-stone-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)] sm:p-8"
       >
-        {done.eligibilityPassed && (
-          /* Celebration sparkles animated via CSS */
-          <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden>
-            <div className="absolute inset-0 animate-[confetti-fall_3s_ease-out] opacity-0">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <span
-                  key={i}
-                  className="absolute h-2 w-2 rounded-full"
-                  style={{
-                    backgroundColor: ["#FF6B00", "#FF8C38", "#FFB07C", "#FFD4B0", "#FFFFFF"][i % 5],
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                    animation: `confetti-fall ${2 + Math.random() * 2}s ease-out ${Math.random() * 0.5}s forwards`,
-                    opacity: 0,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        <Card className="relative overflow-hidden border-border shadow-card">
-          {/* Header gradient */}
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand via-emerald-400 to-brand" />
-
-          <CardContent className="py-12 text-center">
-            {/* Icon */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.1 }}
-            >
+        <motion.div
+              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+        >
               {done.eligibilityPassed ? (
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
-                  <Sparkles className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
+                  <PhosphorIcon name="CheckCircle2" className="h-6 w-6 text-emerald-700" />
                 </div>
               ) : (
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                  <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-stone-100">
+                  <PhosphorIcon name="CheckCircle2" className="h-6 w-6 text-slate-600" />
                 </div>
               )}
-            </motion.div>
+        </motion.div>
 
-            {/* Title */}
-            <motion.p
-              className="mt-4 text-2xl font-bold text-foreground"
-              initial={{ opacity: 0, y: 10 }}
+        <motion.p
+              className="mt-5 text-2xl font-semibold tracking-tight text-slate-900"
+              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              {done.eligibilityPassed ? "Application submitted successfully!" : "Application received"}
-            </motion.p>
+              transition={{ duration: 0.25 }}
+        >
+              {done.eligibilityPassed ? "Your interview is ready" : "Application received"}
+        </motion.p>
 
-            <motion.p
-              className="mt-2 max-w-md mx-auto text-sm text-muted-foreground"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
+        <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
               {done.eligibilityPassed
-                ? "You're eligible for the next step. Your interview link is ready."
+                ? "You meet the role requirements. Continue when you are ready for the structured interview."
                 : "Your responses have been recorded. The hiring team will be in touch if you progress."}
-            </motion.p>
+        </p>
 
-            {/* Eligible: Interview card */}
-            {done.eligibilityPassed && done.interviewUrl && (
-              <motion.div
-                className="mx-auto mt-6 max-w-sm rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/20"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
+        {done.eligibilityPassed && done.interviewUrl && (
+              <div className="mt-8 rounded-2xl border border-stone-200 bg-stone-50 p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <ExternalLink className="h-4 w-4 text-emerald-600" />
-                    <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                    <PhosphorIcon name="ExternalLink" className="h-4 w-4 text-[#F97316]" />
+                    <span className="text-sm font-medium text-slate-900">
                       Interview link
                     </span>
                   </div>
                   {done.expiresAt && (
-                    <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
-                      <Clock className="h-3 w-3" />
-                      Expires {new Date(done.expiresAt).toLocaleDateString()}
+                    <span className="flex items-center gap-1 text-xs text-slate-500">
+                      <PhosphorIcon name="Clock" className="h-3 w-3" />
+                      Expires {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(done.expiresAt))}
                     </span>
                   )}
                 </div>
-                <div className="mt-3 flex gap-2">
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                   <Button
-                    className="flex-1 rounded-full bg-brand hover:bg-brand/90"
+                    className="h-11 flex-1 rounded-full bg-[#F97316] px-5 text-white hover:bg-[#EA6B2D]"
                     onClick={() => router.push(done.interviewUrl!)}
                   >
                     Start interview
-                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                    <PhosphorIcon name="ArrowRight" className="ml-1.5 h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
-                    className="h-10 w-10 rounded-full p-0"
+                    className="h-11 rounded-full px-4 sm:w-11 sm:p-0"
+                    aria-label="Copy interview link"
                     onClick={() => {
-                      navigator.clipboard.writeText(done.interviewUrl!);
+                      void navigator.clipboard.writeText(done.interviewUrl!);
                       toast.success("Link copied");
                     }}
                   >
-                    <Copy className="h-4 w-4" />
+                    <PhosphorIcon name="Copy" className="h-4 w-4" />
+                    <span className="sm:sr-only">Copy link</span>
                   </Button>
                 </div>
-              </motion.div>
-            )}
+              </div>
+        )}
 
-            {/* Not eligible: info */}
-            {!done.eligibilityPassed && (
-              <motion.div
-                className="mx-auto mt-6 max-w-sm rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/20"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  Unfortunately, you don&apos;t meet the eligibility criteria for this role.
+        {!done.eligibilityPassed && (
+              <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm leading-6 text-amber-900">
+                  Your responses do not currently meet this role&apos;s eligibility requirements.
                 </p>
-              </motion.div>
-            )}
+              </div>
+        )}
 
-            <motion.div
-              className="mt-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
+        <div className="mt-6">
               <Button
                 variant="ghost"
-                className="rounded-full"
+                className="h-11 rounded-full px-5"
                 onClick={() => router.push("/")}
               >
                 Back to home
               </Button>
-            </motion.div>
-          </CardContent>
-        </Card>
+        </div>
       </motion.div>
     );
   }
 
   // ===== Application Form =====
   return (
-    <Card className="relative border-border shadow-card">
-      <CardHeader>
-        <CardTitle>Application form</CardTitle>
-        <p className="text-sm text-muted-foreground">{job.title}</p>
-      </CardHeader>
-      <CardContent>
-        {/* Eligibility preview — appears when rules exist */}
+    <div className="rounded-3xl border border-stone-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)] sm:p-8">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900">Application</h2>
+        <p className="mt-1 text-sm text-slate-600">Complete all required fields for {job.title}.</p>
+        {/* Eligibility preview &mdash; appears when rules exist */}
         {eligibilityRules.length > 0 && (
           <EligibilityPreview
             rules={eligibilityRules}
             formValues={formValues}
-            className="mb-6"
+            className="mt-6"
           />
         )}
 
-        <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-4">
+        <form onSubmit={handleSubmit} encType="multipart/form-data" className="mt-8 space-y-5">
           {job.formFields
-            .sort((a, b) => a.order - b.order)
+            .toSorted((a, b) => a.order - b.order)
             .map((field) => (
               <div key={field.id} className="space-y-2">
                 <Label htmlFor={field.fieldKey}>
@@ -258,13 +203,14 @@ export function ApplicationForm({ job }: { job: JobRole }) {
                       type="file"
                       accept={DOCUMENT_ACCEPT}
                       required={field.required}
+                      className="min-h-11 rounded-2xl px-4"
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;
                         setFormValues((prev) => ({ ...prev, [field.fieldKey]: file }));
                       }}
                     />
                     <p className="text-xs text-muted-foreground">
-                      PDF, Word, Excel, PowerPoint, images, or text — max 10 MB
+                      PDF, Word, Excel, PowerPoint, images, or text. Maximum 10 MB.
                     </p>
                   </>
                 ) : field.type === "dropdown" ? (
@@ -272,7 +218,7 @@ export function ApplicationForm({ job }: { job: JobRole }) {
                     id={field.fieldKey}
                     name={field.fieldKey}
                     required={field.required}
-                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="min-h-11 w-full rounded-2xl border border-stone-200 bg-white px-4 text-sm outline-none transition-colors duration-200 focus-visible:border-[#F97316] focus-visible:ring-2 focus-visible:ring-[#F97316]/20"
                     defaultValue=""
                     onChange={(e) => handleFieldChange(field.fieldKey, e.target.value)}
                   >
@@ -299,6 +245,7 @@ export function ApplicationForm({ job }: { job: JobRole }) {
                             : "text"
                     }
                     required={field.required}
+                    className="min-h-11 rounded-2xl px-4"
                     onChange={(e) => handleFieldChange(field.fieldKey, e.target.value)}
                   />
                 )}
@@ -306,20 +253,24 @@ export function ApplicationForm({ job }: { job: JobRole }) {
             ))}
           <Button
             type="submit"
-            className="w-full rounded-full bg-brand text-brand-foreground hover:bg-brand/90 transition-transform active:scale-[0.98]"
+            className="h-11 w-full rounded-full bg-[#F97316] px-6 font-semibold text-white transition-colors duration-200 hover:bg-[#EA6B2D] motion-reduce:transition-none"
             disabled={submitting}
           >
             {submitting ? (
               <span className="flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />
                 Submitting…
               </span>
             ) : (
               "Submit application"
             )}
           </Button>
+          {submitError ? (
+            <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+              {submitError}
+            </p>
+          ) : null}
         </form>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

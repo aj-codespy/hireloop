@@ -87,7 +87,7 @@ function computeInsights(state: HireLoopState): DashboardInsights {
       const candidate = state.candidates.find((c) => c.id === app.candidateId);
       actionItems.push({
         id: `expiring-${app.id}`,
-        title: `Interview link expiring soon — ${candidate?.name ?? "Candidate"}`,
+        title: `Interview link expiring soon &mdash; ${candidate?.name ?? "Candidate"}`,
         description: "Link expires within 24 hours. Resend or follow up if needed.",
         href: `/admin/candidates/${app.candidateId}`,
         priority: "high",
@@ -115,7 +115,7 @@ function computeInsights(state: HireLoopState): DashboardInsights {
       const candidate = state.candidates.find((c) => c.id === app.candidateId);
       actionItems.push({
         id: `proctor-${session.id}`,
-        title: `Proctoring review — ${candidate?.name ?? "Candidate"}`,
+        title: `Proctoring review &mdash; ${candidate?.name ?? "Candidate"}`,
         description: session.proctoringSummary?.reason ?? "Session flagged for manual review.",
         href: `/admin/candidates/${app.candidateId}`,
         priority: "high",
@@ -128,7 +128,7 @@ function computeInsights(state: HireLoopState): DashboardInsights {
     if (jobQuestions.length === 0) {
       actionItems.push({
         id: `no-questions-${job.id}`,
-        title: `No interview questions — ${job.title}`,
+        title: `No interview questions &mdash; ${job.title}`,
         description: "Add questions before candidates can complete interviews.",
         href: `/admin/jobs/${job.id}/questions`,
         priority: "high",

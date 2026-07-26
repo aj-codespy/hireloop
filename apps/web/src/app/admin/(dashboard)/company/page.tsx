@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Building2, Globe, Palette } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { updateOrganizationAction } from "@/app/actions/hireloop";
 import { FadeIn } from "@/components/motion/fade-in";
 import { useOrgPermissions } from "@/hooks/use-org-permissions";
@@ -24,7 +24,7 @@ export default function CompanyPage() {
   const [about, setAbout] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [introVideoUrl, setIntroVideoUrl] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#FF6B00");
+  const [primaryColor, setPrimaryColor] = useState("#F97316");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -70,39 +70,41 @@ export default function CompanyPage() {
 
   return (
     <FadeIn className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Company</h1>
-        <p className="text-sm text-muted-foreground">
-          Organization profile for <strong>{org.name}</strong> — shown on candidate-facing pages.
+      <header className="border-b border-slate-200 pb-6">
+        <h1>Company</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Organization profile for <strong>{org.name}</strong>. Shown on candidate-facing pages.
         </p>
-      </div>
+      </header>
 
       <Card className="border-border shadow-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Building2 className="h-4 w-4 text-brand" />
+            <PhosphorIcon name="Building2" className="h-4 w-4 text-brand" />
             Company profile
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Company name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Label htmlFor="company-name">Company name</Label>
+            <Input id="company-name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label className="flex items-center gap-1">
-              <Globe className="h-3.5 w-3.5" />
+            <Label htmlFor="company-website" className="flex items-center gap-1">
+              <PhosphorIcon name="Globe" className="h-3.5 w-3.5" />
               Website
             </Label>
             <Input
+              id="company-website"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://example.com"
             />
           </div>
           <div className="space-y-2">
-            <Label>Logo URL</Label>
+            <Label htmlFor="company-logo-url">Logo URL</Label>
             <Input
+              id="company-logo-url"
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
               placeholder="https://example.com/logo.png"
@@ -112,16 +114,18 @@ export default function CompanyPage() {
             </p>
           </div>
           <div className="space-y-2">
-            <Label>Intro video URL</Label>
+            <Label htmlFor="company-video-url">Intro video URL</Label>
             <Input
+              id="company-video-url"
               value={introVideoUrl}
               onChange={(e) => setIntroVideoUrl(e.target.value)}
               placeholder="https://www.youtube.com/embed/..."
             />
           </div>
           <div className="space-y-2">
-            <Label>About</Label>
+            <Label htmlFor="company-about">About</Label>
             <Textarea
+              id="company-about"
               rows={4}
               value={about}
               onChange={(e) => setAbout(e.target.value)}
@@ -129,12 +133,13 @@ export default function CompanyPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label className="flex items-center gap-1">
-              <Palette className="h-3.5 w-3.5" />
+            <Label htmlFor="company-brand-color" className="flex items-center gap-1">
+              <PhosphorIcon name="Palette" className="h-3.5 w-3.5" />
               Brand color
             </Label>
             <div className="flex gap-2">
               <Input
+                id="company-brand-color"
                 type="color"
                 value={primaryColor}
                 onChange={(e) => setPrimaryColor(e.target.value)}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import type { Question, QuestionSection } from "@/lib/types";
 import { SECTION_LABELS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -61,9 +61,9 @@ export function QuestionBankEditor({
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-        <strong className="text-foreground">{jobTitle}</strong> — mandatory technical questions
-        are always asked; situational pool picks 2 of N per candidate server-side.
-      </div>
+              <strong className="text-foreground">{jobTitle}</strong> &mdash; mandatory technical questions
+              are always asked; situational pool picks 2 of N per candidate server-side.
+            </div>
 
       <Tabs defaultValue="technical">
         <TabsList>
@@ -144,7 +144,7 @@ export function QuestionBankEditor({
               );
             })}
             <Button type="button" variant="outline" onClick={() => addQuestion(section)}>
-              <Plus className="mr-1 h-4 w-4" />
+              <PhosphorIcon name="Plus" className="mr-1 h-4 w-4" />
               Add {SECTION_LABELS[section]} question
             </Button>
           </TabsContent>

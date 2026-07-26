@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, type HTMLMotionProps } from "framer-motion";
+import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -10,11 +10,13 @@ export function FadeIn({
   delay = 0,
   ...props
 }: HTMLMotionProps<"div"> & { delay?: number }) {
+  const reduce = useReducedMotion();
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={reduce ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay, ease }}
+      transition={reduce ? { duration: 0 } : { duration: 0.45, delay, ease }}
       className={className}
       {...props}
     >
@@ -30,13 +32,15 @@ export function FadeInStagger({
   children: React.ReactNode;
   className?: string;
 }) {
+  const reduce = useReducedMotion();
+
   return (
     <motion.div
-      initial="hidden"
+      initial={reduce ? false : "hidden"}
       animate="visible"
       variants={{
         hidden: {},
-        visible: { transition: { staggerChildren: 0.07 } },
+        visible: { transition: { staggerChildren: reduce ? 0 : 0.07 } },
       }}
       className={className}
     >
@@ -52,11 +56,17 @@ export function FadeInItem({
   children: React.ReactNode;
   className?: string;
 }) {
+  const reduce = useReducedMotion();
+
   return (
     <motion.div
       variants={{
-        hidden: { opacity: 0, y: 14 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease } },
+        hidden: reduce ? {} : { opacity: 0, y: 14 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: reduce ? { duration: 0 } : { duration: 0.4, ease },
+        },
       }}
       className={className}
     >

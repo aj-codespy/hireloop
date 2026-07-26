@@ -1,6 +1,14 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export function AppBreadcrumbs({
   items,
@@ -12,34 +20,34 @@ export function AppBreadcrumbs({
   if (items.length === 0) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className={cn("flex items-center gap-1 text-sm", className)}>
-      <ol className="flex flex-wrap items-center gap-1">
-        <li>
-          <Link
-            href="/admin"
-            className="text-muted-foreground transition-colors hover:text-foreground focus-ring rounded-sm"
+    <Breadcrumb className={cn("mb-0", className)}>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink
+            render={<Link href="/admin" />}
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             Home
-          </Link>
-        </li>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
         {items.map((item, i) => (
-          <li key={`${item.label}-${i}`} className="flex items-center gap-1">
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" aria-hidden />
+          <BreadcrumbItem key={`${item.label}-${i}`}>
+            <BreadcrumbSeparator>
+              <PhosphorIcon name="ChevronRight" className="h-3.5 w-3.5" />
+            </BreadcrumbSeparator>
             {item.href && i < items.length - 1 ? (
-              <Link
-                href={item.href}
-                className="text-muted-foreground transition-colors hover:text-foreground focus-ring rounded-sm"
+              <BreadcrumbLink
+                render={<Link href={item.href} />}
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 {item.label}
-              </Link>
+              </BreadcrumbLink>
             ) : (
-              <span className="font-medium text-foreground" aria-current="page">
-                {item.label}
-              </span>
+              <BreadcrumbPage>{item.label}</BreadcrumbPage>
             )}
-          </li>
+          </BreadcrumbItem>
         ))}
-      </ol>
-    </nav>
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }

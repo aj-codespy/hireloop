@@ -1,13 +1,14 @@
 "use client";
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useHireLoop } from "@/lib/store/provider";
 
-const COLORS = ["#ff6b00", "#3b82f6", "#8b5cf6", "#14b8a6", "#d1d5db"];
+const COLORS = ["#F97316", "#111827", "#6B7280", "#9CA3AF", "#D1D5DB"];
 
 export function SourcesDonutChart({ compact = false }: { compact?: boolean }) {
   const { state } = useHireLoop();
+  const reduceMotion = useReducedMotion();
   const counts = state.candidates.reduce<Record<string, number>>((acc, candidate) => {
     const source = candidate.source || "Unknown";
     acc[source] = (acc[source] ?? 0) + 1;
@@ -27,9 +28,9 @@ export function SourcesDonutChart({ compact = false }: { compact?: boolean }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.15 }}
+      transition={{ duration: 0.25 }}
       className={compact ? "h-[200px]" : "h-[240px]"}
     >
       <ResponsiveContainer width="100%" height="100%">
@@ -44,6 +45,7 @@ export function SourcesDonutChart({ compact = false }: { compact?: boolean }) {
             dataKey="value"
             animationBegin={200}
             animationDuration={800}
+            isAnimationActive={!reduceMotion}
           >
             {data.map((entry) => (
               <Cell key={entry.name} fill={entry.color} stroke="none" />

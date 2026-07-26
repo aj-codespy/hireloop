@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { RoleGate } from "@/components/auth/role-gate";
 import {
   getCurrentProfileAction,
   updateAdminProfileAction,
@@ -19,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -88,10 +88,10 @@ export default function SettingsPage() {
 
   return (
     <FadeIn>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your account and workspace preferences.</p>
-      </div>
+      <header className="mb-6 border-b border-slate-200 pb-6">
+        <h1>Settings</h1>
+        <p className="mt-2 text-sm text-slate-600">Manage your account and workspace preferences.</p>
+      </header>
 
       <Tabs defaultValue="profile">
         <TabsList className="mb-6 h-auto flex-wrap gap-1 bg-transparent p-0">
@@ -121,16 +121,16 @@ export default function SettingsPage() {
                 </Button>
               </div>
               <div className="space-y-2">
-                <Label>Full name</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
+                <Label htmlFor="settings-full-name">Full name</Label>
+                <Input id="settings-full-name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={email} disabled />
+                <Label htmlFor="settings-email">Email</Label>
+                <Input id="settings-email" value={email} disabled />
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Label htmlFor="settings-phone">Phone</Label>
+                <Input id="settings-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
               <Button
                 onClick={saveProfile}
@@ -148,24 +148,27 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Current password</Label>
+                <Label htmlFor="settings-current-password">Current password</Label>
                 <Input
+                  id="settings-current-password"
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label>New password</Label>
+                <Label htmlFor="settings-new-password">New password</Label>
                 <Input
+                  id="settings-new-password"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Confirm password</Label>
+                <Label htmlFor="settings-confirm-password">Confirm password</Label>
                 <Input
+                  id="settings-confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

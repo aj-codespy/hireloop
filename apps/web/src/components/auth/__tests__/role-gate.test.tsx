@@ -32,7 +32,7 @@ describe("RoleGate", () => {
       </RoleGate>
     );
 
-    expect(screen.getByText("Checking permissions…")).toBeInTheDocument();
+    expect(screen.getByText("Checking permissions")).toBeInTheDocument();
   });
 
   it("renders children when user has required role", () => {

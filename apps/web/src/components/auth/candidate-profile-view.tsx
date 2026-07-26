@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 const STATUS_STEPS = [
   "interview_sent",
@@ -75,8 +76,8 @@ export function CandidateProfileView({
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b border-border bg-white px-6 py-5">
+    <div className="min-h-dvh bg-[#FAFAF9]">
+      <header className="border-b border-[#ECECEC] bg-white px-5 py-5 sm:px-6">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <Logo href="/" />
           <form action={signOutAction}>
@@ -87,34 +88,52 @@ export function CandidateProfileView({
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-6 px-6 py-10">
+      <main className="mx-auto max-w-3xl space-y-6 px-5 py-10 sm:px-6">
         <div>
           <h1 className="text-2xl font-bold">My profile</h1>
           <p className="mt-1 text-sm text-muted-foreground">{profile.email}</p>
         </div>
 
-        <Card className="border-border shadow-card">
+        <Card className="rounded-3xl border-[#ECECEC] bg-white shadow-[0_1px_3px_rgba(15,15,15,0.05)]">
           <CardHeader>
             <CardTitle className="text-base">Profile details</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-2">
-                <Label>Full name</Label>
-                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                <Label htmlFor="profile-full-name">Full name</Label>
+                <Input
+                  id="profile-full-name"
+                  name="name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  autoComplete="name"
+                  className="h-12 rounded-xl border-[#ECECEC]"
+                />
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Label htmlFor="profile-phone">Phone</Label>
+                <Input
+                  id="profile-phone"
+                  name="tel"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  className="h-12 rounded-xl border-[#ECECEC]"
+                />
               </div>
-              <Button type="submit" disabled={saving} className="rounded-full bg-brand hover:bg-brand/90">
-                {saving ? "Saving…" : "Save profile"}
+              <Button type="submit" disabled={saving} className="h-11 rounded-full bg-[#F97316] px-6 font-semibold text-white hover:bg-[#EA6B2D]">
+                {saving ? <PhosphorIcon name="Loader2" /> : null}
+                <span>Save profile</span>
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-card">
+        <Card className="rounded-3xl border-[#ECECEC] bg-white shadow-[0_1px_3px_rgba(15,15,15,0.05)]">
           <CardHeader>
             <CardTitle className="text-base">My applications</CardTitle>
             <p className="text-sm text-muted-foreground">

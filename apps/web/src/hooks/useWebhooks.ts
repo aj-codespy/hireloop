@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { api, ApiError } from "@/lib/api/client";
 import { toast } from "sonner";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export type WebhookEvent =
   | "candidate.qualified"

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import type { LucideIconName } from "@/components/icons/icon-map";
 
 export interface TourStep {
   id: string;
   title: string;
   description: string;
-  icon?: React.ElementType;
+  icon?: LucideIconName;
   target?: string;
 }
 

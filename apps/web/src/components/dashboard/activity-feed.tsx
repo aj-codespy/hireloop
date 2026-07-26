@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ScrollText, UserPlus, Video, ArrowRight, XCircle, CheckCircle2, AlertTriangle } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import Link from "next/link";
 
 type ActivityType = "application" | "interview" | "stage" | "hired" | "rejected";
@@ -16,11 +16,11 @@ interface Activity {
 }
 
 const ICON_MAP: Record<ActivityType, React.ReactNode> = {
-  application: <UserPlus className="h-4 w-4" />,
-  interview: <Video className="h-4 w-4" />,
-  stage: <ArrowRight className="h-4 w-4" />,
-  hired: <CheckCircle2 className="h-4 w-4" />,
-  rejected: <XCircle className="h-4 w-4" />,
+  application: <PhosphorIcon name="UserPlus" className="h-4 w-4" />,
+  interview: <PhosphorIcon name="Video" className="h-4 w-4" />,
+  stage: <PhosphorIcon name="ArrowRight" className="h-4 w-4" />,
+  hired: <PhosphorIcon name="CheckCircle2" className="h-4 w-4" />,
+  rejected: <PhosphorIcon name="XCircle" className="h-4 w-4" />,
 };
 
 const COLOR_MAP: Record<ActivityType, string> = {
@@ -79,7 +79,7 @@ export function ActivityFeed({ initial = MOCK_ACTIVITIES }: ActivityFeedProps) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
-          <ScrollText className="h-4 w-4 text-muted-foreground" />
+          <PhosphorIcon name="ScrollText" className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Recent activity</span>
         </div>
         <div className="flex items-center gap-2">

@@ -2,25 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Briefcase,
-  LayoutDashboard,
-  Settings,
-  Users,
-  ListChecks,
-  Key,
-  Webhook,
-} from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
+import type { LucideIconName } from "@/components/icons/icon-map";
 
-const nav = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/jobs", label: "Job roles", icon: Briefcase },
-  { href: "/admin/candidates", label: "Pipeline", icon: Users },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-  { href: "/admin/api-keys", label: "API Keys", icon: Key },
-  { href: "/admin/webhooks", label: "Webhooks", icon: Webhook },
+const nav: { href: string; label: string; icon: LucideIconName; exact?: boolean }[] = [
+  { href: "/admin", label: "Dashboard", icon: "LayoutDashboard", exact: true },
+  { href: "/admin/jobs", label: "Job roles", icon: "Briefcase" },
+  { href: "/admin/candidates", label: "Pipeline", icon: "Users" },
+  { href: "/admin/settings", label: "Settings", icon: "Settings" },
+  { href: "/admin/api-keys", label: "API Keys", icon: "Key" },
+  { href: "/admin/webhooks", label: "Webhooks", icon: "Webhook" },
 ];
 
 export function AdminSidebar() {
@@ -37,7 +30,6 @@ export function AdminSidebar() {
           const active = item.exact
             ? pathname === item.href
             : pathname.startsWith(item.href);
-          const Icon = item.icon;
           return (
             <Link
               key={item.href}
@@ -49,7 +41,7 @@ export function AdminSidebar() {
                   : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <PhosphorIcon name={item.icon} className="h-4 w-4" />
               {item.label}
             </Link>
           );
@@ -60,7 +52,7 @@ export function AdminSidebar() {
           href={`/admin/jobs/job-1/questions`}
           className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
         >
-          <ListChecks className="h-3.5 w-3.5" />
+          <PhosphorIcon name="ListChecks" className="h-3.5 w-3.5" />
           Question banks
         </Link>
       </div>

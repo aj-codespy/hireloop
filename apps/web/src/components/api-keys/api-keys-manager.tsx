@@ -8,18 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Plus,
-  Copy,
-  Trash2,
-  Key,
-  Check,
-  Eye,
-  EyeOff,
-  Clock,
-  Shield,
-  ShieldAlert,
-} from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { toast } from "sonner";
 
 const SCOPE_LABELS: Record<ApiKeyScope, string> = {
@@ -29,8 +18,8 @@ const SCOPE_LABELS: Record<ApiKeyScope, string> = {
 };
 
 const SCOPE_COLORS: Record<ApiKeyScope, string> = {
-  read: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-  write: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  read: "bg-slate-100 text-slate-700",
+  write: "bg-orange-50 text-orange-700",
   admin: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300",
 };
 
@@ -54,6 +43,7 @@ function KeyRow({
   onDelete: (id: string) => void;
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingRevoke, setConfirmingRevoke] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const isActive = keyItem.status === "active";
@@ -68,7 +58,7 @@ function KeyRow({
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-1 flex-col gap-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <Key className="h-4 w-4 text-muted-foreground shrink-0" />
+          <PhosphorIcon name="Key" className="h-4 w-4 text-muted-foreground shrink-0" />
           <span className="font-medium text-sm">{keyItem.name}</span>
           <span className="font-mono text-xs text-muted-foreground">{keyItem.prefix}</span>
           <Badge
@@ -78,20 +68,20 @@ function KeyRow({
                 : "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
             }`}
           >
-            {isActive ? "Active" : "Revoked"}
+            {SCOPE_LABELS[keyItem.scope]}
           </Badge>
           <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] ${SCOPE_COLORS[keyItem.scope]}`}>
             {keyItem.scope === "admin" ? (
-              <ShieldAlert className="h-3 w-3" />
+              <PhosphorIcon name="ShieldWarning" className="h-3 w-3" />
             ) : (
-              <Shield className="h-3 w-3" />
+              <PhosphorIcon name="Shield" className="h-3 w-3" />
             )}
             {SCOPE_LABELS[keyItem.scope]}
           </span>
         </div>
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
           <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
+            <PhosphorIcon name="Clock" className="h-3 w-3" />
             Created {maskDate(keyItem.createdAt)}
           </span>
           <span>Last used {maskDate(keyItem.lastUsedAt)}</span>
@@ -105,18 +95,35 @@ function KeyRow({
           onClick={handleCopy}
           aria-label="Copy key prefix"
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <PhosphorIcon name="Check" className="h-3.5 w-3.5 text-emerald-500" /> : <PhosphorIcon name="Copy" className="h-3.5 w-3.5" />}
           <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
         </Button>
-        {isActive ? (
+        {isActive && confirmingRevoke ? (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={() => {
+                onRevoke(keyItem.id);
+                setConfirmingRevoke(false);
+              }}
+            >
+              Confirm revoke
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8" onClick={() => setConfirmingRevoke(false)}>
+              Cancel
+            </Button>
+          </div>
+        ) : isActive ? (
           <Button
             variant="ghost"
             size="sm"
             className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={() => onRevoke(keyItem.id)}
+            onClick={() => setConfirmingRevoke(true)}
             aria-label="Revoke key"
           >
-            <EyeOff className="h-3.5 w-3.5" />
+            <PhosphorIcon name="EyeOff" className="h-3.5 w-3.5" />
             <span className="text-xs">Revoke</span>
           </Button>
         ) : confirmingDelete ? (
@@ -131,7 +138,7 @@ function KeyRow({
               }}
               aria-label="Confirm delete"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <PhosphorIcon name="Trash2" className="h-3.5 w-3.5" />
               <span className="text-xs">Confirm</span>
             </Button>
             <Button
@@ -152,7 +159,7 @@ function KeyRow({
             onClick={() => setConfirmingDelete(true)}
             aria-label="Delete key"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <PhosphorIcon name="Trash2" className="h-3.5 w-3.5" />
           </Button>
         )}
       </div>
@@ -237,8 +244,8 @@ function CreateKeyDialog({
                         {s === "read"
                           ? "View candidates, jobs, and reports"
                           : s === "write"
-                            ? "Create jobs, manage candidates, configure settings"
-                            : "Full access including team and billing"}
+                          ? "Create jobs, manage candidates, configure settings"
+                          : "Full access including team and billing"}
                       </span>
                     </div>
                   </label>
@@ -278,7 +285,7 @@ export function ApiKeysManager() {
           onClick={() => setShowCreate(true)}
           className="rounded-full bg-brand hover:bg-brand/90"
         >
-          <Plus className="mr-1.5 h-4 w-4" />
+          <PhosphorIcon name="Plus" className="mr-1.5 h-4 w-4" />
           Create key
         </Button>
       </div>
@@ -289,7 +296,7 @@ export function ApiKeysManager() {
           <CardContent className="flex items-start justify-between gap-4 p-4">
             <div className="space-y-1 min-w-0">
               <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                Key created — copy it now. You won&apos;t see it again.
+                Key created. Copy it now because you won&apos;t see it again.
               </p>
               <code className="block select-all break-all rounded bg-emerald-100 px-2 py-1 font-mono text-xs dark:bg-emerald-900/40">
                 {newlyCreatedKey}
@@ -304,7 +311,7 @@ export function ApiKeysManager() {
                 toast.success("Copied");
               }}
             >
-              <Copy className="h-3.5 w-3.5 mr-1" />
+              <PhosphorIcon name="Copy" className="h-3.5 w-3.5 mr-1" />
               Copy
             </Button>
           </CardContent>
@@ -315,7 +322,7 @@ export function ApiKeysManager() {
       {keys.length === 0 ? (
         <Card className="border-border">
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Key className="h-10 w-10 text-muted-foreground/50" />
+            <PhosphorIcon name="Key" className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm font-medium">No API keys yet</p>
             <p className="text-xs text-muted-foreground max-w-xs">
               Create your first key to access the HireLoop API programmatically.
@@ -326,7 +333,7 @@ export function ApiKeysManager() {
               onClick={() => setShowCreate(true)}
               className="mt-2"
             >
-              <Plus className="mr-1 h-4 w-4" />
+              <PhosphorIcon name="Plus" className="mr-1 h-4 w-4" />
               Create key
             </Button>
           </CardContent>

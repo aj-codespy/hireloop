@@ -1,15 +1,14 @@
-"use client";
-
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { X, Check, ArrowRight, ArrowLeft } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
+import type { LucideIconName } from "@/components/icons/icon-map";
 
 export interface WelcomeStepProps {
   step: {
     id: string;
     title: string;
     description: string;
-    icon?: React.ElementType;
+    icon?: LucideIconName; // Phosphor icon name (mapped from Lucide)
   };
   isActive: boolean;
   isFirst: boolean;
@@ -32,7 +31,7 @@ export function WelcomeStep({
   onComplete,
   orgId,
 }: WelcomeStepProps) {
-  const Icon = step.icon;
+  const reduceMotion = useReducedMotion();
 
   return (
     <AnimatePresence>
@@ -40,68 +39,66 @@ export function WelcomeStep({
         <motion.div
           data-testid="welcome-tour-container"
           data-tour-step={step.id}
-          className="flex h-full min-w-[320px] flex-col rounded-lg gradient elev-3 reveal p-6 shadow-lg"
-          initial={{ opacity: 0, x: 20 }}
+          className="flex h-full min-w-0 flex-col rounded-3xl border border-[#ECECEC] bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.08)] sm:min-w-[320px] sm:p-8"
+          initial={reduceMotion ? false : { opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
+          exit={reduceMotion ? { opacity: 1 } : { opacity: 0, x: -20 }}
+          transition={{ duration: reduceMotion ? 0 : 0.25, ease: "easeOut" }}
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h2 className="mb-2 text-xl font-bold text-foreground">Step {step.id.split('-')[0]}</h2>
-              <h3 className="mb-4 text-lg font-semibold text-foreground">{step.title}</h3>
-              <p className="text-sm text-muted-foreground">{step.description}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F97316]">Step {step.id.split('-')[0]}</p>
+              <h2 className="mt-3 text-2xl font-bold tracking-[-0.025em] text-[#111827]">{step.title}</h2>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-[#6B7280]">{step.description}</p>
               {orgId && (
-                <div className="mt-4 rounded-md bg-muted/50 p-3">
-                  <span className="text-xs text-muted-foreground">Organization: {orgId}</span>
+                <div className="mt-5 rounded-xl bg-[#FAFAF9] p-3">
+                  <span className="text-xs text-[#6B7280]">Organization: {orgId}</span>
                 </div>
               )}
             </div>
-            {Icon && (
-              <div className="ml-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-muted text-brand shadow-lg">
-                <Icon className="h-6 w-6" />
+            {step.icon && (
+              <div className="ml-4 flex size-12 items-center justify-center rounded-xl bg-[#FAFAF9] text-[#F97316]">
+                <PhosphorIcon name={step.icon} className="h-6 w-6" />
               </div>
             )}
           </div>
 
-          <div className="mt-6 flex justify-between">
-            <div className="flex gap-2">
+          <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
               {!isFirst && (
                 <Button
                   variant="outline"
-                  size="sm"
                   onClick={onPrevious}
-                  className="h-9 px-4"
+                  className="h-11 rounded-full px-5"
                 >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <PhosphorIcon name="ArrowLeft" className="mr-2 h-4 w-4" />
                   Previous
                 </Button>
               )}
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={onSkip}
-                className="h-9 px-4 text-muted-foreground hover:text-foreground"
+                className="h-11 rounded-full px-5 text-[#6B7280] hover:text-[#111827]"
               >
-                Skip Tour
+                Skip tour
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex">
               {isLast ? (
                 <Button
                   onClick={onComplete}
-                  className="h-9 px-6 bg-brand text-brand-foreground hover:bg-brand/90"
+                  className="h-11 w-full rounded-full bg-[#F97316] px-6 font-semibold text-white hover:bg-[#EA6B2D] sm:w-auto"
                 >
-                  <Check className="mr-2 h-4 w-4" />
+                  <PhosphorIcon name="Check" className="mr-2 h-4 w-4" />
                   Complete
                 </Button>
               ) : (
                 <Button
                   onClick={onNext}
-                  className="h-9 px-6 bg-brand text-brand-foreground hover:bg-brand/90"
+                  className="h-11 w-full rounded-full bg-[#F97316] px-6 font-semibold text-white hover:bg-[#EA6B2D] sm:w-auto"
                 >
                   Next
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <PhosphorIcon name="ArrowRight" className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>

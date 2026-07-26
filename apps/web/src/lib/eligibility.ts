@@ -41,9 +41,9 @@ export function evaluateEligibility(
     const raw = formResponse[rule.fieldKey];
     if (isApplicationDocument(raw)) continue;
     if (raw === undefined || raw === "") {
-      failures.push({ rule, actual: "—" });
-      continue;
-    }
+          failures.push({ rule, actual: "&mdash;" });
+          continue;
+        }
 
     const expected = Number(rule.value);
     const actual = Number(raw);

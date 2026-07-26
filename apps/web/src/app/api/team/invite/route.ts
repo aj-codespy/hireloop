@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 import { generateId } from "@/lib/id";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 const VALID_ROLES = [
   "admin",

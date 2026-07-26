@@ -10,10 +10,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useHireLoop } from "@/lib/store/provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 const RANGES = [
   { label: "7d", months: 1, days: 7 },
@@ -23,6 +24,7 @@ const RANGES = [
 
 export function PipelineLineChart() {
   const { state } = useHireLoop();
+  const reduceMotion = useReducedMotion();
   const [range, setRange] = useState<(typeof RANGES)[number]["label"]>("30d");
   const config = RANGES.find((r) => r.label === range) ?? RANGES[1];
   const now = new Date();
@@ -83,20 +85,14 @@ export function PipelineLineChart() {
         ))}
       </div>
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={reduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
+        transition={{ duration: 0.25 }}
         className="h-[260px] w-full"
       >
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="orangeGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ff6b00" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="#ff6b00" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#ECECEC" vertical={false} />
             <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
             <Tooltip
@@ -109,20 +105,22 @@ export function PipelineLineChart() {
             <Area
               type="monotone"
               dataKey="interviews"
-              stroke="#d1d5db"
+              stroke="#9CA3AF"
               strokeWidth={2}
               fill="transparent"
               dot={false}
               name="Interviews"
+              isAnimationActive={!reduceMotion}
             />
             <Area
               type="monotone"
               dataKey="applications"
-              stroke="#ff6b00"
+              stroke="#F97316"
               strokeWidth={2.5}
-              fill="url(#orangeGrad)"
+              fill="transparent"
               dot={false}
               name="Applications"
+              isAnimationActive={!reduceMotion}
             />
           </AreaChart>
         </ResponsiveContainer>

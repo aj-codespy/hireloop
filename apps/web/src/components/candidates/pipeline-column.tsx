@@ -5,6 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { PipelineColumn as PipelineColumnType } from "@/hooks/useInterviewPipeline";
 import { CandidateCard } from "./candidate-card";
 import { STATUS_COLORS } from "@/lib/constants";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 interface PipelineColumnProps {
   column: PipelineColumnType;

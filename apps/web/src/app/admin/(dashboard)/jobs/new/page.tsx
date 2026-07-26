@@ -21,12 +21,12 @@ export default function NewJobPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Create a new job</h1>
-        <p className="text-sm text-muted-foreground">
-          Configure the role, application form, interview questions, and optional thresholds — then share the link.
+      <header className="mb-8 border-b border-slate-200 pb-6">
+        <h1>Create a job</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Configure the role, application form, interview questions, and optional thresholds. Then share the link.
         </p>
-      </div>
+      </header>
       <JobCreationWizard />
     </div>
   );

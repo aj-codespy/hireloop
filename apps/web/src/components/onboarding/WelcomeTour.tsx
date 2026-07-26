@@ -2,6 +2,16 @@
 
 import { WelcomeStep } from "@/components/onboarding/WelcomeStep";
 import { useWelcomeTour } from "@/hooks/useWelcomeTour";
+import { Button } from "@/components/ui/button";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
+import type { LucideIconName } from "@/components/icons/icon-map";
+
+const nextActions: { icon: LucideIconName; label: string }[] = [
+  { icon: "Briefcase", label: "Create your first job" },
+  { icon: "ClipboardList", label: "Set up interview questions" },
+  { icon: "Users", label: "Invite team members" },
+  { icon: "CreditCard", label: "Review your subscription" },
+];
 
 export interface WelcomeTourProps {
   orgId?: string;
@@ -16,7 +26,6 @@ export function WelcomeTour({ orgId, onComplete, onSkip }: WelcomeTourProps = {}
     progress,
     tourSteps,
     totalSteps,
-    isMobile,
     startTour,
     nextStep,
     prevStep,
@@ -26,59 +35,55 @@ export function WelcomeTour({ orgId, onComplete, onSkip }: WelcomeTourProps = {}
 
   if (!isTourOpen) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
-        <div className="w-full max-w-2xl rounded-lg gradient elev-3 reveal p-8 shadow-lg">
-          <div className="text-center">
-            <h1 className="mb-4 text-3xl font-bold text-foreground">Welcome to HireLoop!</h1>
-            <p className="mb-8 text-muted-foreground">
-              Your organization has been created successfully. Let&apos;s get you started with a quick guided tour of the key features.
+      <div className="flex min-h-dvh items-center justify-center bg-[#FAFAF9] px-5 py-12">
+        <div className="w-full max-w-2xl rounded-3xl border border-[#ECECEC] bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.08)] sm:p-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F97316]">Workspace ready</p>
+            <h1 className="mt-3 text-3xl font-bold tracking-[-0.03em] text-[#111827]">Welcome to HireLoop</h1>
+            <p className="mt-4 max-w-xl leading-7 text-[#6B7280]">
+              Your organization is ready. Take a quick tour of the tools your team will use first.
             </p>
             
-            <div className="mb-8 space-y-4">
+            <div className="mt-8 space-y-4">
               {tourSteps.map((step, index) => (
                 <div key={step.id} className="flex gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-muted text-brand shadow-lg">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#FAFAF9] text-[#F97316]">
                     <span className="text-sm font-semibold">{index + 1}</span>
                   </div>
                   <div className="text-left">
-                    <h3 className="font-semibold text-foreground">{step.title}</h3>
-                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                    <h2 className="font-semibold text-[#111827]">{step.title}</h2>
+                    <p className="mt-1 text-sm leading-6 text-[#6B7280]">{step.description}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mb-6 rounded-lg bg-muted/50 p-4">
-              <h4 className="font-medium mb-2">What&apos;s next?</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  📝 Create your first job posting
-                </li>
-                <li className="flex items-center gap-2">
-                  🎯 Setup interview questions
-                </li>
-                <li className="flex items-center gap-2">
-                  👥 Invite team members to your organization
-                </li>
-                <li className="flex items-center gap-2">
-                  💳 Review your subscription plan
-                </li>
+            <div className="mt-8 rounded-2xl bg-[#FAFAF9] p-5">
+              <h2 className="font-medium">First actions</h2>
+              <ul className="mt-3 grid gap-3 text-sm text-[#6B7280] sm:grid-cols-2">
+                {nextActions.map((action) => (
+                  <li key={action.label} className="flex items-center gap-3">
+                    <PhosphorIcon name={action.icon} className="size-4 text-[#F97316]" aria-hidden={true} />
+                    {action.label}
+                  </li>
+                ))}
               </ul>
             </div>
 
-            <div className="flex justify-center gap-4">
-              <button
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button
                 onClick={startTour}
-                className="px-8 py-3 rounded-full bg-brand text-brand-foreground font-medium hover:bg-brand/90 transition-colors"
+                className="h-12 rounded-full bg-[#F97316] px-8 font-semibold text-white hover:bg-[#EA6B2D]"
               >
-                Start Tour
-              </button>
-              <button
+                Start tour
+              </Button>
+              <Button
+                variant="outline"
                 onClick={skipTour}
-                className="px-8 py-3 rounded-full border border-border text-foreground font-medium hover:bg-muted transition-colors"
+                className="h-12 rounded-full border-[#ECECEC] px-8 font-semibold hover:bg-[#FAFAF9]"
               >
-                Skip Tour
-              </button>
+                Skip tour
+              </Button>
             </div>
           </div>
         </div>
@@ -91,7 +96,7 @@ export function WelcomeTour({ orgId, onComplete, onSkip }: WelcomeTourProps = {}
   const isLast = currentStep === totalSteps - 1;
 
   return (
-    <div className="min-h-screen bg-muted/30 px-4 py-12">
+    <div className="min-h-dvh bg-[#FAFAF9] px-5 py-10 sm:px-8 sm:py-12">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
@@ -99,20 +104,20 @@ export function WelcomeTour({ orgId, onComplete, onSkip }: WelcomeTourProps = {}
           </div>
           <button
             onClick={skipTour}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex min-h-11 items-center rounded-full px-3 text-sm text-[#6B7280] transition-colors duration-200 hover:bg-white hover:text-[#111827] focus-visible:outline-2 focus-visible:outline-[#F97316]"
           >
-            Skip Tour
+            Skip tour
           </button>
         </div>
 
-        <div className="mb-6 rounded-lg bg-card p-4 shadow-card">
+        <div className="mb-6 rounded-2xl border border-[#ECECEC] bg-white p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">Progress</span>
             <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
           </div>
           <div className="w-full bg-muted rounded-full h-2">
             <div
-              className="bg-brand h-2 rounded-full transition-all duration-300"
+              className="h-2 rounded-full bg-[#F97316] transition-all duration-200 motion-reduce:transition-none"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -129,12 +134,6 @@ export function WelcomeTour({ orgId, onComplete, onSkip }: WelcomeTourProps = {}
           onComplete={completeTour}
           orgId={orgId}
         />
-
-        {isMobile && (
-          <div className="mt-4 text-center">
-            <p className="text-xs text-muted-foreground">Mobile view enabled</p>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Mic, MicOff, AlertTriangle, Clock, User, Video, VideoOff } from "lucide-react";
+import { useCallback, useState, useEffect, useRef } from "react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { cn } from "@/lib/utils";
 import { interviewWsUrl } from "@/lib/config";
 import { formatSeconds } from "@/lib/format";
@@ -31,6 +31,14 @@ interface InterviewPhaseProps {
   sessionId?: string | null;
 }
 
+interface InterviewSocketEvent {
+  type: string;
+  status?: string;
+  prompt?: string;
+  index?: number;
+  message?: string;
+}
+
 export function InterviewPhase({
   step,
   interviewToken,
@@ -47,7 +55,7 @@ export function InterviewPhase({
   sessionId,
 }: InterviewPhaseProps) {
   const [isRecording, setIsRecording] = useState(false);
-  const [phase, setPhase] = useState<"idle" | "connecting" | "active" | "submitting" | "done" | "error">("idle");
+  const [, setPhase] = useState<"idle" | "connecting" | "active" | "submitting" | "done" | "error">("idle");
   const [questionText, setQuestionText] = useState("");
   const [questionMeta, setQuestionMeta] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +72,29 @@ export function InterviewPhase({
     }
   }, [mediaStream]);
 
+  const handleMessage = useCallback((payload: InterviewSocketEvent) => {
+    switch (payload.type) {
+      case "session_started":
+        setPhase("active");
+        setQuestionText(payload.prompt || "");
+        break;
+      case "question_changed":
+        setQuestionText(payload.prompt || "");
+        setQuestionMeta(`Question ${(payload.index ?? 0) + 1}`);
+        break;
+      case "timer":
+        break;
+      case "session_ended":
+        setPhase("done");
+        onComplete?.({ status: payload.status });
+        break;
+      case "error":
+        setError(payload.message || "Unknown error");
+        setPhase("error");
+        break;
+    }
+  }, [onComplete]);
+
   // WebSocket connection
   useEffect(() => {
     const ws = new WebSocket(interviewWsUrl(interviewToken, language));
@@ -76,7 +107,7 @@ export function InterviewPhase({
 
     ws.onmessage = (event) => {
       try {
-        const payload = JSON.parse(event.data);
+        const payload = JSON.parse(event.data) as InterviewSocketEvent;
         handleMessage(payload);
       } catch (err) {
         console.error("Failed to parse message:", err);
@@ -89,41 +120,15 @@ export function InterviewPhase({
 
     ws.onclose = () => {
       socketRef.current = null;
-      if (phase !== "done") {
-        setPhase("error");
-      }
+      setPhase((current) => current === "done" ? current : "error");
     };
 
     return () => {
       ws.close();
     };
-  }, [interviewToken, language]);
+  }, [handleMessage, interviewToken, language]);
 
-  const handleMessage = (payload: any) => {
-    switch (payload.type) {
-      case "session_started":
-        setPhase("active");
-        setQuestionText(payload.prompt || "");
-        break;
-      case "question_changed":
-        setQuestionText(payload.prompt || "");
-        setQuestionMeta(`Question ${payload.index + 1}`);
-        break;
-      case "timer":
-        // Update timer display
-        break;
-      case "session_ended":
-        setPhase("done");
-        onComplete?.({ status: payload.status });
-        break;
-      case "error":
-        setError(payload.message || "Unknown error");
-        setPhase("error");
-        break;
-    }
-  };
-
-  const sendMessage = (message: any) => {
+  const sendMessage = (message: Record<string, unknown>) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify(message));
     }
@@ -172,13 +177,13 @@ export function InterviewPhase({
                   <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
                     <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                     <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
-                      <Video className="h-4 w-4" />
+                      <PhosphorIcon name="Video" className="h-4 w-4" />
                       <span className="text-sm">Webcam active</span>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center aspect-video rounded-lg bg-muted/50">
-                    <VideoOff className="h-12 w-12 text-muted-foreground" />
+                    <PhosphorIcon name="VideoOff" className="h-12 w-12 text-muted-foreground" />
                     <span className="ml-2 text-muted-foreground">Camera not available</span>
                   </div>
                 )}
@@ -194,7 +199,7 @@ export function InterviewPhase({
 
             {timeRemaining !== undefined && (
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
+                <PhosphorIcon name="Clock" className="h-4 w-4" />
                 <span>Time remaining: {formatSeconds(timeRemaining)}</span>
               </div>
             )}
@@ -202,7 +207,7 @@ export function InterviewPhase({
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                 <div className="flex items-start gap-2 text-red-600">
-                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <PhosphorIcon name="AlertTriangle" className="h-4 w-4 shrink-0" />
                   <span className="text-sm">{error}</span>
                 </div>
               </div>
@@ -224,7 +229,7 @@ export function InterviewPhase({
                   </div>
                 ) : (
                   <div className="flex items-center justify-center aspect-video rounded-lg bg-muted/50">
-                    <VideoOff className="h-12 w-12 text-muted-foreground" />
+                    <PhosphorIcon name="VideoOff" className="h-12 w-12 text-muted-foreground" />
                     <span className="ml-2 text-muted-foreground">Camera not available</span>
                   </div>
                 )}
@@ -241,12 +246,12 @@ export function InterviewPhase({
                   >
                     {isRecording ? (
                       <>
-                        <MicOff className="h-4 w-4" />
+                        <PhosphorIcon name="MicOff" className="h-4 w-4" />
                         <span>Stop Recording</span>
                       </>
                     ) : (
                       <>
-                        <Mic className="h-4 w-4" />
+                        <PhosphorIcon name="Mic" className="h-4 w-4" />
                         <span>Start Recording</span>
                       </>
                     )}
@@ -257,7 +262,7 @@ export function InterviewPhase({
                   <div className="rounded-lg bg-red-50 border border-red-200 p-4">
                     <div className="flex items-center gap-2 text-red-600">
                       <div className="animate-pulse h-3 w-3 bg-red-600 rounded-full"></div>
-                      <span className="text-sm font-medium">Recording...</span>
+                      <span className="text-sm font-medium">Recording…</span>
                     </div>
                   </div>
                 )}
@@ -280,7 +285,7 @@ export function InterviewPhase({
                   <div className="relative aspect-video rounded-lg overflow-hidden bg-black mb-4">
                     <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                     <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
-                      <User className="h-4 w-4" />
+                      <PhosphorIcon name="User" className="h-4 w-4" />
                       <span className="text-sm">Candidate View</span>
                     </div>
                   </div>
@@ -294,7 +299,7 @@ export function InterviewPhase({
                     {timeRemaining !== undefined && (
                       <>
                         <span>•</span>
-                        <Clock className="h-4 w-4" />
+                        <PhosphorIcon name="Clock" className="h-4 w-4" />
                         <span>{formatSeconds(timeRemaining)}</span>
                       </>
                     )}
@@ -308,17 +313,17 @@ export function InterviewPhase({
 
                   <div className="rounded-lg bg-muted/50 p-4">
                     <p className="text-foreground whitespace-pre-wrap">
-                      {questionText || "Loading question..."}
+                      {questionText || "Loading question…"}
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      {questionCount ? `Question ${currentQuestionIndex ? currentQuestionIndex + 1 : 1} of ${questionCount}` : "Preparing question..."}
+                      {questionCount ? `Question ${currentQuestionIndex ? currentQuestionIndex + 1 : 1} of ${questionCount}` : "Preparing question…"}
                     </div>
                     {sessionId && (
                       <div className="text-xs text-muted-foreground">
-                        Session: {sessionId.slice(0, 8)}...
+                        Session: {sessionId.slice(0, 8)}…
                       </div>
                     )}
                   </div>
@@ -342,12 +347,12 @@ export function InterviewPhase({
                   >
                     {isRecording ? (
                       <>
-                        <MicOff className="h-4 w-4" />
+                        <PhosphorIcon name="MicOff" className="h-4 w-4" />
                         <span>Stop Recording</span>
                       </>
                     ) : (
                       <>
-                        <Mic className="h-4 w-4" />
+                        <PhosphorIcon name="Mic" className="h-4 w-4" />
                         <span>Start Recording</span>
                       </>
                     )}
@@ -357,9 +362,7 @@ export function InterviewPhase({
                     onClick={handlePause}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-border hover:bg-muted transition-colors"
                   >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <PhosphorIcon name="Pause" />
                     <span>Pause Interview</span>
                   </button>
 
@@ -367,7 +370,7 @@ export function InterviewPhase({
                     onClick={() => setShowSkipConfirm(true)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
                   >
-                    <AlertTriangle className="h-4 w-4" />
+                    <PhosphorIcon name="AlertTriangle" className="h-4 w-4" />
                     <span>Skip Question</span>
                   </button>
                 </div>
@@ -382,9 +385,9 @@ export function InterviewPhase({
                     proctoringStatus === "warning" && "bg-amber-100 text-amber-700",
                     proctoringStatus === "flagged" && "bg-red-100 text-red-700"
                   )}>
-                    {proctoringStatus === "active" && "✓ Proctoring Active"}
-                    {proctoringStatus === "warning" && "⚠ Proctoring Warning"}
-                    {proctoringStatus === "flagged" && "🚨 Proctoring Flagged"}
+                    {proctoringStatus === "active" && "Proctoring active"}
+                    {proctoringStatus === "warning" && "Proctoring warning"}
+                    {proctoringStatus === "flagged" && "Proctoring flagged"}
                   </div>
                 </div>
               )}
@@ -393,18 +396,19 @@ export function InterviewPhase({
 
           {/* Skip Confirmation Modal */}
           {showSkipConfirm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-card rounded-xl p-6 max-w-md w-full">
-                <h3 className="text-lg font-semibold text-foreground mb-2">Skip Question</h3>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5" role="dialog" aria-modal="true" aria-labelledby="phase-skip-title">
+              <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.16)]">
+                <h2 id="phase-skip-title" className="mb-2 text-lg font-semibold text-foreground">Skip question</h2>
                 <p className="text-sm text-muted-foreground mb-4">
                   Please provide a reason for skipping this question. Your reason will be recorded for review.
                 </p>
                 <textarea
+                  aria-label="Reason for skipping"
                   value={skipReason}
                   onChange={(e) => setSkipReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm mb-4"
+                  className="mb-4 w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none focus-visible:border-[#F97316] focus-visible:ring-2 focus-visible:ring-[#F97316]/20"
                   rows={3}
-                  placeholder="Reason for skipping..."
+                  placeholder="Reason for skipping…"
                 />
                 <div className="flex gap-3">
                   <button
@@ -412,16 +416,16 @@ export function InterviewPhase({
                       setShowSkipConfirm(false);
                       setSkipReason("");
                     }}
-                    className="flex-1 px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted"
+                    className="min-h-11 flex-1 rounded-full border border-stone-200 px-4 text-sm font-semibold hover:bg-stone-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSkip}
                     disabled={!skipReason.trim() || skipping}
-                    className="flex-1 px-4 py-2 text-sm rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="min-h-11 flex-1 rounded-full bg-[#F97316] px-4 text-sm font-semibold text-white hover:bg-[#EA6B2D] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {skipping ? "Skipping..." : "Skip Question"}
+                    {skipping ? "Skipping…" : "Skip question"}
                   </button>
                 </div>
               </div>
@@ -431,7 +435,7 @@ export function InterviewPhase({
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4">
               <div className="flex items-start gap-2 text-red-600">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <PhosphorIcon name="AlertTriangle" className="h-4 w-4 shrink-0" />
                 <span className="text-sm">{error}</span>
               </div>
             </div>
@@ -470,9 +474,7 @@ export function InterviewPhase({
         <div className="mx-auto max-w-2xl space-y-6">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-              <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <PhosphorIcon name="CheckCircle2" />
             </div>
             <h2 className="text-2xl font-semibold text-foreground">Interview Complete</h2>
             <div className="rounded-xl border border-border bg-card p-6">
@@ -489,7 +491,7 @@ export function InterviewPhase({
         <div className="mx-auto max-w-2xl space-y-6">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
+              <PhosphorIcon name="AlertTriangle" className="h-8 w-8 text-red-600" />
             </div>
             <h2 className="text-2xl font-semibold text-red-900">Interview Terminated</h2>
             <div className="rounded-xl border border-red-200 bg-red-50 p-6">
@@ -506,7 +508,7 @@ export function InterviewPhase({
         <div className="mx-auto max-w-2xl space-y-6">
           <div className="text-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-            <p className="text-muted-foreground">Loading interview phase...</p>
+            <p className="text-muted-foreground">Loading interview phase…</p>
           </div>
         </div>
       );

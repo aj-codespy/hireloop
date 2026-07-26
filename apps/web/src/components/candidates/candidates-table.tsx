@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, CheckCircle2, XCircle, LayoutGrid, List } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { useApplicationRows, useHireLoop } from "@/lib/store/provider";
 import { APPLICATION_STATUS_LABELS } from "@/lib/constants";
 import { StatusBadge } from "@/components/patterns/status-badge";
@@ -29,6 +29,28 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const VIEW_KEY = "hireloop-candidates-view";
 
@@ -70,13 +92,28 @@ export function CandidatesTable() {
     });
   }, [rows, jobFilter, statusFilter, query]);
 
-  if (!hydrated) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (!hydrated) return (
+    <div className="space-y-4 p-4" role="status" aria-label="Loading candidates">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-64 w-full rounded-xl" />
+    </div>
+  );
 
   return (
-    <FadeIn className="space-y-5">
+    <FadeIn className="min-w-0 space-y-6">
+      <header className="border-b border-slate-200 pb-6">
+        <h1 className="text-2xl font-semibold tracking-[-0.02em]">Candidates</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Review applicants, interview progress, and hiring decisions.
+        </p>
+      </header>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-2">
+          <label htmlFor="candidate-search" className="sr-only">
+            Search candidates
+          </label>
           <Input
+            id="candidate-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search candidates"
@@ -110,33 +147,20 @@ export function CandidatesTable() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-full border border-border bg-card p-0.5" role="group" aria-label="View mode">
-            <Button
-              type="button"
-              size="sm"
-              variant={view === "table" ? "default" : "ghost"}
-              className={cn("h-8 rounded-full px-3", view === "table" && "bg-brand text-brand-foreground hover:bg-brand/90")}
-              onClick={() => switchView("table")}
-              aria-pressed={view === "table"}
-            >
-              <List className="mr-1 h-4 w-4" aria-hidden />
+          <ToggleGroup type="single" value={view} onValueChange={(v) => v && switchView(v as any)} className="rounded-full border border-border bg-card p-0.5 gap-0">
+            <ToggleGroupItem value="table" className="h-8 rounded-full px-3 text-xs data-[state=on]:bg-brand data-[state=on]:text-brand-foreground data-[state=on]:hover:bg-brand/90">
+              <PhosphorIcon name="List" className="h-3.5 w-3.5 mr-1" />
               Table
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={view === "board" ? "default" : "ghost"}
-              className={cn("h-8 rounded-full px-3", view === "board" && "bg-brand text-brand-foreground hover:bg-brand/90")}
-              onClick={() => switchView("board")}
-              aria-pressed={view === "board"}
-            >
-              <LayoutGrid className="mr-1 h-4 w-4" aria-hidden />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="board" className="h-8 rounded-full px-3 text-xs data-[state=on]:bg-brand data-[state=on]:text-brand-foreground data-[state=on]:hover:bg-brand/90">
+              <PhosphorIcon name="LayoutGrid" className="h-3.5 w-3.5 mr-1" />
               Board
-            </Button>
-          </div>
+            </ToggleGroupItem>
+          </ToggleGroup>
           <ButtonLink href="/admin/jobs/new" className="rounded-full bg-brand text-brand-foreground hover:bg-brand/90">
-          <Plus className="mr-1 h-4 w-4" />
-          Create job
+          <PhosphorIcon name="Plus" className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Create job</span>
+          <kbd className="ml-1.5 hidden rounded-sm bg-brand-foreground/20 px-1.5 py-0.5 text-[10px] font-medium text-brand-foreground/80 sm:inline">⌘N</kbd>
         </ButtonLink>
         </div>
       </div>
@@ -144,17 +168,32 @@ export function CandidatesTable() {
       {view === "board" ? <InterviewPipeline /> : null}
 
       {view === "table" ? (
-      <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-card">
+      <div className="max-w-full overflow-x-auto border-y border-slate-200">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead>Name</TableHead>
+              <TableHead className="cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-1">
+                  Name
+                  <PhosphorIcon name="ArrowUpDown" className="h-3 w-3 opacity-30" />
+                </span>
+              </TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Job</TableHead>
+              <TableHead className="cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-1">
+                  Job
+                  <PhosphorIcon name="ArrowUpDown" className="h-3 w-3 opacity-30" />
+                </span>
+              </TableHead>
               <TableHead>Stage</TableHead>
               <TableHead>Shortlisted</TableHead>
               <TableHead>Interview done</TableHead>
-              <TableHead>Applied</TableHead>
+              <TableHead className="cursor-pointer hover:text-foreground transition-colors">
+                <span className="flex items-center gap-1">
+                  Applied
+                  <PhosphorIcon name="ArrowUpDown" className="h-3 w-3 opacity-30" />
+                </span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -171,35 +210,54 @@ export function CandidatesTable() {
                 return (
                   <TableRow key={application.id}>
                     <TableCell>
-                      <Link href={`/admin/candidates/${candidate.id}`} className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-brand-muted text-xs text-brand">
-                            {initials(candidate.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium hover:text-brand">{candidate.name}</span>
-                      </Link>
+                      <HoverCard>
+                        <HoverCardTrigger
+                          render={
+                            <Link href={`/admin/candidates/${candidate.id}`} className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="bg-brand-muted text-xs text-brand">
+                                  {initials(candidate.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium hover:text-brand">{candidate.name}</span>
+                            </Link>
+                          }
+                        />
+                        <HoverCardContent className="w-64 p-3" side="right" align="start">
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">{candidate.name}</p>
+                            <p className="text-xs text-muted-foreground">{candidate.email}</p>
+                            <div className="flex items-center gap-2 text-xs">
+                              <StatusBadge status={application.status} />
+                            </div>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{candidate.email}</TableCell>
+                    <TableCell className="max-w-[220px] truncate text-muted-foreground">
+                      {candidate.email}
+                    </TableCell>
                     <TableCell className="max-w-[160px] truncate">{job?.title}</TableCell>
                     <TableCell>
                       <StatusBadge status={application.status} />
                     </TableCell>
                     <TableCell>
                       {shortlisted ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <PhosphorIcon name="CheckCircle2" className="h-4 w-4 text-emerald-600" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-red-400" />
+                        <PhosphorIcon name="XCircle" className="h-4 w-4 text-red-400" />
                       )}
                     </TableCell>
                     <TableCell>
                       {interviewed ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <PhosphorIcon name="CheckCircle2" className="h-4 w-4 text-emerald-600" />
                       ) : (
                         <span className="text-xs text-muted-foreground">Pending</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(application.createdAt)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">
+                      {formatDate(application.createdAt)}
+                    </TableCell>
                   </TableRow>
                 );
               })
@@ -208,9 +266,19 @@ export function CandidatesTable() {
         </Table>
       </div>
       ) : null}
-      <p className="text-right text-sm text-muted-foreground">
-        Showing {filtered.length} application{filtered.length !== 1 ? "s" : ""}
-      </p>
+      <div className="flex items-center justify-between gap-4 pt-2">
+        <p className="text-sm text-muted-foreground">
+          {filtered.length} application{filtered.length !== 1 ? "s" : ""}
+        </p>
+        {filtered.length > 20 ? (
+          <Pagination className="w-auto">
+            <PaginationContent>
+              <PaginationItem><PaginationPrevious href="#" onClick={(e) => e.preventDefault()} /></PaginationItem>
+              <PaginationItem><PaginationNext href="#" onClick={(e) => e.preventDefault()} /></PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        ) : null}
+      </div>
     </FadeIn>
   );
 }

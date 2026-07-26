@@ -1,18 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import type { EligibilityRule } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-interface EligibilityEvaluator {
-  fieldKey: string;
-  rule: EligibilityRule;
-  meetsCondition: boolean;
-  currentValue: string | number | undefined;
-}
 
 interface EligibilityPreviewProps {
   rules: EligibilityRule[];
@@ -67,102 +58,81 @@ export function EligibilityPreview({
   if (rules.length === 0) return null;
 
   // Icon and text color
-  const IconComponent = allMet
-    ? CheckCircle2
-    : someMet
-      ? AlertTriangle
-      : XCircle;
+  const iconName = allMet ? "CheckCircle" : someMet ? "Warning" : "Circle";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={className}
+    <section
+      className={cn("rounded-2xl border border-stone-200 bg-stone-50 p-4", className)}
+      aria-live="polite"
     >
-      <Card
-        className={cn(
-          "border",
-          allMet
-            ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20"
-            : someMet
-              ? "border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20"
-              : "border-red-300 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20",
-        )}
-      >
-        <CardContent className="space-y-3 p-4">
-          {/* Summary */}
-          <div className="flex items-start gap-2">
-            <IconComponent
+      <div className="space-y-4">
+        <div className="flex items-start gap-2">
+          <PhosphorIcon
+            name={iconName}
+            className={cn(
+              "h-5 w-5 shrink-0 mt-0.5",
+              allMet
+                ? "text-emerald-700"
+                : someMet
+                ? "text-amber-700"
+                : "text-slate-500",
+            )}
+            aria-hidden
+          />
+          <div>
+            <p
               className={cn(
-                "h-5 w-5 shrink-0 mt-0.5",
+                "text-sm font-medium",
                 allMet
-                  ? "text-emerald-600 dark:text-emerald-400"
+                  ? "text-emerald-900"
                   : someMet
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-red-600 dark:text-red-400",
+                  ? "text-amber-900"
+                  : "text-slate-900",
               )}
-              aria-hidden
-            />
-            <div>
-              <p
-                className={cn(
-                  "text-sm font-medium",
-                  allMet
-                    ? "text-emerald-800 dark:text-emerald-200"
-                    : someMet
-                      ? "text-amber-800 dark:text-amber-200"
-                      : "text-red-800 dark:text-red-200",
-                )}
-              >
-                {allMet
-                  ? "You meet the eligibility criteria"
-                  : someMet
-                    ? "Some eligibility criteria not met"
-                    : "Eligibility criteria not met"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {allMet
-                  ? "If you proceed, you'll receive an interview link after submitting."
-                  : "Review the requirements below before submitting your application."}
-              </p>
-            </div>
+            >
+              {allMet
+                ? "You meet the eligibility criteria"
+                : someMet
+                ? "Some eligibility criteria not met"
+                : "Complete the fields to check eligibility"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {allMet
+                ? "If you proceed, you'll receive an interview link after submitting."
+                : "Review the requirements below before submitting your application."}
+            </p>
           </div>
+        </div>
 
-          {/* Rules */}
-          <div className="space-y-2">
-            {evaluations.map((ev) => (
-              <motion.div
-                key={ev.rule.fieldKey}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-start gap-2 rounded-lg bg-background/60 p-2.5"
-              >
-                {ev.meetsCondition ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500 mt-0.5" />
-                ) : (
-                  <XCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium">
-                    {ev.rule.label}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {ev.meetsCondition
-                      ? "✓ Requirement satisfied"
-                      : `Requires ${ev.rule.operator} ${ev.rule.value}${
-                          typeof ev.rule.value === "number" ? "" : ""
-                        }`}
-                  </p>
-                </div>
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {ev.currentValue != null ? String(ev.currentValue) : "—"}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+        <div className="divide-y divide-stone-200 border-t border-stone-200">
+          {evaluations.map((ev) => (
+            <div key={ev.rule.fieldKey} className="flex items-start gap-3 py-3">
+              {ev.meetsCondition ? (
+                <PhosphorIcon
+                  name="CheckCircle"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700"
+                />
+              ) : (
+                <PhosphorIcon
+                  name="Circle"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium">{ev.rule.label}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {ev.meetsCondition
+                    ? "Requirement satisfied"
+                    : `Requires ${ev.rule.operator} ${ev.rule.value}`}
+                </p>
+              </div>
+              <span className="text-[10px] text-muted-foreground shrink-0">
+                {ev.currentValue != null ? String(ev.currentValue) : "Not provided"}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

@@ -38,7 +38,13 @@ export default function OffersPage() {
   if (!hydrated) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl space-y-6">
+      <header className="border-b border-slate-200 pb-6">
+        <h1>Offers</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          HireLoop owns the interview. You own the offer.
+        </p>
+      </header>
       <Card className="border-border shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Create offer draft</CardTitle>
@@ -46,8 +52,9 @@ export default function OffersPage() {
         <CardContent>
           <form onSubmit={(e) => void submit(e)} className="space-y-4">
             <div className="space-y-2">
-              <Label>Candidate application</Label>
+              <Label htmlFor="offer-application">Candidate application</Label>
               <select
+                id="offer-application"
                 name="applicationId"
                 required
                 className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
@@ -55,23 +62,23 @@ export default function OffersPage() {
                 <option value="">Select candidate</option>
                 {rows.map(({ application, candidate, job }) => (
                   <option key={application.id} value={application.id}>
-                    {candidate?.name ?? "Unknown"} — {job?.title ?? "Unknown role"}
+                    {candidate?.name ?? "Unknown"} · {job?.title ?? "Unknown role"}
                   </option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Compensation summary</Label>
-              <Input name="compensationLabel" required placeholder="₹32L CTC + benefits" />
+              <Label htmlFor="offer-compensation">Compensation summary</Label>
+              <Input id="offer-compensation" name="compensationLabel" required placeholder="₹32L CTC + benefits" />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Start date</Label>
-                <Input name="startDate" type="date" />
+                <Label htmlFor="offer-start-date">Start date</Label>
+                <Input id="offer-start-date" name="startDate" type="date" />
               </div>
               <div className="space-y-2">
-                <Label>Offer expires</Label>
-                <Input name="expiresAt" type="datetime-local" />
+                <Label htmlFor="offer-expires-at">Offer expires</Label>
+                <Input id="offer-expires-at" name="expiresAt" type="datetime-local" />
               </div>
             </div>
             <Button type="submit" disabled={loading} className="rounded-full bg-brand hover:bg-brand/90">

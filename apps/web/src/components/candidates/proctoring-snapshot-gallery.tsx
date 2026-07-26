@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, ZoomIn } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { getProctoringSnapshotUrlAction } from "@/app/actions/hireloop";
 import type { ProctoringLogEntry } from "@/lib/types";
 import { formatDate } from "@/lib/format";
@@ -53,14 +53,14 @@ export function ProctoringSnapshotThumb({
     >
       {loading ? (
         <div className="flex h-full items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <PhosphorIcon name="Loader2" className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       ) : url ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={url} alt="Proctoring snapshot" className="h-full w-full object-cover" />
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
-            <ZoomIn className="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+            <PhosphorIcon name="ZoomIn" className="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
           </div>
         </>
       ) : (

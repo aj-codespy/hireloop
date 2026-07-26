@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, Search, Building2 } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { getAdminRouteMeta } from "@/lib/navigation/admin-routes";
 import { useOrgPermissions } from "@/hooks/use-org-permissions";
 import { ButtonLink } from "@/components/ui/button-link";
-import { Input } from "@/components/ui/input";
 import { OrgSwitcher } from "@/components/layout/org-switcher";
+import { MobileAppSidebar } from "@/components/layout/app-sidebar";
+import { CommandPalette } from "@/components/layout/command-palette";
 
 export function AppHeader({
   showSearch = true,
@@ -20,6 +21,7 @@ export function AppHeader({
   const pathname = usePathname();
   const meta = getAdminRouteMeta(pathname);
   const { canManageJobs } = useOrgPermissions();
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   function submitSearch(e: React.FormEvent<HTMLFormElement>) {
@@ -29,7 +31,8 @@ export function AppHeader({
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-card px-6">
+    <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-3 pt-[env(safe-area-inset-top)] sm:px-5 lg:px-6">
+      <MobileAppSidebar />
       <div className="min-w-0 flex-1">
         {pathname === "/admin" && meta ? (
           <div>
@@ -37,22 +40,15 @@ export function AppHeader({
             <p className="truncate text-xs text-muted-foreground">{meta.description}</p>
           </div>
         ) : showSearch ? (
-          <form onSubmit={submitSearch} className="relative w-full max-w-md">
-            <Search
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search candidates…"
-              aria-label="Search candidates"
-              className="h-9 rounded-full border-border bg-muted/50 pl-9 shadow-none focus-visible:ring-brand"
-            />
-            <span className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 text-[10px] text-muted-foreground sm:inline">
-              ⌘K
-            </span>
-          </form>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="flex h-10 w-full max-w-md items-center gap-2 rounded-full border border-border bg-muted/50 px-4 text-sm text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-brand sm:block"
+          >
+            <PhosphorIcon name="Search" className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Search candidates…</span>
+            <span className="pointer-events-none ml-auto text-[10px] text-muted-foreground">⌘K</span>
+          </button>
         ) : null}
       </div>
 
@@ -61,13 +57,15 @@ export function AppHeader({
         {showCreateJob && canManageJobs ? (
           <ButtonLink
             href="/admin/jobs/new"
-            className="h-9 gap-1.5 rounded-full bg-brand px-4 text-brand-foreground shadow-sm hover:bg-brand/90"
+            aria-label="Create job"
+            className="h-10 gap-1.5 bg-brand px-4 text-brand-foreground shadow-sm hover:bg-[#ea6b2d]"
           >
-            <Plus className="h-4 w-4" aria-hidden />
-            Create job
+            <PhosphorIcon name="Plus" />
+            <span className="hidden sm:inline">Create job</span>
           </ButtonLink>
         ) : null}
       </div>
+      <CommandPalette />
     </header>
   );
 }

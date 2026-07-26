@@ -13,6 +13,7 @@ import {
   mapJobRole,
   mapOrganization,
   mapQuestion,
+  mapScorecard,
   questionInputToRow,
 } from "@/lib/supabase/mappers";
 import type {
@@ -22,6 +23,7 @@ import type {
   FormResponseValue,
   JobRole,
   Organization,
+  Scorecard,
 } from "@/lib/types";
 
 function db() {
@@ -38,6 +40,7 @@ export async function fetchHireLoopState(scopeOrgId?: string): Promise<HireLoopS
     { data: candidateRows, error: candidateError },
     { data: applicationRows, error: applicationError },
     { data: sessionRows, error: sessionError },
+    { data: scorecardRows, error: scorecardError },
   ] = await Promise.all([
     supabase.from("organizations").select("*").order("created_at", { ascending: true }),
     supabase.from("job_roles").select("*").order("created_at", { ascending: false }),
@@ -45,10 +48,17 @@ export async function fetchHireLoopState(scopeOrgId?: string): Promise<HireLoopS
     supabase.from("candidates").select("*").order("created_at", { ascending: false }),
     supabase.from("applications").select("*").order("created_at", { ascending: false }),
     supabase.from("interview_sessions").select("*").order("created_at", { ascending: false }),
+    supabase.from("scorecards").select("*").order("submitted_at", { ascending: false }),
   ]);
 
   const error =
-    orgError ?? jobError ?? questionError ?? candidateError ?? applicationError ?? sessionError;
+      orgError ??
+      jobError ??
+      questionError ??
+      candidateError ??
+      applicationError ??
+      sessionError ??
+      scorecardError;
   if (error) throw new Error(error.message);
 
   let organization =
@@ -94,6 +104,8 @@ export async function fetchHireLoopState(scopeOrgId?: string): Promise<HireLoopS
     .map(mapInterviewSession)
     .filter((s) => !scopeOrgId || applicationIds.has(s.applicationId));
 
+  const scorecards = (scorecardRows ?? []).map(mapScorecard);
+
   return {
     organization,
     jobs: scopedJobs,
@@ -101,6 +113,7 @@ export async function fetchHireLoopState(scopeOrgId?: string): Promise<HireLoopS
     candidates,
     applications,
     interviewSessions,
+    scorecards,
   };
 }
 

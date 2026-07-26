@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldAlert } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -15,21 +15,22 @@ export function ConsentScreen({ onAccept }: { onAccept: () => void }) {
   const ready = continuousWebcam && aiSurveillance && environment && honesty;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
-      <div className="space-y-2 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-          <ShieldAlert className="h-6 w-6 text-red-600" />
+    <section className="mx-auto max-w-2xl rounded-3xl border border-stone-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)] sm:p-8">
+      <div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50">
+          <PhosphorIcon name="ShieldAlert" className="h-6 w-6 text-[#F97316]" />
         </div>
-        <h2 className="text-xl font-semibold text-primary">Strict proctored interview</h2>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          This interview uses continuous webcam surveillance and AI vision analysis — not just
+        <p className="mt-5 text-sm font-semibold text-[#F97316]">Consent</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Proctored interview</h2>
+        <p className="mt-3 text-sm leading-7 text-slate-600">
+          This interview uses continuous webcam surveillance and AI vision analysis, not just
           browser checks. Phones, notes, extra people, and suspicious behavior are detected and
           logged.
         </p>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-red-200 bg-red-50/30 p-5 text-left">
-        <div className="flex items-start gap-3">
+      <div className="mt-7 divide-y divide-stone-200 rounded-2xl border border-stone-200 bg-stone-50 px-5">
+        <div className="flex min-h-16 items-start gap-3 py-4">
           <Checkbox
             id="webcam"
             checked={continuousWebcam}
@@ -40,7 +41,7 @@ export function ConsentScreen({ onAccept }: { onAccept: () => void }) {
             My video feed is analyzed in real time and periodic AI snapshots are taken.
           </Label>
         </div>
-        <div className="flex items-start gap-3">
+        <div className="flex min-h-16 items-start gap-3 py-4">
           <Checkbox
             id="ai"
             checked={aiSurveillance}
@@ -51,7 +52,7 @@ export function ConsentScreen({ onAccept }: { onAccept: () => void }) {
             people, and looking away. Violations are recorded and may flag my session.
           </Label>
         </div>
-        <div className="flex items-start gap-3">
+        <div className="flex min-h-16 items-start gap-3 py-4">
           <Checkbox
             id="environment"
             checked={environment}
@@ -62,7 +63,7 @@ export function ConsentScreen({ onAccept }: { onAccept: () => void }) {
             desk with no phones or unauthorized materials in view (including below the laptop).
           </Label>
         </div>
-        <div className="flex items-start gap-3">
+        <div className="flex min-h-16 items-start gap-3 py-4">
           <Checkbox id="honesty" checked={honesty} onCheckedChange={(v) => setHonesty(!!v)} />
           <Label htmlFor="honesty" className="leading-relaxed">
             I confirm I will complete this interview alone without unauthorized assistance.
@@ -71,12 +72,12 @@ export function ConsentScreen({ onAccept }: { onAccept: () => void }) {
       </div>
 
       <Button
-        className="w-full bg-brand text-brand-foreground hover:bg-brand/90"
+        className="mt-7 h-11 w-full rounded-full bg-[#F97316] px-6 font-semibold text-white hover:bg-[#EA6B2D]"
         disabled={!ready}
         onClick={onAccept}
       >
-        I agree — continue to proctoring setup
+        I agree and want to continue
       </Button>
-    </div>
+    </section>
   );
 }

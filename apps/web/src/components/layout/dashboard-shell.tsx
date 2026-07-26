@@ -12,11 +12,15 @@ export function DashboardShell({
   showCreateJob?: boolean;
 }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-muted/30">
+    <div className="flex h-dvh overflow-hidden bg-muted/30">
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AppHeader showSearch={showSearch} showCreateJob={showCreateJob} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 scroll-pt-6 overflow-y-auto overscroll-contain px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-6 lg:px-8"
+        >
           <AdminPageFrame>{children}</AdminPageFrame>
         </main>
       </div>

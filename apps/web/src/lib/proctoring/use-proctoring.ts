@@ -337,15 +337,15 @@ export function useProctoring({
       if (faceCount > 1) {
         noFaceSinceRef.current = null;
         noFaceEscalationRef.current = 0;
-        // Report once per 15s while multiple faces stay in view — not every tick.
-        if (Date.now() - multiFaceLastReportRef.current > 15_000) {
-          multiFaceLastReportRef.current = Date.now();
-          reportViolation(
-            "multiple_faces",
-            "critical",
-            `${faceCount} faces detected — only you should be visible`
-          );
-        }
+        // Report once per 15s while multiple faces stay in view &mdash; not every tick.
+                if (Date.now() - multiFaceLastReportRef.current > 15_000) {
+                  multiFaceLastReportRef.current = Date.now();
+                  reportViolation(
+                    "multiple_faces",
+                    "critical",
+                    `${faceCount} faces detected &mdash; only you should be visible`
+                  );
+                }
         return;
       }
 
@@ -359,10 +359,10 @@ export function useProctoring({
         if (hiddenFor >= PROCTORING.noFaceGraceMs && noFaceEscalationRef.current === 0) {
           noFaceEscalationRef.current = 1;
           reportViolation(
-            "no_face",
-            "warning",
-            "Face not visible — stay centered in front of the camera"
-          );
+                      "no_face",
+                      "warning",
+                      "Face not visible &mdash; stay centered in front of the camera"
+                    );
         }
       } else {
         if (noFaceSinceRef.current !== null && noFaceEscalationRef.current > 0) {
@@ -392,8 +392,8 @@ export function useProctoring({
               isPhone ? "phone_detected" : "prohibited_object",
               isPhone ? "critical" : "warning",
               isPhone
-                ? "Mobile phone detected in view — put it away immediately"
-                : `Prohibited item in view: ${name} — remove it from your desk`
+                              ? "Mobile phone detected in view &mdash; put it away immediately"
+                              : `Prohibited item in view: ${name} &mdash; remove it from your desk`
             );
           }
         }

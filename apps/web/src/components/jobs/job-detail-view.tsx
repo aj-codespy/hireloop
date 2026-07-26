@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { toast } from "sonner";
 import {
   useJob,
@@ -112,7 +112,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                   className="rounded-full"
                   onClick={() => setEditingDetails(true)}
                 >
-                  <Pencil className="mr-1 h-3.5 w-3.5" />
+                  <PhosphorIcon name="Pencil" className="mr-1 h-3.5 w-3.5" />
                   Edit
                 </Button>
               ) : null}
@@ -169,8 +169,8 @@ export function JobDetailView({ jobId }: { jobId: string }) {
             <Card className="border-border shadow-card">
               <CardContent className="py-4 text-center">
                 <p className="text-2xl font-bold">
-                  {job.passingScore != null ? `${job.passingScore}/10` : "—"}
-                </p>
+                                  {job.passingScore != null ? `${job.passingScore}/10` : "&mdash;"}
+                                </p>
                 <p className="text-xs text-muted-foreground">Pass threshold</p>
               </CardContent>
             </Card>
@@ -189,7 +189,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                   className="rounded-full"
                   onClick={() => setEditingQuestions(true)}
                 >
-                  <Pencil className="mr-1 h-3.5 w-3.5" />
+                  <PhosphorIcon name="Pencil" className="mr-1 h-3.5 w-3.5" />
                   Edit
                 </Button>
               ) : null}
@@ -259,7 +259,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                   className="rounded-full"
                   onClick={() => setEditingForm(true)}
                 >
-                  <Pencil className="mr-1 h-3.5 w-3.5" />
+                  <PhosphorIcon name="Pencil" className="mr-1 h-3.5 w-3.5" />
                   Edit
                 </Button>
               ) : null}
@@ -310,7 +310,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                   className="rounded-full"
                   onClick={() => setEditingRules(true)}
                 >
-                  <Pencil className="mr-1 h-3.5 w-3.5" />
+                  <PhosphorIcon name="Pencil" className="mr-1 h-3.5 w-3.5" />
                   Edit
                 </Button>
               ) : null}
@@ -337,7 +337,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                   <div>
                     <p className="font-medium">Eligibility rules</p>
                     {job.eligibilityRules.length === 0 ? (
-                      <p className="mt-1 text-muted-foreground">None — all applicants accepted.</p>
+                      <p className="mt-1 text-muted-foreground">None &mdash; all applicants accepted.</p>
                     ) : (
                       <ul className="mt-2 space-y-1">
                         {job.eligibilityRules.map((r, i) => (
@@ -368,8 +368,8 @@ export function JobDetailView({ jobId }: { jobId: string }) {
             <CardContent className="p-0">
               {applicants.length === 0 ? (
                 <p className="p-6 text-sm text-muted-foreground">
-                  No applicants yet — share the link above.
-                </p>
+                                  No applicants yet &mdash; share the link above.
+                                </p>
               ) : (
                 <ul className="divide-y divide-border">
                   {applicants.map(({ candidate, application }) => (

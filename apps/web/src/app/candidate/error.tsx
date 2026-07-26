@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export default function CandidateError({
   error,
@@ -14,34 +15,35 @@ export default function CandidateError({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 dark:bg-gray-900">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-        <h2 className="mb-2 text-2xl font-bold text-red-600 dark:text-red-400">
-          Interview System Failure
-        </h2>
-        <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-          We encountered an error while loading your interview session. This might be due to a temporary network issue or server disruption.
+    <main className="flex min-h-[100dvh] items-center justify-center bg-stone-50 px-5 py-12">
+      <div className="w-full max-w-md rounded-3xl border border-red-100 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)]">
+        <p className="text-sm font-semibold text-red-700">Session interrupted</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+          Your interview couldn&apos;t load
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          This may be a temporary connection issue. Retry the session before refreshing the page.
         </p>
         {error.message && (
-          <div className="mb-4 rounded border border-red-100 bg-red-50 p-3 text-xs text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300">
-            <strong>Diagnostic Info:</strong> {error.message}
+          <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-4 text-xs leading-5 text-red-800">
+            <strong>Details:</strong> {error.message}
           </div>
         )}
-        <div className="flex flex-col gap-2">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             onClick={() => reset()}
-            className="w-full rounded bg-blue-600 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            className="min-h-11 flex-1 rounded-full bg-[#F97316] px-5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#EA6B2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2"
           >
-            Retry Loading Session
+            Retry session
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="w-full rounded border border-gray-300 bg-transparent py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="min-h-11 flex-1 rounded-full border border-stone-200 bg-white px-5 text-sm font-semibold text-slate-900 transition-colors duration-200 hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2"
           >
-            Refresh Page
+            Refresh page
           </button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

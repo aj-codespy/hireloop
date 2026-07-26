@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Link2, Plus, Trash2 } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { toast } from "sonner";
 import {
   useHireLoop,
@@ -40,7 +40,7 @@ import {
 const STEPS = [
   { label: "Job details", description: "Define the role candidates will see." },
   { label: "Application form", description: "Collect the information you need to screen fairly." },
-  { label: "Interview questions", description: "Build your question pool — mandatory always run; others are sampled." },
+  { label: "Interview questions", description: "Build your question pool. Mandatory questions always run; others are sampled." },
   { label: "Rules & thresholds", description: "Set pass rules and who advances automatically." },
   { label: "Publish", description: "Review and publish. Share the apply link when you're ready." },
 ];
@@ -193,7 +193,7 @@ export function JobCreationWizard() {
               }`}
               aria-current={i === step ? "step" : undefined}
             >
-              {i < step ? <Check className="h-3 w-3" aria-hidden /> : <span>{i + 1}</span>}
+              {i < step ? <PhosphorIcon name="Check" /> : <span>{i + 1}</span>}
               {s.label}
             </button>
           ))}
@@ -209,12 +209,13 @@ export function JobCreationWizard() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Job title *</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Graduate Accountant" />
+                <Label htmlFor="new-job-title">Job title *</Label>
+                <Input id="new-job-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Graduate Accountant" />
               </div>
               <div className="space-y-2">
-                <Label>Description</Label>
+                <Label htmlFor="new-job-description">Description</Label>
                 <Textarea
+                  id="new-job-description"
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -233,7 +234,7 @@ export function JobCreationWizard() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Application form</CardTitle>
               <Button variant="outline" size="sm" className="rounded-full" onClick={addField}>
-                <Plus className="mr-1 h-4 w-4" />
+                <PhosphorIcon name="Plus" className="mr-1 h-4 w-4" />
                 Add field
               </Button>
             </CardHeader>
@@ -319,7 +320,7 @@ export function JobCreationWizard() {
                       size="icon"
                       onClick={() => setFormFields((prev) => prev.filter((f) => f.id !== field.id))}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <PhosphorIcon name="Trash2" className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -376,7 +377,7 @@ export function JobCreationWizard() {
                   </Button>
                 </div>
                 {rules.length === 0 ? (
-                  <p className="mt-3 text-sm text-muted-foreground">No rules — all applicants proceed to review.</p>
+                  <p className="mt-3 text-sm text-muted-foreground">No rules. All applicants proceed to review.</p>
                 ) : (
                   <div className="mt-3 space-y-2">
                     {rules.map((rule, i) => (
@@ -461,7 +462,7 @@ export function JobCreationWizard() {
                   </div>
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">
-                    No score gate — you decide pass/fail manually in admin.
+                    No score gate. You decide pass or fail manually in admin.
                   </p>
                 )}
               </div>
@@ -487,7 +488,7 @@ export function JobCreationWizard() {
           <Card className="border-border shadow-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-600" />
+                <PhosphorIcon name="Check" className="h-5 w-5 text-emerald-600" />
                 Job created
               </CardTitle>
             </CardHeader>
@@ -497,11 +498,11 @@ export function JobCreationWizard() {
               </p>
               <div className="flex gap-2">
                 <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-                  <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <PhosphorIcon name="Link2" className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="truncate">{getJobApplyUrl(createdJobId)}</span>
                 </div>
                 <Button className="rounded-full bg-brand hover:bg-brand/90" onClick={copyLink}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied ? <PhosphorIcon name="Check" className="h-4 w-4" /> : <PhosphorIcon name="Copy" className="h-4 w-4" />}
                 </Button>
               </div>
               <div className="flex gap-2 pt-2">

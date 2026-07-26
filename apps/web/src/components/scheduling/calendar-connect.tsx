@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle2, XCircle, ExternalLink, Loader2 } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { toast } from "sonner";
 
 type ConnectionStatus = "disconnected" | "connecting" | "connected";
@@ -62,7 +62,7 @@ export function CalendarConnect() {
     <Card className="border-border shadow-card">
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
+          <PhosphorIcon name="Calendar" className="h-4 w-4" />
           Calendar Integration
         </CardTitle>
       </CardHeader>
@@ -83,14 +83,14 @@ export function CalendarConnect() {
                 {conn.status === "connected" ? (
                   <div className="flex items-center gap-2 mt-0.5">
                     <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 text-[10px]">
-                      <CheckCircle2 className="h-3 w-3 mr-0.5" />
+                      <PhosphorIcon name="CheckCircle2" className="h-3 w-3 mr-0.5" />
                       Connected
                     </Badge>
                     <span className="text-xs text-muted-foreground">{conn.email}</span>
                   </div>
                 ) : (
                   <Badge className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 text-[10px] mt-0.5">
-                    <XCircle className="h-3 w-3 mr-0.5" />
+                    <PhosphorIcon name="XCircle" className="h-3 w-3 mr-0.5" />
                     Not connected
                   </Badge>
                 )}
@@ -107,7 +107,7 @@ export function CalendarConnect() {
                   onClick={() => handleDisconnect(conn.provider)}
                 >
                   {loading === conn.provider ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <PhosphorIcon name="Loader2" className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     "Disconnect"
                   )}
@@ -120,7 +120,7 @@ export function CalendarConnect() {
                   onClick={() => handleConnect(conn.provider)}
                 >
                   {loading === conn.provider ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                    <PhosphorIcon name="Loader2" className="h-3.5 w-3.5 animate-spin mr-1" />
                   ) : null}
                   Connect
                 </Button>
@@ -130,11 +130,11 @@ export function CalendarConnect() {
         ))}
 
         <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-          <p className="flex items-center gap-1">
-            <ExternalLink className="h-3 w-3" />
-            Calendar data is used only for availability — events are created only when interviews are scheduled.
-          </p>
-        </div>
+                  <p className="flex items-center gap-1">
+                    <PhosphorIcon name="ExternalLink" className="h-3 w-3" />
+                    Calendar data is used only for availability &mdash; events are created only when interviews are scheduled.
+                  </p>
+                </div>
       </CardContent>
     </Card>
   );

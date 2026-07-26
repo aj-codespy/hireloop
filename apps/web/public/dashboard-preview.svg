@@ -1,0 +1,15 @@
+<svg width="1440" height="900" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="900" fill="#FAFAF9"/>
+  <rect x="40" y="40" width="1360" height="820" rx="24" fill="#FFFFFF" stroke="#ECECEC" stroke-width="1"/>
+  <rect x="60" y="60" width="200" height="30" rx="6" fill="#F97316" opacity="0.15"/>
+  <rect x="60" y="110" width="400" height="24" rx="6" fill="#111827" opacity="0.08"/>
+  <rect x="60" y="144" width="300" height="24" rx="6" fill="#111827" opacity="0.08"/>
+  <rect x="60" y="190" width="180" height="180" rx="16" fill="#F97316" opacity="0.06"/>
+  <rect x="260" y="190" width="180" height="180" rx="16" fill="#F97316" opacity="0.06"/>
+  <rect x="460" y="190" width="180" height="180" rx="16" fill="#F97316" opacity="0.06"/>
+  <rect x="660" y="190" width="180" height="180" rx="16" fill="#F97316" opacity="0.06"/>
+  <rect x="60" y="400" width="780" height="200" rx="16" fill="#F97316" opacity="0.04"/>
+  <line x1="60" y1="440" x2="400" y2="440" stroke="#F97316" stroke-width="2" opacity="0.3"/>
+  <circle cx="120" cy="400" r="80" fill="#F97316" opacity="0.06"/>
+  <text x="60" y="660" font-family="system-ui" font-size="14" fill="#6B7280">Dashboard overview — placeholder</text>
+</svg>

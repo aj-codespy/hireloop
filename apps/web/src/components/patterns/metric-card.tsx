@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export function MetricCard({
   label,
@@ -20,7 +21,7 @@ export function MetricCard({
 }) {
   const inner = (
     <Card className={cn("border-border bg-surface-elevated interactive-card", className)}>
-      <CardContent className="flex items-start gap-4 p-5">
+      <CardContent className="flex items-start gap-4 p-6">
         {icon ? (
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-muted text-brand">
             {icon}
@@ -37,7 +38,7 @@ export function MetricCard({
 
   if (href) {
     return (
-      <Link href={href} className="block focus-ring rounded-xl">
+      <Link href={href} className="block rounded-[var(--radius-dashboard)] focus-ring">
         {inner}
       </Link>
     );

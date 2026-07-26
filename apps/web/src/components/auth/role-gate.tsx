@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useOrgPermissions } from "@/hooks/use-org-permissions";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 type MinRole = "admin" | "recruiter" | "viewer";
 
@@ -34,7 +35,10 @@ export function RoleGate({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12" role="status">
-        <p className="text-sm text-muted-foreground animate-pulse">Checking permissions…</p>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <PhosphorIcon name="Loader2" />
+          <span>Checking permissions</span>
+        </div>
       </div>
     );
   }

@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
-import { Clock, FileText, GripVertical } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { PipelineCandidate } from "@/hooks/useInterviewPipeline";
 import { StatusBadge } from "@/components/patterns/status-badge";
 import { HoverLift } from "@/components/motion/interactions";
@@ -64,7 +64,7 @@ export function CandidateCard({ candidate, isDragging }: CandidateCardProps) {
           className="absolute left-0 top-0 flex h-full w-6 cursor-grab items-center justify-center rounded-l-xl text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
           aria-label="Drag to reorder"
         >
-          <GripVertical className="h-4 w-4" />
+          <PhosphorIcon name="GripVertical" className="h-4 w-4" />
         </button>
 
         <div className="pl-4">
@@ -89,7 +89,7 @@ export function CandidateCard({ candidate, isDragging }: CandidateCardProps) {
             )}
             {hasResume && (
               <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                <FileText className="h-3 w-3" aria-hidden />
+                <PhosphorIcon name="FileText" />
                 CV
               </span>
             )}
@@ -97,7 +97,7 @@ export function CandidateCard({ candidate, isDragging }: CandidateCardProps) {
 
           {/* Footer: time in stage */}
           <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Clock className="h-3 w-3" aria-hidden />
+            <PhosphorIcon name="Clock" />
             <span>{daysLabel(createdAt)} in stage</span>
           </div>
         </div>

@@ -1,12 +1,21 @@
 import { Suspense } from "react";
 import { CandidateAuthForm } from "@/components/auth/candidate-auth-form";
+import { AuthPortalShell } from "@/components/auth/auth-portal-shell";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export default function CandidateSignupPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
-      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+    <AuthPortalShell portal="candidate">
+      <Suspense
+        fallback={
+          <div className="flex min-h-44 items-center gap-2 text-sm text-[#6B7280]" role="status">
+            <PhosphorIcon name="Loader2" />
+            <span>Loading profile setup</span>
+          </div>
+        }
+      >
         <CandidateAuthForm defaultTab="signup" />
       </Suspense>
-    </div>
+    </AuthPortalShell>
   );
 }

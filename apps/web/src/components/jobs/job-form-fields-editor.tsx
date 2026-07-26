@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { slugifyFieldKey, generateId } from "@/lib/id";
 import {
   DOCUMENT_FIELD_PRESETS,
@@ -137,13 +137,13 @@ export function JobFormFieldsEditor({
               type="button"
               onClick={() => setFields((prev) => prev.filter((f) => f.id !== field.id))}
             >
-              <Trash2 className="h-4 w-4" />
+              <PhosphorIcon name="Trash2" className="h-4 w-4" />
             </Button>
           </div>
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={addField}>
-        <Plus className="mr-1 h-4 w-4" />
+        <PhosphorIcon name="Plus" className="mr-1 h-4 w-4" />
         Add field
       </Button>
       <div className="flex gap-2 pt-2">

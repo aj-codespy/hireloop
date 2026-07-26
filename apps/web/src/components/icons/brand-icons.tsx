@@ -1,8 +1,9 @@
 import { cn } from "@/lib/utils";
+import { iconTokens } from "@/lib/design-tokens";
 
-type IconProps = { className?: string };
+type IconProps = { className?: string; strokeWidth?: number };
 
-function BaseIcon({ className, children }: IconProps & { children: React.ReactNode }) {
+function BaseIcon({ className, strokeWidth = iconTokens.strokeWidth, children }: IconProps & { children: React.ReactNode }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -16,159 +17,154 @@ function BaseIcon({ className, children }: IconProps & { children: React.ReactNo
   );
 }
 
-export function IconPipeline({ className }: IconProps) {
+export function IconDashboard({ className }: IconProps) {
   return (
-    <BaseIcon className={className}>
-      <rect x="3" y="4" width="5" height="16" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="9.5" y="8" width="5" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="16" y="12" width="5" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5" className="text-brand" />
-    </BaseIcon>
-  );
-}
-
-export function IconVoiceInterview({ className }: IconProps) {
-  return (
-    <BaseIcon className={className}>
-      <rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M6 11a6 6 0 0012 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M12 17v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="18" cy="8" r="2" className="fill-brand stroke-none" />
-    </BaseIcon>
-  );
-}
-
-export function IconProctoring({ className }: IconProps) {
-  return (
-    <BaseIcon className={className}>
-      <rect x="3" y="6" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="10" cy="11" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M17 9l4-2v10l-4-2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" className="text-brand" />
-    </BaseIcon>
-  );
-}
-
-export function IconScorecard({ className }: IconProps) {
-  return (
-    <BaseIcon className={className}>
-      <path d="M6 4h12v16H6z" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M9 9h6M9 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M15 17l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-brand" />
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <rect x="3" y="3" width="7" height="9" rx="1" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <rect x="14" y="3" width="7" height="9" rx="1" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <rect x="3" y="15" width="7" height="6" rx="1" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <rect x="14" y="15" width="7" height="6" rx="1" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
     </BaseIcon>
   );
 }
 
 export function IconJobBoard({ className }: IconProps) {
   return (
-    <BaseIcon className={className}>
-      <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M8 9h8M8 13h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="17" cy="7" r="2" className="fill-brand stroke-none" />
-    </BaseIcon>
-  );
-}
-
-export function IconScheduling({ className }: IconProps) {
-  return (
-    <BaseIcon className={className}>
-      <rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M4 10h16" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="9" cy="15" r="1.5" className="fill-brand stroke-none" />
-      <circle cx="15" cy="15" r="1.5" stroke="currentColor" strokeWidth="1.5" />
-    </BaseIcon>
-  );
-}
-
-export function IconDashboard({ className }: IconProps) {
-  return (
-    <BaseIcon className={className}>
-      <rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="13" y="3" width="8" height="5" rx="2" stroke="currentColor" strokeWidth="1.5" className="text-brand" />
-      <rect x="13" y="10" width="8" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="1.5" />
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M21 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 3v18h18" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 8h3" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 12h3" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 16h3" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
     </BaseIcon>
   );
 }
 
 export function IconCandidates({ className }: IconProps) {
   return (
-    <BaseIcon className={className}>
-      <circle cx="9" cy="8" r="3" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="17" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5" className="text-brand" />
-      <path d="M14 19c.3-2.2 1.8-3.5 4-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
     </BaseIcon>
   );
 }
 
-export function IconReports({ className }: IconProps) {
+export function IconPipeline({ className }: IconProps) {
   return (
-    <BaseIcon className={className}>
-      <path d="M4 20V8l6-4 6 4v12" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M9 20v-6h6v6" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12 8v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-brand" />
-    </BaseIcon>
-  );
-}
-
-export function IconCompliance({ className }: IconProps) {
-  return (
-    <BaseIcon className={className}>
-      <path d="M12 3l8 4v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-brand" />
-    </BaseIcon>
-  );
-}
-
-export function IconCompany({ className }: IconProps) {
-  return (
-    <BaseIcon className={className}>
-      <rect x="5" y="8" width="14" height="12" rx="1" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M9 8V6a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="10" y="13" width="4" height="7" className="fill-brand stroke-none" />
-    </BaseIcon>
-  );
-}
-
-export function IconSettings({ className }: IconProps) {
-  return (
-    <BaseIcon className={className}>
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        className="text-brand"
-      />
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M3 12h18" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+      <circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <circle cx="18" cy="12" r="3" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <path d="M9 9v6M15 9v6" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
     </BaseIcon>
   );
 }
 
 export function IconRequisitions({ className }: IconProps) {
   return (
-    <BaseIcon className={className}>
-      <path d="M7 4h10v16H7z" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M10 8h7M10 12h7M10 16h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="5" cy="8" r="1.5" className="fill-brand stroke-none" />
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+      <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+      <line x1="10" y1="9" x2="8" y2="9" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+    </BaseIcon>
+  );
+}
+
+export function IconScheduling({ className }: IconProps) {
+  return (
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <path d="M8 14h.01M12 14h.01M16 14h.01" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
     </BaseIcon>
   );
 }
 
 export function IconOffers({ className }: IconProps) {
   return (
-    <BaseIcon className={className}>
-      <path d="M4 8h16v11H4z" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M4 12h16" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12 8V5a2 2 0 00-2-2H8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-brand" />
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
     </BaseIcon>
   );
 }
 
 export function IconPeopleSearch({ className }: IconProps) {
   return (
-    <BaseIcon className={className}>
-      <circle cx="10" cy="10" r="5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M14.5 14.5L19 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-brand" />
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+      <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+      <path d="M9 11a2 2 0 1 1 4 0 2 2 0 0 1-4 0z" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+    </BaseIcon>
+  );
+}
+
+export function IconReports({ className }: IconProps) {
+  return (
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+      <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+      <polyline points="10 9 9 9 8 9" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+    </BaseIcon>
+  );
+}
+
+export function IconCompliance({ className }: IconProps) {
+  return (
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </BaseIcon>
+  );
+}
+
+export function IconSettings({ className }: IconProps) {
+  return (
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </BaseIcon>
+  );
+}
+
+export function IconCompany({ className }: IconProps) {
+  return (
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M22 21H2" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 3h5l-2 7h13l-3-7h5" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18 3v7" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 21v-7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v7" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </BaseIcon>
+  );
+}
+
+export function IconVoiceInterview({ className }: IconProps) {
+  return (
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+    </BaseIcon>
+  );
+}
+
+export function IconScorecard({ className }: IconProps) {
+  return (
+    <BaseIcon className={className} strokeWidth={iconTokens.strokeWidth}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+      <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
+      <polyline points="10 9 9 9 8 9" stroke="currentColor" strokeWidth={iconTokens.strokeWidth} strokeLinecap="round" />
     </BaseIcon>
   );
 }

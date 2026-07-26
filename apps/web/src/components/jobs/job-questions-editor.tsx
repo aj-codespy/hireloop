@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useRef, useEffect } from "react";
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import type { QuestionInput } from "@/lib/store/provider";
 import type { QuestionSection } from "@/lib/types";
 import { SECTION_LABELS } from "@/lib/constants";
@@ -183,7 +183,7 @@ export function JobQuestionsEditor({
               disabled={i === 0}
               aria-label="Move question up"
             >
-              <ChevronUp className="h-4 w-4" />
+              <PhosphorIcon name="ChevronUp" className="h-4 w-4" />
             </Button>
             <Button
               type="button"
@@ -194,7 +194,7 @@ export function JobQuestionsEditor({
               disabled={i === questions.length - 1}
               aria-label="Move question down"
             >
-              <ChevronDown className="h-4 w-4" />
+              <PhosphorIcon name="ChevronDown" className="h-4 w-4" />
             </Button>
           </div>
           <button
@@ -222,7 +222,7 @@ export function JobQuestionsEditor({
             onClick={() => setQuestions((prev) => prev.filter((_, j) => j !== i))}
             aria-label="Delete question"
           >
-            <Trash2 className="h-4 w-4" />
+            <PhosphorIcon name="Trash2" className="h-4 w-4" />
           </Button>
         </div>
         {isOpen ? (
@@ -377,7 +377,7 @@ export function JobQuestionsEditor({
               setNewlyAddedIndex(newIndex);
             }}
           >
-            <Plus className="mr-1 h-4 w-4" aria-hidden />
+            <PhosphorIcon name="Plus" />
             Add to {SECTION_LABELS[activeSection]}
           </Button>
         </aside>

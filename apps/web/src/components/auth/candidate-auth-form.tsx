@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export function CandidateAuthForm({ defaultTab = "signin" }: { defaultTab?: "signin" | "signup" }) {
   const router = useRouter();
@@ -97,21 +98,24 @@ export function CandidateAuthForm({ defaultTab = "signin" }: { defaultTab?: "sig
   }
 
   return (
-    <Card className="w-full max-w-md border-border shadow-card-hover">
-      <CardHeader className="text-center">
-        <div className="mb-4 flex justify-center">
+    <Card className="w-full max-w-md rounded-3xl border border-[#ECECEC] bg-white shadow-[0_12px_40px_rgba(15,15,15,0.08)]">
+      <CardHeader>
+        <div className="mb-5">
           <Logo href="/" />
         </div>
-        <CardTitle className="text-xl">Candidate account</CardTitle>
-        <CardDescription>
-          One profile for all your applications — apply to multiple jobs with a single ID
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#F97316]">
+          Candidate portal
+        </p>
+        <CardTitle className="mt-2 text-2xl font-bold tracking-[-0.025em]">Your applications, one profile</CardTitle>
+        <CardDescription className="text-sm leading-6 text-[#6B7280]">
+          Apply to multiple jobs, record interviews, and track your status from one place.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue={defaultTab}>
-          <TabsList className="mb-4 grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign in</TabsTrigger>
-            <TabsTrigger value="signup">Create profile</TabsTrigger>
+          <TabsList className="mb-5 grid min-h-12 w-full grid-cols-2 rounded-full bg-[#FAFAF9] p-1">
+            <TabsTrigger value="signin" className="min-h-10 rounded-full">Sign in</TabsTrigger>
+            <TabsTrigger value="signup" className="min-h-10 rounded-full">Create profile</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin" className="space-y-4">
@@ -120,18 +124,37 @@ export function CandidateAuthForm({ defaultTab = "signin" }: { defaultTab?: "sig
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" required className="h-11" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    className="h-12 rounded-xl border-[#ECECEC] focus-visible:border-[#F97316] focus-visible:ring-[#F97316]/20"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" name="password" type="password" required className="h-11" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    className="h-12 rounded-xl border-[#ECECEC] focus-visible:border-[#F97316] focus-visible:ring-[#F97316]/20"
+                  />
                 </div>
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="h-11 w-full rounded-full bg-brand text-brand-foreground hover:bg-brand/90"
+                  className="h-12 w-full rounded-full bg-[#F97316] font-semibold tracking-[0.02em] text-white hover:bg-[#EA6B2D]"
                 >
-                  {loading ? "Signing in…" : "Sign in with password"}
+                  {loading ? (
+                    <PhosphorIcon name="Loader2" />
+                  ) : null}
+                  <span>Sign in with password</span>
                 </Button>
               </form>
             ) : (
@@ -150,7 +173,8 @@ export function CandidateAuthForm({ defaultTab = "signin" }: { defaultTab?: "sig
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                className="h-11"
+                autoComplete="name"
+                className="h-12 rounded-xl border-[#ECECEC] focus-visible:border-[#F97316] focus-visible:ring-[#F97316]/20"
               />
             </div>
             <div className="space-y-2">
@@ -161,7 +185,9 @@ export function CandidateAuthForm({ defaultTab = "signin" }: { defaultTab?: "sig
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="h-11"
+                autoComplete="tel"
+                inputMode="tel"
+                className="h-12 rounded-xl border-[#ECECEC] focus-visible:border-[#F97316] focus-visible:ring-[#F97316]/20"
               />
             </div>
 
@@ -172,7 +198,16 @@ export function CandidateAuthForm({ defaultTab = "signin" }: { defaultTab?: "sig
                 <input type="hidden" name="phone" value={phone} />
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
-                  <Input id="signup-email" name="email" type="email" required className="h-11" />
+                  <Input
+                    id="signup-email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    className="h-12 rounded-xl border-[#ECECEC] focus-visible:border-[#F97316] focus-visible:ring-[#F97316]/20"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
@@ -182,8 +217,13 @@ export function CandidateAuthForm({ defaultTab = "signin" }: { defaultTab?: "sig
                     type="password"
                     required
                     minLength={8}
-                    className="h-11"
+                    autoComplete="new-password"
+                    aria-describedby="candidate-password-help"
+                    className="h-12 rounded-xl border-[#ECECEC] focus-visible:border-[#F97316] focus-visible:ring-[#F97316]/20"
                   />
+                  <p id="candidate-password-help" className="text-xs leading-5 text-[#6B7280]">
+                    Use at least 8 characters.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-confirm">Confirm password</Label>
@@ -193,15 +233,19 @@ export function CandidateAuthForm({ defaultTab = "signin" }: { defaultTab?: "sig
                     type="password"
                     required
                     minLength={8}
-                    className="h-11"
+                    autoComplete="new-password"
+                    className="h-12 rounded-xl border-[#ECECEC] focus-visible:border-[#F97316] focus-visible:ring-[#F97316]/20"
                   />
                 </div>
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="h-11 w-full rounded-full bg-brand text-brand-foreground hover:bg-brand/90"
+                  className="h-12 w-full rounded-full bg-[#F97316] font-semibold tracking-[0.02em] text-white hover:bg-[#EA6B2D]"
                 >
-                  {loading ? "Creating…" : "Create profile"}
+                  {loading ? (
+                    <PhosphorIcon name="Loader2" />
+                  ) : null}
+                  <span>Create profile</span>
                 </Button>
               </form>
             ) : (
@@ -216,7 +260,7 @@ export function CandidateAuthForm({ defaultTab = "signin" }: { defaultTab?: "sig
           </TabsContent>
         </Tabs>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className="mt-5 text-xs leading-6 text-[#6B7280]">
           Hiring team?{" "}
           <Link href="/admin/login" className="text-brand hover:underline">
             Admin sign in

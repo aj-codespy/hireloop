@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Briefcase, Handshake, UserPlus, Video } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { useApplicationRows, useHireLoop } from "@/lib/store/provider";
 import { useDashboardInsights } from "@/hooks/use-dashboard-insights";
 import { formatDate } from "@/lib/format";
@@ -25,6 +25,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { HoverLift } from "@/components/motion/interactions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 export function AdminDashboard() {
   const { hydrated, state } = useHireLoop();
@@ -36,28 +46,28 @@ export function AdminDashboard() {
       label: "Applications",
       value: insights.metrics.totalApplications,
       hint: insights.hints.applications,
-      icon: <UserPlus className="h-5 w-5" aria-hidden />,
+      icon: <PhosphorIcon name="UserPlus" />,
       href: "/admin/candidates",
     },
     {
       label: "Active jobs",
       value: insights.metrics.activeJobs,
       hint: insights.hints.activeJobs,
-      icon: <Briefcase className="h-5 w-5" aria-hidden />,
+      icon: <PhosphorIcon name="Briefcase" />,
       href: "/admin/jobs",
     },
     {
       label: "Interviewed",
       value: insights.metrics.interviewed,
       hint: insights.hints.interviewed,
-      icon: <Video className="h-5 w-5" aria-hidden />,
+      icon: <PhosphorIcon name="Video" />,
       href: "/admin/candidates",
     },
     {
       label: "Awaiting decision",
       value: insights.metrics.passedAi,
       hint: insights.hints.finalInterview,
-      icon: <Handshake className="h-5 w-5" aria-hidden />,
+      icon: <PhosphorIcon name="Handshake" className="h-5 w-5" aria-hidden />,
       href: "/admin/candidates",
     },
   ];
@@ -87,13 +97,16 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand/10 via-brand-muted/20 to-background p-6 sm:p-8 dark:from-brand/5 dark:via-brand-muted/10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,107,0,0.08),transparent_50%)] dark:bg-[radial-gradient(circle_at_30%_20%,rgba(255,107,0,0.12),transparent_50%)]" />
-        <div className="relative flex flex-wrap items-end justify-between gap-4">
+    <div className="min-w-0 space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-5 border-b border-slate-200 pb-6">
           <div>
-            <p className="text-caption">{state.organization.name}</p>
-            <h2 className="text-title">{insights.greeting}</h2>
+            <p className="mb-1 text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+              {state.organization.name}
+            </p>
+            <h1>{insights.greeting}</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Hiring activity, decisions, and pipeline health.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <ButtonLink href="/admin/jobs/new" variant="outline" className="rounded-full">
@@ -106,8 +119,7 @@ export function AdminDashboard() {
               Reports
             </ButtonLink>
           </div>
-        </div>
-      </div>
+      </header>
 
       <GlanceBar />
 
@@ -116,19 +128,19 @@ export function AdminDashboard() {
           title={`${insights.actionItems.length} item${insights.actionItems.length !== 1 ? "s" : ""} need attention`}
           description="Review these candidates and roles to keep hiring moving."
         >
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="divide-y divide-slate-200 sm:grid sm:grid-cols-2 sm:divide-x sm:divide-y-0">
             {insights.actionItems.map((item) => (
               <HoverLift key={item.id}>
                 <Link
                   href={item.href}
-                  className="interactive-card block rounded-xl border border-border bg-card p-4 focus-ring"
+                  className="block min-w-0 p-4 focus-ring"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-medium text-foreground">{item.title}</p>
                       <p className="mt-1 text-caption">{item.description}</p>
                     </div>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-brand" aria-hidden />
+                    <PhosphorIcon name="ArrowRight" />
                   </div>
                 </Link>
               </HoverLift>
@@ -137,7 +149,7 @@ export function AdminDashboard() {
         </SectionCard>
       ) : null}
 
-      <FadeInStagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <FadeInStagger className="grid border-y border-slate-200 sm:grid-cols-2 xl:grid-cols-4 xl:divide-x xl:divide-slate-200">
         {statCards.map((s) => (
           <FadeInItem key={s.label}>
             <AnimatedStat
@@ -203,16 +215,34 @@ export function AdminDashboard() {
                 return (
                   <TableRow key={application.id} className="group">
                     <TableCell>
-                      <Link
-                        href={`/admin/candidates/${candidate.id}`}
-                        className="font-medium transition-colors group-hover:text-brand focus-ring rounded-sm"
-                      >
-                        {candidate.name}
-                      </Link>
+                      <HoverCard>
+                        <HoverCardTrigger
+                          render={
+                            <Link
+                              href={`/admin/candidates/${candidate.id}`}
+                              className="font-medium transition-colors group-hover:text-brand focus-ring rounded-sm"
+                            >
+                              {candidate.name}
+                            </Link>
+                          }
+                        />
+                        <HoverCardContent className="w-72 p-4" side="right" align="start">
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">{candidate.name}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <StatusBadge status={application.status} />
+                              <span>{job?.title ?? ""}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Applied {formatDate(application.createdAt)}
+                            </p>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
                     </TableCell>
                     <TableCell className="max-w-[160px] truncate text-muted-foreground">
-                      {job?.title ?? "—"}
-                    </TableCell>
+                                          {job?.title ?? "&mdash;"}
+                                        </TableCell>
                     <TableCell>
                       <StatusBadge status={application.status} />
                     </TableCell>

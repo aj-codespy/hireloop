@@ -6,6 +6,7 @@ import {
   jobs,
   organization,
   questions,
+  scorecards,
 } from "@/lib/mock-data";
 
 /** Initial seed — loaded once when localStorage is empty */
@@ -27,5 +28,6 @@ export function seedState(): HireLoopState {
     candidates: [...candidates],
     applications: [...applications],
     interviewSessions: [...interviewSessions],
+    scorecards: [...scorecards],
   };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Loader2, Mic, ShieldAlert, Square, Volume2 } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { interviewWsUrl } from "@/lib/config";
 import { formatSeconds } from "@/lib/format";
 import {
@@ -83,8 +83,8 @@ export function InterviewStructured({
   const [questionMeta, setQuestionMeta] = useState("");
   const [questionIndex, setQuestionIndex] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
-  const [qTimer, setQTimer] = useState("—");
-  const [oTimer, setOTimer] = useState("—");
+  const [qTimer, setQTimer] = useState("&mdash;");
+  const [oTimer, setOTimer] = useState("&mdash;");
   const [error, setError] = useState<string | null>(null);
   const [reconnecting, setReconnecting] = useState(false);
   const [resumed, setResumed] = useState(false);
@@ -115,7 +115,6 @@ export function InterviewStructured({
   const [sessionReady, setSessionReady] = useState(false);
   const [timeUp, setTimeUp] = useState(false);
   const [lastSaved, setLastSaved] = useState<{ index: number; text: string } | null>(null);
-
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -285,7 +284,7 @@ export function InterviewStructured({
 
   async function startRecording() {
     if (blocked || timeUp) {
-      if (blocked) setError("Proctoring check failed — resolve the issue shown above to continue");
+      if (blocked) setError("Proctoring check failed. Resolve the issue shown above to continue.");
       return;
     }
     const audioTrack = mediaStream.getAudioTracks()[0];
@@ -465,8 +464,8 @@ export function InterviewStructured({
     setLockReason(null);
     setQuestionText("");
     setQuestionMeta("");
-    setQTimer("—");
-    setOTimer("—");
+    setQTimer("&mdash;");
+    setOTimer("&mdash;");
     completedRef.current = false;
 
     if (!isInterviewAudioUnlocked()) unlockInterviewAudio();
@@ -682,91 +681,89 @@ export function InterviewStructured({
       <div className="mx-auto max-w-3xl space-y-6">
         {sessionReady ? (
           <>
-            <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-800">
-              <ShieldAlert className="h-4 w-4 shrink-0" />
-              Strict proctoring active — face, objects, and screen monitored continuously
+            <div className="mb-6 flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-3 text-xs text-slate-600">
+              <PhosphorIcon name="ShieldAlert" className="h-4 w-4 shrink-0" />
+              Proctoring active. Face, objects, and screen activity are monitored continuously.
             </div>
 
             {resumed ? (
-              <p className="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                Welcome back — continuing from question {questionIndex + 1}.
+              <p className="mb-4 rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-slate-700" role="status">
+                Welcome back. Continuing from question {new Intl.NumberFormat().format(questionIndex + 1)}.
               </p>
             ) : null}
 
-            <div className="mb-2 flex justify-center gap-10 text-sm">
-              <div className="text-center">
-                <p className="text-muted-foreground">Question</p>
-                <p className="text-xl font-semibold text-primary">{qTimer}</p>
+            <div className="mb-5 grid grid-cols-2 divide-x divide-stone-200 rounded-2xl border border-stone-200 bg-white py-4 text-sm">
+              <div className="px-5">
+                <p className="text-xs text-slate-500">Question time</p>
+                <p className="mt-1 font-mono text-xl font-semibold text-slate-900">{qTimer}</p>
               </div>
-              <div className="text-center">
-                <p className="text-muted-foreground">Overall</p>
-                <p className="text-xl font-semibold text-primary">{oTimer}</p>
+              <div className="px-5">
+                <p className="text-xs text-slate-500">Overall time</p>
+                <p className="mt-1 font-mono text-xl font-semibold text-slate-900">{oTimer}</p>
               </div>
             </div>
           </>
         ) : null}
 
         {questionText ? (
-          <div className="mb-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <section className="mb-2 rounded-3xl border border-stone-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)] sm:p-8" aria-labelledby="current-question">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{questionMeta}</p>
-              <Volume2 className="h-4 w-4 text-muted-foreground" aria-hidden />
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#F97316]">{questionMeta}</p>
+              <PhosphorIcon name="Volume2" />
             </div>
-            <p className="text-base leading-relaxed">{questionText}</p>
-          </div>
+            <p id="current-question" className="mt-4 text-lg leading-8 text-slate-900">{questionText}</p>
+          </section>
         ) : null}
 
         {ttsBlocked || questionText ? (
           <div className="flex items-center justify-center">
-            <Button variant="outline" size="default" onClick={replayQuestionAudio}>
-              <Volume2 className="mr-2 h-4 w-4" />
+            <Button className="h-11 rounded-full px-5" variant="outline" onClick={replayQuestionAudio}>
+              <PhosphorIcon name="Volume2" className="mr-2 h-4 w-4" />
               {ttsBlocked ? "Play question audio" : "Replay question"}
             </Button>
           </div>
         ) : null}
 
-
-
         {timeUp && phase !== "done" ? (
-          <p className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-center text-sm text-amber-800">
-            Time is up for this question — saving your answer and moving on…
+          <p className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+            Time is up for this question. Saving your answer and moving on…
           </p>
         ) : null}
 
         {lastSaved ? (
-          <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-2 text-center text-xs text-emerald-800">
-            Answer to question {lastSaved.index + 1} saved ✓
+          <p className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800" role="status">
+            Answer to question {new Intl.NumberFormat().format(lastSaved.index + 1)} saved
           </p>
         ) : null}
 
         {error ? (
-          <p className="mb-4 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
+          <p className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{error}</p>
         ) : null}
 
         <div className="flex flex-col items-center gap-4 pt-2">
           {phase === "connecting" ? (
-            <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-10 py-12 shadow-sm">
-              <Loader2 className="h-8 w-8 animate-spin text-brand" />
+            <div className="flex w-full flex-col items-center gap-4 rounded-3xl border border-stone-200 bg-white px-6 py-12 shadow-[0_12px_40px_rgba(15,15,15,0.06)]">
+              <PhosphorIcon name="Loader2" className="h-8 w-8 animate-spin text-[#F97316] motion-reduce:animate-none" />
               <p className="text-base font-medium text-foreground">
                 {reconnecting ? "Reconnecting to your interview…" : "Preparing your interview…"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {reconnecting
-                  ? "Hold on — your progress is saved."
+                  ? "Your progress is saved."
                   : "Setting up your questions and the interviewer's voice."}
               </p>
             </div>
           ) : null}
 
           {phase === "error" ? (
-            <Button size="lg" onClick={() => void connect()}>
+            <Button className="h-11 rounded-full bg-[#F97316] px-6 text-white hover:bg-[#EA6B2D]" onClick={() => void connect()}>
               Retry connection
             </Button>
           ) : null}
 
           {phase === "done" ? (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <PhosphorIcon name="Loader2" className="h-4 w-4 animate-spin motion-reduce:animate-none" />
               Wrapping up your interview…
             </p>
           ) : null}
@@ -775,38 +772,37 @@ export function InterviewStructured({
             <>
               {!recording ? (
                 <Button
-                  size="lg"
-                  className="bg-brand text-brand-foreground hover:bg-brand/90"
+                  className="h-11 rounded-full bg-[#F97316] px-6 font-semibold text-white hover:bg-[#EA6B2D]"
                   disabled={phase === "submitting" || blocked || timeUp}
                   onClick={() => void startRecording()}
                 >
-                  <Mic className="mr-2 h-4 w-4" />
+                  <PhosphorIcon name="Mic" className="mr-2 h-4 w-4" />
                   Record answer
                 </Button>
               ) : (
-                <Button size="lg" variant="destructive" onClick={() => void stopRecording()}>
-                  <Square className="mr-2 h-4 w-4" />
-                  Stop &amp; submit
+                <Button className="h-11 rounded-full px-6" variant="destructive" onClick={() => void stopRecording()}>
+                  <PhosphorIcon name="Square" className="mr-2 h-4 w-4" />
+                  Stop and submit
                 </Button>
               )}
 
               {phase === "submitting" ? (
                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <PhosphorIcon name="Loader2" className="h-4 w-4 animate-spin motion-reduce:animate-none" />
                   Submitting your answer…
                 </p>
               ) : null}
 
               <Button
-                size="lg"
+                className="h-11 rounded-full px-6"
                 variant="outline"
                 disabled={recording || phase === "submitting" || blocked || skipping}
                 onClick={sendNextQuestion}
               >
                 {skipping ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <PhosphorIcon name="Loader2" className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
                 ) : (
-                  <ArrowRight className="mr-2 h-4 w-4" />
+                  <PhosphorIcon name="ArrowRight" className="mr-2 h-4 w-4" />
                 )}
                 {skipping
                   ? "Moving on…"
@@ -817,7 +813,7 @@ export function InterviewStructured({
 
               {!canProceed && !blocked ? (
                 <p className="text-xs text-amber-700">
-                  Camera preview is in the bottom-right — allow webcam access if you do not see yourself.
+                  Camera preview is in the bottom-right. Allow webcam access if you do not see yourself.
                 </p>
               ) : null}
             </>
@@ -827,7 +823,7 @@ export function InterviewStructured({
         <div
           className={cn(
             "mx-auto mt-6 h-2 w-32 rounded-full transition-colors",
-            recording ? "bg-red-500 animate-pulse" : "bg-muted"
+            recording ? "animate-pulse bg-red-500 motion-reduce:animate-none" : "bg-stone-200"
           )}
         />
       </div>

@@ -213,3 +213,23 @@ export interface FunnelStats {
   partnerReview: number;
   hired: number;
 }
+
+export type ScorecardRecommendation =
+  | "strong_yes"
+  | "yes"
+  | "hold"
+  | "no"
+  | "strong_no";
+
+export interface Scorecard {
+  id: string;
+  applicationId: string;
+  reviewerId: string;
+  recommendation: ScorecardRecommendation;
+  overallScore: number | null;
+  competencies: Record<string, unknown>;
+  notes: string | null;
+  submittedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -6,6 +6,7 @@ import type {
   JobRole,
   Organization,
   Question,
+  Scorecard,
   TranscriptEntry,
 } from "./types";
 
@@ -27,7 +28,7 @@ export const jobs: SeedJob[] = [
   {
     id: "job-1",
     orgId: "org-1",
-    title: "Graduate Accountant — Audit Track",
+    title: "Graduate Accountant &mdash; Audit Track",
     description:
       "Entry-level role for CA-intermediate candidates joining our audit practice. Strong reconciliation skills and client communication expected.",
     status: "live",
@@ -50,7 +51,7 @@ export const jobs: SeedJob[] = [
   {
     id: "job-2",
     orgId: "org-1",
-    title: "Financial Analyst — FP&A",
+    title: "Financial Analyst &mdash; FP&A",
     description: "Support monthly forecasting, variance analysis, and board reporting for portfolio companies.",
     status: "draft",
     passingScore: 7.5,
@@ -321,6 +322,21 @@ export const demoTranscript: TranscriptEntry[] = [
   { speaker: "candidate", text: "Thank you, I'm ready.", timestampOffsetSeconds: 8 },
   { speaker: "ai", text: "Walk me through how you'd reconcile a bank statement against the general ledger.", timestampOffsetSeconds: 12 },
   { speaker: "candidate", text: "I'd start by matching cleared transactions, then investigate unmatched items...", timestampOffsetSeconds: 25 },
+];
+
+export const scorecards: Scorecard[] = [
+  {
+    id: "sc-1",
+    applicationId: "app-1",
+    reviewerId: "user-1",
+    recommendation: "yes",
+    overallScore: 8.5,
+    competencies: { technical: 8, communication: 9, culture_fit: 8 },
+    notes: "Strong technical foundation, excellent communication. Would recommend for final round.",
+    submittedAt: "2026-06-26T10:00:00Z",
+    createdAt: "2026-06-26T10:00:00Z",
+    updatedAt: "2026-06-26T10:00:00Z",
+  },
 ];
 
 export const funnelStats: FunnelStats = {

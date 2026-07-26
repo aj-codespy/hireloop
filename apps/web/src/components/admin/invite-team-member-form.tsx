@@ -51,18 +51,18 @@ export function InviteTeamMemberForm() {
           <div className="space-y-2">
             <Label htmlFor="tm-role">Role</Label>
             <select
-              id="tm-role"
-              name="role"
-              defaultValue="recruiter"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="admin">Admin — full access</option>
-              <option value="recruiter">Recruiter — pipeline & candidates</option>
-              <option value="hiring_manager">Hiring manager — assigned-stage decisions</option>
-              <option value="interviewer">Interviewer — scorecards and feedback</option>
-              <option value="coordinator">Coordinator — scheduling and pipeline logistics</option>
-              <option value="reporting_viewer">Read-only analytics</option>
-            </select>
+                          id="tm-role"
+                          name="role"
+                          defaultValue="recruiter"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                          <option value="admin">Admin &mdash; full access</option>
+                          <option value="recruiter">Recruiter &mdash; pipeline & candidates</option>
+                          <option value="hiring_manager">Hiring manager &mdash; assigned-stage decisions</option>
+                          <option value="interviewer">Interviewer &mdash; scorecards and feedback</option>
+                          <option value="coordinator">Coordinator &mdash; scheduling and pipeline logistics</option>
+                          <option value="reporting_viewer">Read-only analytics</option>
+                        </select>
           </div>
           <Button type="submit" disabled={loading} className="rounded-full bg-brand hover:bg-brand/90">
             {loading ? "Sending invitation…" : "Send invitation"}

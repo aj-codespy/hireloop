@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Building2, ChevronDown, Check } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { cn } from "@/lib/utils";
 
 type Org = { id: string; name: string };
@@ -59,9 +59,9 @@ export function OrgSwitcher() {
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <Building2 className="h-4 w-4 shrink-0" />
+        <PhosphorIcon name="Building2" className="h-4 w-4 shrink-0" />
         <span className="max-w-[120px] truncate">{currentOrg?.name ?? "Select org"}</span>
-        <ChevronDown className={cn("h-3 w-3 transition-transform shrink-0", open && "rotate-180")} />
+        <PhosphorIcon name="ChevronDown" className={cn("h-3 w-3 transition-transform shrink-0", open && "rotate-180")}  />
       </button>
 
       {open && (
@@ -79,7 +79,7 @@ export function OrgSwitcher() {
             >
               {org.name}
               {org.id === currentOrg?.id && (
-                <Check className="h-3.5 w-3.5 text-brand" />
+                <PhosphorIcon name="Check" className="h-3.5 w-3.5 text-brand" />
               )}
             </button>
           ))}

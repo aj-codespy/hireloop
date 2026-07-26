@@ -3,7 +3,7 @@ import { formatScore } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Quote } from "lucide-react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export function ScoreBreakdown({
   overall,
@@ -91,7 +91,7 @@ export function ScoreBreakdown({
 
                   {answer && (
                     <div className="px-4 py-3 border-t border-border/50 bg-background flex gap-3">
-                      <Quote className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
+                      <PhosphorIcon name="Quote" className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
                       <p className="text-sm italic text-muted-foreground/90">{answer}</p>
                     </div>
                   )}

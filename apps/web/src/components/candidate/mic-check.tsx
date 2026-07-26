@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { useState } from "react";
+import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { unlockInterviewAudio } from "@/lib/interview/unlock-audio";
 import { Button } from "@/components/ui/button";
 
@@ -15,12 +15,6 @@ export function MicCheck({
   const [level, setLevel] = useState(0);
   const [status, setStatus] = useState<"idle" | "testing" | "ok" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      // cleanup handled on unmount via closure in startTest if needed
-    };
-  }, []);
 
   async function startTest() {
     setStatus("testing");
@@ -57,40 +51,48 @@ export function MicCheck({
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6 text-center">
-      <h2 className="text-xl font-semibold text-primary">Microphone check</h2>
-      <p className="text-sm text-muted-foreground">
+    <section className="mx-auto max-w-xl rounded-3xl border border-stone-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)] sm:p-8">
+      <p className="text-sm font-semibold text-[#F97316]">Audio setup</p>
+      <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Microphone check</h2>
+      <p className="mt-3 text-sm leading-6 text-slate-600">
         Speak normally for a few seconds so we can verify your mic is working.
       </p>
 
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+      <div className="mt-7 flex h-16 w-16 items-center justify-center rounded-full bg-stone-100">
         {status === "error" ? (
-          <MicOff className="h-8 w-8 text-destructive" />
+          <PhosphorIcon name="MicOff" className="h-8 w-8 text-destructive" />
         ) : (
-          <Mic className="h-8 w-8 text-primary" />
+          <PhosphorIcon name="Mic" className="h-8 w-8 text-slate-700" />
         )}
       </div>
 
-      <div className="mx-auto h-2 w-full max-w-xs overflow-hidden rounded-full bg-muted">
+      <div
+        className="mt-6 h-2 w-full overflow-hidden rounded-full bg-stone-100"
+        role="progressbar"
+        aria-label="Microphone level"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(level)}
+      >
         <div
-          className="h-full bg-primary transition-all duration-100"
+          className="h-full bg-[#F97316] transition-[width] duration-100 motion-reduce:transition-none"
           style={{ width: `${level}%` }}
         />
       </div>
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? <p className="mt-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{error}</p> : null}
       {status === "ok" ? (
-        <p className="text-sm text-emerald-700">Microphone looks good.</p>
+        <p className="mt-5 text-sm font-medium text-emerald-700" role="status">Microphone looks good.</p>
       ) : null}
 
-      <div className="flex justify-center gap-3">
+      <div className="mt-7 flex flex-col gap-3 sm:flex-row">
         {status !== "ok" ? (
-          <Button variant="outline" onClick={startTest} disabled={status === "testing"}>
+          <Button className="h-11 rounded-full px-5" variant="outline" onClick={startTest} disabled={status === "testing"}>
             {status === "testing" ? "Listening…" : "Test microphone"}
           </Button>
         ) : null}
         <Button
-          className="bg-brand text-brand-foreground hover:bg-brand/90"
+          className="h-11 rounded-full bg-[#F97316] px-6 font-semibold text-white hover:bg-[#EA6B2D]"
           disabled={status !== "ok"}
           onClick={() => {
             unlockInterviewAudio();
@@ -100,6 +102,6 @@ export function MicCheck({
           Start interview
         </Button>
       </div>
-    </div>
+    </section>
   );
 }
