@@ -1,13 +1,127 @@
+# ─── Secrets ───────────────────────────────────────
 .env
+.env.local
+*.pem
 
-# Generated artifacts
-test-results/
-.next/
+# ─── Node / Python deps ──────────────────────────
+node_modules/
 .venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
+.eggs/
+dist/
+build/
+
+# ─── Build artifacts ──────────────────────────────
+.next/
+out/
+.next.d/
+*.tsbuildinfo
+
+# ─── IDE / OS ──────────────────────────────────────
 .DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+
+# ─── Cache / Temp ──────────────────────────────────
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+test-results/
+.tmp/
+*.log
+logs/
+
+# ─── Database ──────────────────────────────────────
+dev.sqlite
+dev.sqlite-shm
+dev.sqlite-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# ─── Dev / Agent Artifacts ─────────────────────────
+.agents/
+.hermes/
+.superpowers/
+docs/
+scripts/
+prometheus.yml
+
+# ─── Design / Screenshots ──────────────────────────
+design/
+design-system/
+screenshots/
+DOCS-1-overviews/
+
+# ─── Planning docs ─────────────────────────────────
+CHANGELOG.md
+DEMO_SCRIPT.md
+HireLoop_Presentation_Content_Source.md
+HireLoop_Product_Specification_DeepDive.md
+MILESTONE4_AUDIT.md
+ORIGINAL_REQUEST.md
+PLAN-frontend-ux.md
+PLAN-*.md
+
+# ─── Root dev scripts ──────────────────────────────
+apply_migrations.py
+fix_tasks.py
+get_schema.py
+patch_relay.py
+patch_request.py
+patch_scoring.py
+seed_test_job.py
+seed_test_job_ca.py
+test_all_combos_real.py
+test_client.py
+test_correct.py
+test_db.py
+test_db_constraints.py
+test_download.py
+test_interview.py
+test_interview_5.py
+test_postgres_conn.py
+test_ssl.py
+test_supabase_storage.py
+test_uvicorn_cancel.py
+try_connect.py
+build_pptx.js
+install.sh
+
+# ─── Root design/style files ───────────────────────
+brand-guidelines.md
+design.md
+
+# ─── API ad-hoc test scripts ──────────────────────
+apps/api/test_*.py
+apps/api/fix_logging.py
+apps/api/test_loguru.py
+apps/api/test_proctor.py
+apps/api/test_structured_relay_proctoring.py
+apps/api/test_upload.py
+apps/api/test_download.py
+
+# ─── API runtime artifacts ─────────────────────────
+apps/api/logs/
+apps/api/frontend/
+
+# ─── Web nested monorepo artifact ──────────────────
+apps/web/apps/
+
+# ─── Web test snapshots ───────────────────────────
+apps/web/scripts/visual-regression/
+apps/web/scripts/visual-regression/test-results/
+
+# ─── Standalone demos ─────────────────────────────
+hero-demo.html
+demo-hero-image.png
+
+# ─── In-progress demo pages ──────────────────────
+apps/web/src/app/(demo)/demo2/
+apps/web/src/components/demo2/
