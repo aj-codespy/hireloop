@@ -198,7 +198,6 @@ export function JobDetailView({ jobId }: { jobId: string }) {
               {editingQuestions || (questions.length === 0 && canManageJobs) ? (
                 <JobQuestionsEditor
                   questions={questions.map(toQuestionInput)}
-                  interviewQuestionCount={job.interviewQuestionCount}
                   onSave={async (next, interviewQuestionCount) => {
                     const promise = setJobQuestions(jobId, next, interviewQuestionCount);
                     toast.promise(promise, {
