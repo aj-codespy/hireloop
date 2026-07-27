@@ -69,9 +69,17 @@ export function JobDetailView({ jobId }: { jobId: string }) {
             {job.updatedAt !== job.createdAt ? ` · Updated ${formatDate(job.updatedAt)}` : ""}
           </p>
         </div>
-        <ButtonLink href="/admin/jobs" variant="outline" className="rounded-full">
-          All jobs
-        </ButtonLink>
+        <div className="flex items-center gap-2">
+          {canManageJobs && (
+            <ButtonLink href={`/admin/jobs/new?clone=${job.id}`} variant="outline" className="rounded-full">
+              <PhosphorIcon name="copy" className="mr-2" size="sm" />
+              Duplicate job
+            </ButtonLink>
+          )}
+          <ButtonLink href="/admin/jobs" variant="outline" className="rounded-full">
+            All jobs
+          </ButtonLink>
+        </div>
       </div>
 
       <Card className="border-brand/20 bg-brand-muted/30 shadow-card">

@@ -202,6 +202,115 @@ export async function loadPublicOrgJobsAction(orgId: string): Promise<{
     return { ok: false, error: err instanceof Error ? err.message : "Failed to load organization jobs" };
   }
 }
+export async function getJobCloneDataAction(jobId: string): Promise<CreateJobInput | null | { ok: false; error: string }> {
+  try {
+    const { orgId } = await requireOrgRole(ORG_PIPELINE_ROLES);
+    const supabase = createAdminClient();
+
+    const { data: job } = await supabase
+      .from("job_roles")
+      .select("*")
+      .eq("id", jobId)
+      .eq("org_id", orgId)
+      .single();
+
+    if (!job) return null;
+
+    const { data: jobRounds } = await supabase
+      .from("job_rounds")
+      .select("*")
+      .eq("job_role_id", jobId)
+      .order("order_index", { ascending: true });
+
+    const { data: questions } = await supabase
+      .from("questions")
+      .select("*")
+      .eq("job_role_id", jobId)
+      .order("order_index", { ascending: true });
+
+    const roundInputs: import("@/lib/store/provider").RoundInput[] = [];
+
+    if (jobRounds && jobRounds.length > 0) {
+      for (const round of jobRounds) {
+        const roundQuestions = (questions || [])
+          .filter((q) => q.round_id === round.id)
+          .map((q) => ({
+            id: generateId("q"),
+            section: q.section,
+            promptText: q.prompt_text,
+            idealAnswerNotes: q.ideal_answer_notes,
+            timeLimitSeconds: q.time_limit_seconds,
+            scoreThreshold: q.score_threshold,
+            isActive: q.is_active,
+            isMandatory: q.is_mandatory,
+          }));
+
+        roundInputs.push({
+          id: generateId("round"),
+          title: round.title,
+          interviewType: round.interview_type,
+          passingScore: round.passing_score,
+          interviewQuestionCount: null,
+          questions: roundQuestions.length > 0 ? roundQuestions : [
+            {
+              section: "technical",
+              promptText: "",
+              idealAnswerNotes: "",
+              timeLimitSeconds: null,
+              scoreThreshold: null,
+              isActive: true,
+              isMandatory: false,
+            }
+          ],
+        });
+      }
+    } else {
+      // Legacy support: all questions in one ai round
+      if (questions && questions.length > 0) {
+        roundInputs.push({
+          id: generateId("round"),
+          title: "Round 1: AI Screen",
+          interviewType: "ai",
+          passingScore: null,
+          interviewQuestionCount: null,
+          questions: questions.map((q) => ({
+            id: generateId("q"),
+            section: q.section,
+            promptText: q.prompt_text,
+            idealAnswerNotes: q.ideal_answer_notes,
+            timeLimitSeconds: q.time_limit_seconds,
+            scoreThreshold: q.score_threshold,
+            isActive: q.is_active,
+            isMandatory: q.is_mandatory,
+          }))
+        });
+      }
+    }
+
+    return {
+      title: `${job.title} (Copy)`,
+      description: job.description || "",
+      status: "draft",
+      formFields: Array.isArray(job.form_fields) ? job.form_fields.map((f: any) => ({
+        id: generateId("f"),
+        fieldKey: f.fieldKey,
+        label: f.label,
+        type: f.type,
+        required: f.required,
+        order: f.order,
+        options: f.options,
+      })) : [],
+      eligibilityRules: Array.isArray(job.eligibility_rules) ? job.eligibility_rules : [],
+      passingScore: job.passing_score,
+      interviewQuestionCount: job.interview_question_count,
+      rounds: roundInputs,
+    };
+  } catch (err) {
+    if (isRedirectError(err) || isNotFoundError(err)) throw err;
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to load clone data" };
+  }
+}
+
 
 export async function createJobAction(input: CreateJobInput): Promise<JobRole | { ok: false; error: string }> {
   try {

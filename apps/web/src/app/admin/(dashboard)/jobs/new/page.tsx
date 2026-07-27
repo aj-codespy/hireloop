@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { JobCreationWizard } from "@/components/jobs/job-creation-wizard";
 import { useOrgPermissions } from "@/hooks/use-org-permissions";
@@ -27,7 +27,9 @@ export default function NewJobPage() {
           Configure the role, application form, interview questions, and optional thresholds. Then share the link.
         </p>
       </header>
-      <JobCreationWizard />
+      <Suspense fallback={<p>Loading wizard...</p>}>
+        <JobCreationWizard />
+      </Suspense>
     </div>
   );
 }

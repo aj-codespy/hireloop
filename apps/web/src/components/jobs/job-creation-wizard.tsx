@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { toast } from "sonner";
 import {
@@ -15,6 +15,7 @@ import {
   FORM_FIELD_TYPES,
   FORM_FIELD_TYPE_LABELS,
 } from "@/lib/form-fields";
+import { getJobCloneDataAction } from "@/app/actions/hireloop";
 import type { ApplicationFormField, EligibilityRule, FormFieldType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,10 +64,15 @@ const emptyQuestion = (): QuestionInput => ({
 
 export function JobCreationWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const cloneJobId = searchParams.get("clone");
   const { createJob, setJobQuestions, getJobApplyUrl } = useHireLoop();
   const [step, setStep] = useState(0);
   const [createdJobId, setCreatedJobId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  
+  const [isCloning, setIsCloning] = useState(false);
+  const [hasCloned, setHasCloned] = useState(false);
 
   // Step 1
   const [title, setTitle] = useState("");
@@ -117,6 +123,36 @@ export function JobCreationWizard() {
         value: 0,
       },
     ]);
+  }
+
+  useEffect(() => {
+    if (cloneJobId && !hasCloned) {
+      setIsCloning(true);
+      getJobCloneDataAction(cloneJobId).then((data) => {
+        setIsCloning(false);
+        setHasCloned(true);
+        if (data && 'ok' in data === false) {
+          setTitle(data.title);
+          setDescription(data.description || "");
+          setFormFields(data.formFields);
+          setRules(data.eligibilityRules);
+          if (data.rounds && data.rounds.length > 0) {
+            setRounds(data.rounds);
+          }
+          toast.success("Job template loaded");
+        } else if (data && 'ok' in data && !data.ok) {
+          toast.error(data.error);
+        }
+      }).catch((err) => {
+        setIsCloning(false);
+        setHasCloned(true);
+        toast.error("Failed to load job template");
+      });
+    }
+  }, [cloneJobId, hasCloned]);
+
+  if (isCloning) {
+    return <div className="p-8 text-center text-muted-foreground">Loading template...</div>;
   }
 
   async function handlePublish() {
