@@ -13,11 +13,10 @@ export function PipelineFunnelChart({ showConversion = false }: { showConversion
     { label: "Applied", value: total },
     {
       label: "Interview invited",
-      value: count(["interview_sent", "interviewed", "passed_ai", "partner_review", "hired"]),
+      value: count(["interview_sent", "interviewed", "passed_ai", "cleared_interviews"]),
     },
-    { label: "Interviewed", value: count(["interviewed", "passed_ai", "partner_review", "hired"]) },
-    { label: "Final interview", value: count(["partner_review", "hired"]) },
-    { label: "Hired", value: count(["hired"]) },
+    { label: "Interviewed", value: count(["interviewed", "passed_ai", "cleared_interviews"]) },
+    { label: "Cleared interviews", value: count(["cleared_interviews"]) },
   ].map((stage, index, arr) => ({
     ...stage,
     pct: total === 0 ? 0 : Math.round((stage.value / total) * 100),

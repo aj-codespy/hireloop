@@ -4,9 +4,7 @@ const BLOCKED_STATUSES: ApplicationStatus[] = [
   "interviewed",
   "passed_ai",
   "rejected_ai",
-  "partner_review",
-  "hired",
-  "rejected_final",
+  "cleared_interviews",
   "auto_rejected",
 ];
 

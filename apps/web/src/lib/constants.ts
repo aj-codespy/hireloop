@@ -9,9 +9,7 @@ export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
   interview_expired: "Interview expired",
   passed_ai: "Passed AI",
   rejected_ai: "Rejected (AI)",
-  partner_review: "Final interview",
-  hired: "Hired",
-  rejected_final: "Rejected (final)",
+  cleared_interviews: "Cleared interviews",
 };
 
 export const PIPELINE_COLUMNS: ApplicationStatus[] = [
@@ -20,8 +18,7 @@ export const PIPELINE_COLUMNS: ApplicationStatus[] = [
   "interview_sent",
   "interviewed",
   "passed_ai",
-  "partner_review",
-  "hired",
+  "cleared_interviews",
 ];
 
 export const STATUS_COLORS: Record<ApplicationStatus, string> = {
@@ -33,9 +30,7 @@ export const STATUS_COLORS: Record<ApplicationStatus, string> = {
   interview_expired: "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300",
   passed_ai: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
   rejected_ai: "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300",
-  partner_review: "bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
-  hired: "bg-green-50 text-green-800 dark:bg-green-950/50 dark:text-green-300",
-  rejected_final: "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300",
+  cleared_interviews: "bg-green-50 text-green-800 dark:bg-green-950/50 dark:text-green-300",
 };
 
 export const SECTION_LABELS = {

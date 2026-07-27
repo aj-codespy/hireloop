@@ -219,7 +219,7 @@ export const applications: Application[] = [
     candidateId: "cand-1",
     jobRoleId: "job-1",
     formResponse: { ca_attempt: 1, grad_score: 72 },
-    status: "partner_review",
+    status: "cleared_interviews",
     interviewToken: "demo-token-priya",
     tokenExpiresAt: "2026-07-10T00:00:00Z",
     createdAt: "2026-06-20T08:30:00Z",

@@ -543,10 +543,10 @@ export function useDashboardMetrics() {
   const { state } = useHireLoop();
   const apps = state.applications;
   const interviewed = apps.filter((a) =>
-    ["interviewed", "passed_ai", "rejected_ai", "partner_review", "hired"].includes(a.status)
+    ["interviewed", "passed_ai", "rejected_ai", "cleared_interviews"].includes(a.status)
   ).length;
   const shortlisted = apps.filter((a) =>
-    ["shortlisted", "interview_sent", "interviewed", "passed_ai", "partner_review", "hired"].includes(
+    ["shortlisted", "interview_sent", "interviewed", "passed_ai", "cleared_interviews"].includes(
       a.status
     )
   ).length;
@@ -566,7 +566,7 @@ export function useApplicationRows() {
     const candidate = state.candidates.find((c) => c.id === app.candidateId);
     const job = state.jobs.find((j) => j.id === app.jobRoleId);
     const session = state.interviewSessions.find((s) => s.applicationId === app.id);
-    const interviewed = ["interviewed", "passed_ai", "rejected_ai", "partner_review", "hired"].includes(
+    const interviewed = ["interviewed", "passed_ai", "rejected_ai", "cleared_interviews"].includes(
       app.status
     );
     return { application: app, candidate, job, session, interviewed };

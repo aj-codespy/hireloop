@@ -79,7 +79,7 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
     return <p className="text-sm text-muted-foreground">Candidate not found.</p>;
   }
 
-  const interviewed = ["interviewed", "shortlisted", "passed_ai", "rejected_ai", "partner_review", "hired"].includes(
+  const interviewed = ["interviewed", "shortlisted", "passed_ai", "rejected_ai", "cleared_interviews"].includes(
     application.status
   );
   const showResendLink = canRegenerateInterviewLink(application);

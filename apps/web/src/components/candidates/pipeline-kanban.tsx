@@ -25,10 +25,10 @@ function daysInStage(createdAt: string): number {
 export function PipelineKanban() {
   const rows = useApplicationRows();
   const terminalRows = rows.filter(({ application }) =>
-    ["auto_rejected", "interview_expired", "rejected_ai", "rejected_final"].includes(application.status)
+    ["auto_rejected", "interview_expired", "rejected_ai"].includes(application.status)
   );
   const columns = [
-    ...(["applied", "shortlisted", "interview_sent", "interviewed", "passed_ai", "partner_review", "hired"] as const).map(
+    ...(["applied", "shortlisted", "interview_sent", "interviewed", "passed_ai", "cleared_interviews"] as const).map(
       (status) => ({
         status,
         label: APPLICATION_STATUS_LABELS[status],
@@ -44,7 +44,7 @@ export function PipelineKanban() {
 
   return (
     <div className="overflow-x-auto pb-2">
-      <div className="grid min-w-[1100px] grid-cols-8 gap-3">
+      <div className="grid min-w-[1000px] grid-cols-7 gap-3">
         {columns.map((column) => {
           const staleCount = column.rows.filter(
             ({ application }) => daysInStage(application.createdAt) > 3

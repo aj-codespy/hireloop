@@ -43,7 +43,7 @@ export function PipelineLineChart() {
             month: label,
             applications: sameDay.length,
             interviews: sameDay.filter((app) =>
-              ["interviewed", "passed_ai", "partner_review", "hired"].includes(app.status)
+              ["interviewed", "passed_ai", "cleared_interviews"].includes(app.status)
             ).length,
           };
         })
@@ -59,7 +59,7 @@ export function PipelineLineChart() {
             month,
             applications: sameMonth.length,
             interviews: sameMonth.filter((app) =>
-              ["interviewed", "passed_ai", "partner_review", "hired"].includes(app.status)
+              ["interviewed", "passed_ai", "cleared_interviews"].includes(app.status)
             ).length,
           };
         });

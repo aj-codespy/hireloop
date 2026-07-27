@@ -17,12 +17,11 @@ const STATUS_STEPS = [
   "interview_sent",
   "interviewed",
   "passed_ai",
-  "partner_review",
-  "hired",
+  "cleared_interviews",
 ] as const;
 
 function currentStepIndex(status: string) {
-  if (status === "auto_rejected" || status === "rejected_ai" || status === "rejected_final") return -1;
+  if (status === "auto_rejected" || status === "rejected_ai") return -1;
   if (status === "interview_expired") return 0;
   const idx = STATUS_STEPS.findIndex((s) => s === status);
   return idx >= 0 ? idx : 0;
@@ -175,8 +174,8 @@ export function CandidateProfileView({
                         <p className="text-sm text-foreground">
                           {nextAction(app.status, Boolean(app.interviewToken))}
                         </p>
-                        <div className="grid grid-cols-5 gap-1 text-[11px] text-muted-foreground">
-                          {["AI invite", "AI done", "AI pass", "Final", "Hired"].map((label, idx) => (
+                        <div className="grid grid-cols-4 gap-1 text-[11px] text-muted-foreground">
+                          {["AI invite", "AI done", "AI pass", "Cleared"].map((label, idx) => (
                             <div key={label} className="space-y-1">
                               <div
                                 className={

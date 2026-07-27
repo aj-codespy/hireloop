@@ -53,8 +53,7 @@ function computeInsights(state: HireLoopState): DashboardInsights {
     "interviewed",
     "passed_ai",
     "rejected_ai",
-    "partner_review",
-    "hired",
+    "cleared_interviews",
   ] as const;
   const interviewed = apps.filter((a) =>
     interviewedStatuses.includes(a.status as (typeof interviewedStatuses)[number])
@@ -141,7 +140,7 @@ function computeInsights(state: HireLoopState): DashboardInsights {
     .slice(0, 8);
 
   const awaitingReview = passedAi;
-  const finalInterview = apps.filter((a) => ["partner_review", "hired"].includes(a.status)).length;
+  const finalInterview = apps.filter((a) => ["cleared_interviews"].includes(a.status)).length;
 
   return {
     greeting: getGreeting(),

@@ -18,8 +18,7 @@ const STATUS_ACCENT: Record<string, string> = {
   interview_sent: "border-indigo-400 dark:border-indigo-600",
   interviewed: "border-amber-400 dark:border-amber-600",
   passed_ai: "border-cyan-400 dark:border-cyan-600",
-  partner_review: "border-orange-400 dark:border-orange-600",
-  hired: "border-emerald-400 dark:border-emerald-600",
+  cleared_interviews: "border-emerald-400 dark:border-emerald-600",
 };
 
 export function PipelineColumn({ column, isOver }: PipelineColumnProps) {
