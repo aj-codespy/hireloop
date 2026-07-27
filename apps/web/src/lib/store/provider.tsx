@@ -58,7 +58,8 @@ type HireLoopContextValue = {
   setJobQuestions: (
     jobId: string,
     questions: QuestionInput[],
-    interviewQuestionCount?: number | null
+    interviewQuestionCount?: number | null,
+    rounds?: RoundInput[]
   ) => Promise<void>;
   submitApplication: (
     jobId: string,
@@ -244,10 +245,11 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
     async (
       jobId: string,
       inputs: QuestionInput[],
-      interviewQuestionCount?: number | null
+      interviewQuestionCount?: number | null,
+      rounds?: RoundInput[]
     ): Promise<void> => {
       if (usingSupabase) {
-        const res = await setJobQuestionsAction(jobId, inputs, interviewQuestionCount);
+        const res = await setJobQuestionsAction(jobId, inputs, interviewQuestionCount, rounds);
         if (isActionError(res)) {
           throw new Error(res.error);
         }
