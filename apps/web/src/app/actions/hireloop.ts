@@ -397,7 +397,7 @@ export async function setJobQuestionsAction(
 export async function sendToFinalInterviewAction(applicationId: string): Promise<Application | { ok: false; error: string }> {
   try {
     const { orgId } = await requireOrgRole(ORG_PIPELINE_ROLES);
-    const application = await updateApplicationStatusInDb(applicationId, "partner_review", orgId);
+    const application = await updateApplicationStatusInDb(applicationId, "cleared_interviews", orgId);
     await notifyCandidateStatus(application);
 
     // Dispatch candidate.qualified webhook when candidate advances to final interview
