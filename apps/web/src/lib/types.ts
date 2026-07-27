@@ -90,6 +90,7 @@ export interface JobRound {
   title: string;
   orderIndex: number;
   passingScore: number | null;
+  interviewType: "ai" | "offline" | "online";
   createdAt: string;
   updatedAt: string;
 }

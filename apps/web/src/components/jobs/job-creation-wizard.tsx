@@ -88,9 +88,8 @@ export function JobCreationWizard() {
 
   // Step 4
   const [rules, setRules] = useState<EligibilityRule[]>([]);
-  const [usePassingScore, setUsePassingScore] = useState(false);
-  const [passingScore, setPassingScore] = useState("7.0");
-  const [publishLive, setPublishLive] = useState(true);
+
+  const [publishLive, setPublishLive] = useState(false);
 
   function addField() {
     const label = "New field";
@@ -134,16 +133,10 @@ export function JobCreationWizard() {
     }
     
     // We will validate all rounds
-    for (const [i, round] of rounds.entries()) {
+    for (const round of rounds) {
       const validQuestions = round.questions.filter((q) => q.promptText.trim());
       if (validQuestions.length === 0) {
         toast.error(`Add at least one interview question to ${round.title}`);
-        setStep(2);
-        return;
-      }
-      const configError = validateInterviewQuestionCount(round.interviewQuestionCount, validQuestions);
-      if (configError) {
-        toast.error(`Error in ${round.title}: ${INTERVIEW_CONFIG_ERRORS[configError]}`);
         setStep(2);
         return;
       }
@@ -155,11 +148,11 @@ export function JobCreationWizard() {
       status: publishLive ? "live" : "draft",
       formFields: formFields.map((f, i) => ({ ...f, order: i + 1 })),
       eligibilityRules: rules,
-      passingScore: usePassingScore ? Number(passingScore) : null,
+      passingScore: null,
       rounds: rounds.map(r => ({
         ...r,
         questions: r.questions.filter((q) => q.promptText.trim()),
-        passingScore: usePassingScore ? Number(passingScore) : null // Applying global passing score for now
+        passingScore: r.passingScore
       })),
     };
 
@@ -382,35 +375,71 @@ export function JobCreationWizard() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Define the sequence of interview rounds candidates will go through. All rounds are conducted by the AI agent.
+                Define the sequence of interview rounds candidates will go through.
               </p>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {rounds.map((r, i) => (
-                  <div key={r.id} className="group flex items-center justify-between rounded-lg border border-border p-4 transition-colors hover:border-brand/50">
-                    <div className="flex-1 space-y-1">
-                      <Input 
-                        value={r.title} 
-                        onChange={e => { const next = [...rounds]; next[i].title = e.target.value; setRounds(next); }} 
-                        className="max-w-[300px] border-none px-0 text-base font-semibold shadow-none focus-visible:ring-0"
-                        placeholder="Round title"
-                      />
-                      <div className="text-sm text-muted-foreground">
-                        {r.questions.length} questions • {r.interviewQuestionCount ? `${r.interviewQuestionCount} asked per interview` : 'All asked'}
+                  <div key={r.id || i} className="group flex flex-col gap-4 rounded-xl border border-border p-5 transition-colors hover:border-brand/50 bg-card">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <Input 
+                          value={r.title} 
+                          onChange={e => { const next = [...rounds]; next[i].title = e.target.value; setRounds(next); }} 
+                          className="max-w-[300px] border-none px-0 text-lg font-semibold shadow-none focus-visible:ring-0 h-auto py-1"
+                          placeholder="Round title"
+                        />
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {r.questions.length} question{r.questions.length !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="secondary" className="rounded-full" onClick={() => setEditingRoundIndex(i)}>
+                          Configure questions
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setRounds(rounds.filter((_, idx) => idx !== i))}
+                          disabled={rounds.length === 1}
+                        >
+                          <PhosphorIcon name="Trash2" className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="secondary" className="rounded-full" onClick={() => setEditingRoundIndex(i)}>
-                        Configure questions
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => setRounds(rounds.filter((_, idx) => idx !== i))}
-                        disabled={rounds.length === 1}
-                      >
-                        <PhosphorIcon name="Trash2" className="h-4 w-4" />
-                      </Button>
+                    <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
+                      <div className="space-y-2">
+                        <Label>Round Type</Label>
+                        <Select
+                          value={r.interviewType || "ai"}
+                          onValueChange={(val: any) => { const next = [...rounds]; next[i].interviewType = val; setRounds(next); }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ai">AI Interview</SelectItem>
+                            <SelectItem value="online">Online Assessment</SelectItem>
+                            <SelectItem value="offline">Offline / In-person</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Passing Threshold (%)</Label>
+                        <Input 
+                          type="number"
+                          min={0}
+                          max={100}
+                          placeholder="No threshold"
+                          value={r.passingScore ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const next = [...rounds];
+                            next[i].passingScore = val ? Number(val) : null;
+                            setRounds(next);
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -435,12 +464,12 @@ export function JobCreationWizard() {
             <CardContent>
               <JobQuestionsEditor
                 questions={rounds[editingRoundIndex].questions}
-                interviewQuestionCount={rounds[editingRoundIndex].interviewQuestionCount}
                 saveLabel="Done"
-                onSave={(qs, count) => {
+                onSave={(qs) => {
                   const next = [...rounds];
                   next[editingRoundIndex].questions = qs.length ? qs : [emptyQuestion()];
-                  next[editingRoundIndex].interviewQuestionCount = count;
+                  // We remove interviewQuestionCount completely from logic
+                  next[editingRoundIndex].interviewQuestionCount = null;
                   setRounds(next);
                   setEditingRoundIndex(null);
                 }}
@@ -448,6 +477,7 @@ export function JobCreationWizard() {
               />
             </CardContent>
           </Card>
+
         )}
 
         {step === 3 && (
@@ -527,35 +557,6 @@ export function JobCreationWizard() {
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-
-              <div className="rounded-lg border border-dashed border-border p-4">
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="use-passing"
-                    checked={usePassingScore}
-                    onCheckedChange={(c) => setUsePassingScore(!!c)}
-                  />
-                  <Label htmlFor="use-passing" className="font-medium">
-                    Require minimum AI interview score to pass
-                  </Label>
-                </div>
-                {usePassingScore ? (
-                  <div className="mt-3 flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      className="w-24"
-                      value={passingScore}
-                      onChange={(e) => setPassingScore(e.target.value)}
-                    />
-                    <span className="text-sm text-muted-foreground">/ 10 overall</span>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    No score gate. You decide pass or fail manually in admin.
-                  </p>
                 )}
               </div>
 

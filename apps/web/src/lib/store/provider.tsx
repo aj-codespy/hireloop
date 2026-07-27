@@ -75,7 +75,7 @@ type HireLoopContextValue = {
 export type RoundInput = {
   id?: string;
   title: string;
-  interviewType: string; // e.g. "ai" or "human"
+  interviewType: "ai" | "offline" | "online";
   passingScore: number | null;
   interviewQuestionCount: number | null;
   questions: QuestionInput[];
