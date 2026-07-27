@@ -146,7 +146,7 @@ export function AdminSignInForm() {
                   Password
                 </Label>
                 <Link
-                  href="/auth/forgot-password"
+                  href="/login"
                   className="text-sm text-brand hover:underline focus-ring rounded-sm"
                 >
                   Forgot password?

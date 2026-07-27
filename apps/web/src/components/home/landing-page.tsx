@@ -160,7 +160,7 @@ export function LandingPage({ userEmail, currentYear }: { userEmail: string | nu
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/auth/login"
+              href="/login"
               className="hidden text-sm font-medium text-white/75 transition-colors hover:text-white md:block"
             >
               Sign in
