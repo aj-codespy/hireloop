@@ -5,9 +5,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import {
-  markCandidateHiredAction,
   regenerateAndSendInterviewLinkAction,
-  rejectCandidateFinalAction,
   sendToFinalInterviewAction,
   submitScorecardAction,
 } from "@/app/actions/hireloop";
@@ -166,29 +164,7 @@ export function CandidateDetailView({ candidateId }: { candidateId: string }) {
                 Send to final interview
               </Button>
             ) : null}
-            {application.status === "partner_review" ? (
-              <>
-                <Button
-                  className="w-full rounded-full bg-emerald-600 hover:bg-emerald-700"
-                  disabled={actionLoading != null}
-                  onClick={() =>
-                    void runAction("hire", () => markCandidateHiredAction(application.id))
-                  }
-                >
-                  Mark hired
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="w-full rounded-full"
-                  disabled={actionLoading != null}
-                  onClick={() =>
-                    void runAction("reject", () => rejectCandidateFinalAction(application.id))
-                  }
-                >
-                  Reject (final)
-                </Button>
-              </>
-            ) : null}
+
             <ButtonLink href="/admin/candidates" variant="outline" className="w-full rounded-full">
               Back to list
             </ButtonLink>

@@ -477,30 +477,6 @@ export async function sendToFinalInterviewAction(applicationId: string): Promise
   }
 }
 
-export async function markCandidateHiredAction(applicationId: string): Promise<Application | { ok: false; error: string }> {
-  try {
-    const { orgId } = await requireOrgRole(ORG_PIPELINE_ROLES);
-    const application = await updateApplicationStatusInDb(applicationId, "hired", orgId);
-    await notifyCandidateStatus(application);
-    return application;
-  } catch (err) {
-    if (isRedirectError(err) || isNotFoundError(err)) throw err;
-    return { ok: false, error: err instanceof Error ? err.message : "Failed to mark candidate as hired" };
-  }
-}
-
-export async function rejectCandidateFinalAction(applicationId: string): Promise<Application | { ok: false; error: string }> {
-  try {
-    const { orgId } = await requireOrgRole(ORG_PIPELINE_ROLES);
-    const application = await updateApplicationStatusInDb(applicationId, "rejected_final", orgId);
-    await notifyCandidateStatus(application);
-    return application;
-  } catch (err) {
-    if (isRedirectError(err) || isNotFoundError(err)) throw err;
-    return { ok: false, error: err instanceof Error ? err.message : "Failed to reject candidate" };
-  }
-}
-
 async function notifyCandidateStatus(application: Application): Promise<void> {
   if (!isEmailConfigured()) return;
 
@@ -529,9 +505,7 @@ async function notifyCandidateStatus(application: Application): Promise<void> {
 
 const PIPELINE_TRANSITION_TARGETS: ApplicationStatus[] = [
   "interview_sent",
-  "partner_review",
-  "hired",
-  "rejected_final",
+  "cleared_interviews",
   "interview_expired",
 ];
 
