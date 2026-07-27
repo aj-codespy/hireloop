@@ -1,8 +1,11 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { SidebarIndicatorAnimations, ChartTooltipAnimations } from "@/components/animations/dashboard-animations";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <DashboardShell>
+      <SidebarIndicatorAnimations />
+      <ChartTooltipAnimations />
       <main
         className={[
           "admin-workspace min-w-0 font-sans text-slate-950",

@@ -95,12 +95,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ) : null}
       </div>
 
-      <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-4" aria-label="Admin">
+      <nav className="relative flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-4" aria-label="Admin">
+        <div className="sidebar-active-indicator absolute left-3 w-1 rounded-full bg-brand" style={{ height: 0, top: 0 }} aria-hidden />
         {navGroups.map((group) => {
           const items = group.items.filter((item) => !item.managersOnly || canManageOrg);
           if (items.length === 0) return null;
           return (
-            <div key={group.label}>
+            <div key={group.label} className="relative z-10">
               <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                 {group.label}
               </p>
@@ -116,19 +117,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       href={item.href}
                       onClick={onNavigate}
                       className={cn(
-                        "group relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-[color,background-color] duration-250 ease-out focus-ring motion-reduce:transition-none",
+                        "sidebar-item group relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-[color,background-color] duration-250 ease-out focus-ring motion-reduce:transition-none",
                         active
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          ? "active bg-sidebar-accent text-sidebar-accent-foreground"
                           : "text-muted-foreground hover:bg-card hover:text-foreground"
                       )}
                       aria-current={active ? "page" : undefined}
                     >
-                      {active ? (
-                        <span
-                          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-brand"
-                          aria-hidden
-                        />
-                      ) : null}
                       <Icon
                         className={cn(
                           "h-[18px] w-[18px] shrink-0",

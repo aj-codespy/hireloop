@@ -7,31 +7,44 @@ export interface InterviewLinkEmailInput {
 }
 
 export function isEmailConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM);
+  return Boolean(
+    process.env.BREVO_API_KEY && 
+    process.env.BREVO_FROM && 
+    process.env.BREVO_FROM_NAME
+  );
 }
 
 export async function sendInterviewLinkEmail(input: InterviewLinkEmailInput): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM;
+  const apiKey = process.env.BREVO_API_KEY;
+  const from = process.env.BREVO_FROM;
+  const fromName = process.env.BREVO_FROM_NAME;
   const expiresLabel = new Date(input.expiresAt).toLocaleString();
 
   if (!apiKey || !from) {
     throw new Error(
-      "Email is not configured. Set RESEND_API_KEY and RESEND_FROM in apps/web/.env.local"
+      "Email is not configured. Set BREVO_API_KEY and BREVO_FROM in apps/web/.env.local"
     );
   }
 
-  const res = await fetch("https://api.resend.com/emails", {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      "api-key": apiKey,
     },
     body: JSON.stringify({
-      from,
-      to: input.to,
+      sender: {
+        name: fromName || "HireLoop",
+        email: from,
+      },
+      to: [
+        {
+          name: input.candidateName,
+          email: input.to,
+        },
+      ],
       subject: `Your interview for ${input.jobTitle}`,
-      html: `
+      htmlContent: `
         <p>Hi ${input.candidateName},</p>
         <p>You have been invited to complete your AI interview for <strong>${input.jobTitle}</strong>.</p>
         <p><a href="${input.interviewUrl}">Start your interview</a></p>

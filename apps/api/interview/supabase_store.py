@@ -607,13 +607,15 @@ class SupabaseInterviewStore:
         rows = await self._request(
             "GET",
             "interview_sessions",
-            params={"id": f"eq.{session_id}", "select": "status,proctoring_summary"},
+            params={"id": f"eq.{session_id}", "select": "status,proctoring_summary,round_id"},
         )
         flagged = False
+        current_round_id = None
         if rows:
             row = rows[0]
             summary = row.get("proctoring_summary") or {}
             flagged = row.get("status") == "flagged" or bool(summary.get("flagged"))
+            current_round_id = row.get("round_id")
 
         if flagged:
             passed = False
@@ -634,11 +636,80 @@ class SupabaseInterviewStore:
             },
             prefer="return=minimal",
         )
+
+        # Multi-round logic
+        final_status = "passed_ai" if passed else "rejected_ai"
+        update_payload: dict[str, Any] = {"status": final_status}
+
+        if passed and current_round_id:
+            # Check if there is a next round
+            app_rows = await self._request(
+                "GET",
+                "applications",
+                params={"id": f"eq.{application_id}", "select": "job_role_id,candidate_id"},
+            )
+            if app_rows:
+                job_role_id = app_rows[0].get("job_role_id")
+                candidate_id = app_rows[0].get("candidate_id")
+                # Get current round's order_index
+                curr_round_rows = await self._request(
+                    "GET",
+                    "job_rounds",
+                    params={"id": f"eq.{current_round_id}", "select": "order_index"},
+                )
+                if curr_round_rows:
+                    curr_order = curr_round_rows[0].get("order_index", 0)
+                    # Find the next round
+                    next_round_rows = await self._request(
+                        "GET",
+                        "job_rounds",
+                        params={
+                            "job_role_id": f"eq.{job_role_id}",
+                            "order_index": f"gt.{curr_order}",
+                            "order": "order_index.asc",
+                            "limit": "1",
+                        },
+                    )
+                    if next_round_rows:
+                        next_round = next_round_rows[0]
+                        update_payload["current_round_id"] = next_round["id"]
+                        
+                        # Generate token for the next round
+                        new_token = f"int-{uuid.uuid4().hex}"
+                        expires_at = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+                        update_payload["interview_token"] = new_token
+                        update_payload["token_expires_at"] = expires_at
+                        update_payload["status"] = "interview_sent"
+
+                        # Send email asynchronously
+                        if candidate_id:
+                            cand_rows = await self._request(
+                                "GET",
+                                "candidates",
+                                params={"id": f"eq.{candidate_id}", "select": "name,email"},
+                            )
+                            job_rows = await self._request(
+                                "GET",
+                                "job_roles",
+                                params={"id": f"eq.{job_role_id}", "select": "title"},
+                            )
+                            if cand_rows and job_rows:
+                                from interview.email_notify import send_interview_invite_email
+                                from config import APP_URL
+                                
+                                await send_interview_invite_email(
+                                    candidate_email=cand_rows[0].get("email", ""),
+                                    candidate_name=cand_rows[0].get("name", ""),
+                                    job_title=job_rows[0].get("title", ""),
+                                    interview_url=f"{APP_URL.rstrip('/')}/candidate/{new_token}",
+                                    expires_at=expires_at,
+                                )
+        
         await self._request(
             "PATCH",
             "applications",
             params={"id": f"eq.{application_id}"},
-            json={"status": "passed_ai" if passed else "rejected_ai"},
+            json=update_payload,
             prefer="return=minimal",
         )
 

@@ -32,24 +32,33 @@ const BODY: Partial<Record<ApplicationStatus, string>> = {
 };
 
 export async function sendApplicationStatusEmail(input: ApplicationStatusEmailInput): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM;
+  const apiKey = process.env.BREVO_API_KEY;
+  const from = process.env.BREVO_FROM;
+  const fromName = process.env.BREVO_FROM_NAME;
   const subject = SUBJECTS[input.status];
   const body = BODY[input.status];
 
-  if (!apiKey || !from || !subject || !body) return;
+  if (!apiKey || !from || !fromName || !subject || !body) return;
 
-  const res = await fetch("https://api.resend.com/emails", {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      "api-key": apiKey,
     },
     body: JSON.stringify({
-      from,
-      to: input.to,
+      sender: {
+        name: fromName,
+        email: from,
+      },
+      to: [
+        {
+          name: input.candidateName,
+          email: input.to,
+        },
+      ],
       subject: `${subject} — ${input.jobTitle}`,
-      html: `
+      htmlContent: `
         <p>Hi ${input.candidateName},</p>
         <p>${body}</p>
         <p>Role: <strong>${input.jobTitle}</strong></p>

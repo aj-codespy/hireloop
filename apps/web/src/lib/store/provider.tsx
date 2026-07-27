@@ -71,6 +71,15 @@ type HireLoopContextValue = {
   refreshState: () => Promise<void>;
 };
 
+export type RoundInput = {
+  id?: string;
+  title: string;
+  interviewType: string; // e.g. "ai" or "human"
+  passingScore: number | null;
+  interviewQuestionCount: number | null;
+  questions: QuestionInput[];
+};
+
 export type CreateJobInput = {
   title: string;
   description: string;
@@ -79,6 +88,7 @@ export type CreateJobInput = {
   eligibilityRules: EligibilityRule[];
   passingScore: number | null;
   interviewQuestionCount?: number | null;
+  rounds?: RoundInput[];
 };
 
 export type QuestionInput = {

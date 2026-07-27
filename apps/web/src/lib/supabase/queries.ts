@@ -196,50 +196,96 @@ export async function updateJobInDb(
 export async function setJobQuestionsInDb(
   jobId: string,
   inputs: QuestionInput[],
-  interviewQuestionCount?: number | null
+  interviewQuestionCount?: number | null,
+  rounds?: import("@/lib/store/provider").RoundInput[]
 ): Promise<void> {
   const supabase = db();
-  const { error: deleteError } = await supabase
+  const { error: deleteQuestionsError } = await supabase
     .from("questions")
     .delete()
     .eq("job_role_id", jobId);
+  if (deleteQuestionsError) throw new Error(deleteQuestionsError.message);
 
-  if (deleteError) throw new Error(deleteError.message);
+  // We should also delete existing rounds for this job
+  const { error: deleteRoundsError } = await supabase
+    .from("job_rounds")
+    .delete()
+    .eq("job_role_id", jobId);
+  if (deleteRoundsError) throw new Error(deleteRoundsError.message);
 
-  if (inputs.length === 0) return;
+  if (inputs.length === 0 && (!rounds || rounds.length === 0)) return;
 
-  const rows = inputs.map((q, index) =>
-    questionInputToRow(jobId, {
-      id: q.id ?? generateId("q"),
-      section: q.section,
-      promptText: q.promptText,
-      idealAnswerNotes: q.idealAnswerNotes,
-      timeLimitSeconds: q.timeLimitSeconds,
-      scoreThreshold: q.scoreThreshold,
-      isActive: q.isActive,
-      isMandatory: q.isMandatory,
-      order: index + 1,
-    })
-  );
+  const now = new Date().toISOString();
+  let questionRowsToInsert: any[] = [];
+  
+  if (rounds && rounds.length > 0) {
+    const roundRows = rounds.map((r, i) => ({
+      id: r.id ?? generateId("round"),
+      job_role_id: jobId,
+      title: r.title,
+      order_index: i,
+      passing_score: r.passingScore,
+      interview_type: r.interviewType || "ai",
+      created_at: now,
+      updated_at: now,
+    }));
+    const { error: insertRoundsError } = await supabase.from("job_rounds").insert(roundRows);
+    if (insertRoundsError) throw new Error(insertRoundsError.message);
 
-  const { error: insertError } = await supabase.from("questions").insert(
-    rows.map((r) => ({
-      id: r.id,
-      question_bank_id: r.question_bank_id,
-      job_role_id: r.job_role_id,
-      section: r.section,
-      prompt_text: r.prompt_text,
-      ideal_answer_notes: r.ideal_answer_notes,
-      time_limit_seconds: r.time_limit_seconds,
-      score_threshold: r.score_threshold,
-      order_index: r.order_index,
-      is_active: r.is_active,
-      is_mandatory: r.is_mandatory,
-      created_at: r.created_at,
-    }))
-  );
+    rounds.forEach((r, roundIndex) => {
+      const roundId = roundRows[roundIndex].id;
+      const rows = r.questions.map((q, qIndex) => 
+        questionInputToRow(jobId, {
+          id: q.id ?? generateId("q"),
+          section: q.section,
+          promptText: q.promptText,
+          idealAnswerNotes: q.idealAnswerNotes,
+          timeLimitSeconds: q.timeLimitSeconds,
+          scoreThreshold: q.scoreThreshold,
+          isActive: q.isActive,
+          isMandatory: q.isMandatory,
+          order: qIndex + 1,
+        })
+      ).map(row => ({ ...row, round_id: roundId }));
+      questionRowsToInsert.push(...rows);
+    });
+  } else {
+    // Legacy support (no rounds)
+    questionRowsToInsert = inputs.map((q, index) =>
+      questionInputToRow(jobId, {
+        id: q.id ?? generateId("q"),
+        section: q.section,
+        promptText: q.promptText,
+        idealAnswerNotes: q.idealAnswerNotes,
+        timeLimitSeconds: q.timeLimitSeconds,
+        scoreThreshold: q.scoreThreshold,
+        isActive: q.isActive,
+        isMandatory: q.isMandatory,
+        order: index + 1,
+      })
+    );
+  }
 
-  if (insertError) throw new Error(insertError.message);
+  if (questionRowsToInsert.length > 0) {
+    const { error: insertError } = await supabase.from("questions").insert(
+      questionRowsToInsert.map((r) => ({
+        id: r.id,
+        question_bank_id: r.question_bank_id,
+        job_role_id: r.job_role_id,
+        round_id: r.round_id,
+        section: r.section,
+        prompt_text: r.prompt_text,
+        ideal_answer_notes: r.ideal_answer_notes,
+        time_limit_seconds: r.time_limit_seconds,
+        score_threshold: r.score_threshold,
+        order_index: r.order_index,
+        is_active: r.is_active,
+        is_mandatory: r.is_mandatory,
+        created_at: r.created_at,
+      }))
+    );
+    if (insertError) throw new Error(insertError.message);
+  }
 
   if (interviewQuestionCount !== undefined) {
     const { error: jobError } = await supabase

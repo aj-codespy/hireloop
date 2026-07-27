@@ -84,6 +84,16 @@ export interface ApplicationFormField {
   options?: string[];
 }
 
+export interface JobRound {
+  id: string;
+  jobRoleId: string;
+  title: string;
+  orderIndex: number;
+  passingScore: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface JobRole {
   id: string;
   orgId: string;
@@ -112,6 +122,7 @@ export interface Question {
   id: string;
   questionBankId: string;
   jobRoleId: string;
+  roundId?: string;
   section: QuestionSection;
   promptText: string;
   idealAnswerNotes: string;
@@ -142,6 +153,7 @@ export interface Application {
   id: string;
   candidateId: string;
   jobRoleId: string;
+  currentRoundId?: string;
   formResponse: Record<string, FormResponseValue>;
   status: ApplicationStatus;
   interviewToken?: string;
@@ -176,6 +188,7 @@ export interface ProctoringSummary {
 export interface InterviewSession {
   id: string;
   applicationId: string;
+  roundId?: string;
   startedAt?: string;
   endedAt?: string;
   status: "in_progress" | "completed" | "abandoned" | "flagged";

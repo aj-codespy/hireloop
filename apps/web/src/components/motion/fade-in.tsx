@@ -1,27 +1,37 @@
 "use client";
 
-import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
+import { useRef, useId } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { HTMLAttributes } from "react";
 
-const ease = [0.22, 1, 0.36, 1] as const;
+gsap.registerPlugin(useGSAP);
 
 export function FadeIn({
   children,
   className,
   delay = 0,
   ...props
-}: HTMLMotionProps<"div"> & { delay?: number }) {
-  const reduce = useReducedMotion();
+}: HTMLAttributes<HTMLDivElement> & { delay?: number }) {
+  const el = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    
+    gsap.from(el.current, {
+      y: 12,
+      opacity: 0,
+      duration: 0.5,
+      delay,
+      ease: "power2.out",
+      clearProps: "all"
+    });
+  }, { scope: el });
 
   return (
-    <motion.div
-      initial={reduce ? false : { opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={reduce ? { duration: 0 } : { duration: 0.45, delay, ease }}
-      className={className}
-      {...props}
-    >
+    <div ref={el} className={className} {...props}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -32,20 +42,29 @@ export function FadeInStagger({
   children: React.ReactNode;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const container = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (!container.current) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    
+    const items = container.current.querySelectorAll(":scope > .gsap-fade-item");
+    if (items.length === 0) return;
+
+    gsap.from(items, {
+      y: 14,
+      opacity: 0,
+      duration: 0.45,
+      stagger: 0.08,
+      ease: "power2.out",
+      clearProps: "all"
+    });
+  }, { scope: container });
 
   return (
-    <motion.div
-      initial={reduce ? false : "hidden"}
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: reduce ? 0 : 0.07 } },
-      }}
-      className={className}
-    >
+    <div ref={container} className={className}>
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -56,21 +75,12 @@ export function FadeInItem({
   children: React.ReactNode;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
-
+  // Add a class that FadeInStagger can query
+  const combinedClass = className ? `gsap-fade-item ${className}` : "gsap-fade-item";
   return (
-    <motion.div
-      variants={{
-        hidden: reduce ? {} : { opacity: 0, y: 14 },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: reduce ? { duration: 0 } : { duration: 0.4, ease },
-        },
-      }}
-      className={className}
-    >
+    <div className={combinedClass}>
       {children}
-    </motion.div>
+    </div>
   );
 }
+

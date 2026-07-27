@@ -76,8 +76,15 @@ export function JobCreationWizard() {
   const [formFields, setFormFields] = useState<ApplicationFormField[]>(defaultFields);
 
   // Step 3
-  const [questions, setQuestions] = useState<QuestionInput[]>([emptyQuestion()]);
-  const [interviewQuestionCount, setInterviewQuestionCount] = useState<number | null>(null);
+  const [rounds, setRounds] = useState<import("@/lib/store/provider").RoundInput[]>([{
+    id: generateId("round"),
+    title: "Round 1: Technical Screen",
+    interviewType: "ai",
+    passingScore: 7.0, // Default to some score, or maybe null
+    interviewQuestionCount: null,
+    questions: [emptyQuestion()]
+  }]);
+  const [editingRoundIndex, setEditingRoundIndex] = useState<number | null>(null);
 
   // Step 4
   const [rules, setRules] = useState<EligibilityRule[]>([]);
@@ -120,17 +127,26 @@ export function JobCreationWizard() {
       return;
     }
 
-    const validQuestions = questions.filter((q) => q.promptText.trim());
-    if (validQuestions.length === 0) {
-      toast.error("Add at least one interview question");
+    if (rounds.length === 0) {
+      toast.error("Add at least one interview round");
       setStep(2);
       return;
     }
-    const configError = validateInterviewQuestionCount(interviewQuestionCount, validQuestions);
-    if (configError) {
-      toast.error(INTERVIEW_CONFIG_ERRORS[configError]);
-      setStep(2);
-      return;
+    
+    // We will validate all rounds
+    for (const [i, round] of rounds.entries()) {
+      const validQuestions = round.questions.filter((q) => q.promptText.trim());
+      if (validQuestions.length === 0) {
+        toast.error(`Add at least one interview question to ${round.title}`);
+        setStep(2);
+        return;
+      }
+      const configError = validateInterviewQuestionCount(round.interviewQuestionCount, validQuestions);
+      if (configError) {
+        toast.error(`Error in ${round.title}: ${INTERVIEW_CONFIG_ERRORS[configError]}`);
+        setStep(2);
+        return;
+      }
     }
 
     const input: CreateJobInput = {
@@ -140,7 +156,11 @@ export function JobCreationWizard() {
       formFields: formFields.map((f, i) => ({ ...f, order: i + 1 })),
       eligibilityRules: rules,
       passingScore: usePassingScore ? Number(passingScore) : null,
-      interviewQuestionCount,
+      rounds: rounds.map(r => ({
+        ...r,
+        questions: r.questions.filter((q) => q.promptText.trim()),
+        passingScore: usePassingScore ? Number(passingScore) : null // Applying global passing score for now
+      })),
     };
 
     let job;
@@ -151,7 +171,9 @@ export function JobCreationWizard() {
       return;
     }
 
-    const promise = setJobQuestions(job.id, validQuestions, interviewQuestionCount);
+    // Pass the rounds via setJobQuestions (we just pass an empty questions array for the legacy arg, or we can pass the first round's questions to avoid breaking old getters temporarily)
+    const legacyQuestions = rounds[0]?.questions.filter((q) => q.promptText.trim()) || [];
+    const promise = setJobQuestions(job.id, legacyQuestions, null, input.rounds);
     toast.promise(promise, {
       loading: "Generating question audio in the background...",
       success: publishLive ? "Job published" : "Job saved as draft",
@@ -337,22 +359,92 @@ export function JobCreationWizard() {
           </Card>
         )}
 
-        {step === 2 && (
+        {step === 2 && editingRoundIndex === null && (
+          <Card className="border-border shadow-card">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Interview rounds</CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full" 
+                onClick={() => setRounds([...rounds, { 
+                  id: generateId("round"), 
+                  title: `Round ${rounds.length + 1}`, 
+                  interviewType: "ai", 
+                  passingScore: null, 
+                  interviewQuestionCount: null, 
+                  questions: [emptyQuestion()] 
+                }])}
+              >
+                <PhosphorIcon name="Plus" className="mr-1 h-4 w-4" />
+                Add round
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Define the sequence of interview rounds candidates will go through. All rounds are conducted by the AI agent.
+              </p>
+              <div className="space-y-3">
+                {rounds.map((r, i) => (
+                  <div key={r.id} className="group flex items-center justify-between rounded-lg border border-border p-4 transition-colors hover:border-brand/50">
+                    <div className="flex-1 space-y-1">
+                      <Input 
+                        value={r.title} 
+                        onChange={e => { const next = [...rounds]; next[i].title = e.target.value; setRounds(next); }} 
+                        className="max-w-[300px] border-none px-0 text-base font-semibold shadow-none focus-visible:ring-0"
+                        placeholder="Round title"
+                      />
+                      <div className="text-sm text-muted-foreground">
+                        {r.questions.length} questions • {r.interviewQuestionCount ? `${r.interviewQuestionCount} asked per interview` : 'All asked'}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="secondary" className="rounded-full" onClick={() => setEditingRoundIndex(i)}>
+                        Configure questions
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => setRounds(rounds.filter((_, idx) => idx !== i))}
+                        disabled={rounds.length === 1}
+                      >
+                        <PhosphorIcon name="Trash2" className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="rounded-full" onClick={() => setStep(1)}>
+                  Back
+                </Button>
+                <Button className="rounded-full bg-brand hover:bg-brand/90" onClick={() => setStep(3)}>
+                  Continue
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 2 && editingRoundIndex !== null && (
           <Card className="border-border shadow-card">
             <CardHeader>
-              <CardTitle>Interview questions</CardTitle>
+              <CardTitle>Configure: {rounds[editingRoundIndex].title}</CardTitle>
             </CardHeader>
             <CardContent>
               <JobQuestionsEditor
-                questions={questions}
-                interviewQuestionCount={interviewQuestionCount}
-                saveLabel="Continue"
-                onSave={(next, count) => {
-                  setQuestions(next.length ? next : [emptyQuestion()]);
-                  setInterviewQuestionCount(count);
-                  setStep(3);
+                questions={rounds[editingRoundIndex].questions}
+                interviewQuestionCount={rounds[editingRoundIndex].interviewQuestionCount}
+                saveLabel="Done"
+                onSave={(qs, count) => {
+                  const next = [...rounds];
+                  next[editingRoundIndex].questions = qs.length ? qs : [emptyQuestion()];
+                  next[editingRoundIndex].interviewQuestionCount = count;
+                  setRounds(next);
+                  setEditingRoundIndex(null);
                 }}
-                onCancel={() => setStep(1)}
+                onCancel={() => setEditingRoundIndex(null)}
               />
             </CardContent>
           </Card>

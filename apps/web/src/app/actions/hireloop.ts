@@ -229,13 +229,19 @@ export async function updateJobAction(
 export async function setJobQuestionsAction(
   jobId: string,
   questions: QuestionInput[],
-  interviewQuestionCount?: number | null
+  interviewQuestionCount?: number | null,
+  rounds?: import("@/lib/store/provider").RoundInput[]
 ): Promise<void | { ok: false; error: string }> {
   try {
     await requireOrgRole(ORG_MANAGER_ROLES);
-    await setJobQuestionsInDb(jobId, questions, interviewQuestionCount);
+    await setJobQuestionsInDb(jobId, questions, interviewQuestionCount, rounds);
 
     const questionIds = questions.map((q) => q.id).filter(Boolean) as string[];
+    if (rounds) {
+      for (const round of rounds) {
+        questionIds.push(...(round.questions.map((q) => q.id).filter(Boolean) as string[]));
+      }
+    }
     if (!questionIds.length) return;
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";

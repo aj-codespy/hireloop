@@ -80,3 +80,59 @@ async def send_interview_expired_email(
     except Exception as exc:
         logger.exception("Error sending expired interview email to %s: %s", candidate_email, exc)
 
+
+async def send_interview_invite_email(
+    *,
+    candidate_email: str,
+    candidate_name: str,
+    job_title: str,
+    interview_url: str,
+    expires_at: str,
+) -> None:
+    """Notify candidate that they have been invited to an interview round."""
+    if not candidate_email:
+        logger.warning("Skipping invite email — no candidate email")
+        return
+
+    if not email_configured():
+        logger.info(
+            "INTERVIEW INVITE EMAIL (Brevo SMTP not configured) → %s <%s> for role %r\nURL: %s",
+            candidate_name,
+            candidate_email,
+            job_title,
+            interview_url,
+        )
+        return
+
+    # Parse and format the expiration date if possible
+    try:
+        from datetime import datetime, timezone
+        exp_dt = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+        # Format as e.g. "January 1, 2026 at 12:00 PM UTC"
+        expires_str = exp_dt.strftime("%B %d, %Y at %I:%M %p UTC")
+    except Exception:
+        expires_str = expires_at
+
+    html = f"""
+        <p>Hi {candidate_name},</p>
+        <p>You have been invited to the next interview round for <strong>{job_title}</strong>!</p>
+        <p>Please use the link below to start your interview. The link will expire on {expires_str}.</p>
+        <p><a href="{interview_url}">Start Interview</a></p>
+    """
+
+    try:
+        await _send_email_smtp(
+            to_email=candidate_email,
+            to_name=candidate_name,
+            subject=f"Interview Invitation — {job_title}",
+            html=html,
+        )
+        logger.info(
+            "Sent interview invite email → %s <%s> for role %r",
+            candidate_name,
+            candidate_email,
+            job_title,
+        )
+    except Exception as exc:
+        logger.exception("Error sending interview invite email to %s: %s", candidate_email, exc)
+
