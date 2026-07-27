@@ -142,6 +142,8 @@ export const ICON_MAP = {
   TrendingDown: "TrendingDown",
   Sparkles: "Sparkle",
   Quote: "Quote",
+  PieChart: "ChartPieSlice",
+  CheckSquare: "CheckSquare",
   Sun: "Sun",
   Moon: "Moon",
   PowerOff: "Power",
