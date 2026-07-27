@@ -348,11 +348,11 @@ export const funnelStats: FunnelStats = {
   hired: 12,
 };
 
-export const jobStats: Record<string, { sourced: number; applied: number; interview: number; assessment: number; offer: number; hired: number }> = {
-  "job-1": { sourced: 48, applied: 42, interview: 18, assessment: 12, offer: 8, hired: 3 },
-  "job-2": { sourced: 22, applied: 18, interview: 6, assessment: 4, offer: 2, hired: 0 },
-  "job-3": { sourced: 64, applied: 52, interview: 24, assessment: 14, offer: 6, hired: 2 },
-  "job-4": { sourced: 31, applied: 28, interview: 12, assessment: 8, offer: 4, hired: 1 },
+export const jobStats: Record<string, { sourced: number; applied: number; interview: number; assessment: number; cleared: number }> = {
+  "job-1": { sourced: 48, applied: 42, interview: 18, assessment: 12, cleared: 3 },
+  "job-2": { sourced: 22, applied: 18, interview: 6, assessment: 4, cleared: 0 },
+  "job-3": { sourced: 64, applied: 52, interview: 24, assessment: 14, cleared: 2 },
+  "job-4": { sourced: 31, applied: 28, interview: 12, assessment: 8, cleared: 1 },
 };
 
 export const recentActivity = [

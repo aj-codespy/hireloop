@@ -214,7 +214,7 @@ export default function SettingsPage() {
               <p>
                 Candidate emails are sent for interview invitations and expired interview windows.
                 Transition-specific templates are planned for received, advanced, rejected, scheduled,
-                and offer events.
+                and interview events.
               </p>
               <p>
                 Current sending is controlled by `RESEND_API_KEY`, `RESEND_FROM`, and

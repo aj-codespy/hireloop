@@ -17,7 +17,7 @@ export default function ReportsPage() {
     { label: "Total candidates", value: stats.totalApplications },
     { label: "Shortlisted", value: stats.shortlisted },
     { label: "Interviewed", value: stats.interviewed },
-    { label: "Final interview", value: stats.offers },
+    { label: "Cleared interviews", value: stats.cleared },
   ];
 
   return (

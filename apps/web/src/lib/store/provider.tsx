@@ -556,7 +556,7 @@ export function useDashboardMetrics() {
     activeJobs: state.jobs.filter((j) => j.status === "live").length,
     interviewed,
     shortlisted,
-    offers: apps.filter((a) => ["partner_review", "hired"].includes(a.status)).length,
+    cleared: apps.filter((a) => a.status === "cleared_interviews").length,
   };
 }
 

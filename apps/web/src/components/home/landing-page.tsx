@@ -458,11 +458,11 @@ export function LandingPage({ userEmail, currentYear }: { userEmail: string | nu
             <div>
               <Eyebrow>System boundary</Eyebrow>
               <h2 className="mt-6 max-w-3xl text-pretty text-5xl font-bold tracking-[-0.045em] sm:text-6xl">
-                HireLoop owns the interview. You own the offer.
+                HireLoop owns the interview. You own the relationship.
               </h2>
             </div>
             <p className="max-w-lg text-lg leading-8 text-muted-foreground lg:justify-self-end">
-              Screening happens here. The offer and relationship stay with your team.
+              Screening happens here. The relationship stays with your team.
             </p>
           </ScrollReveal>
 

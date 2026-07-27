@@ -29,16 +29,7 @@ const ROUTES: Record<string, AdminRouteMeta> = {
     description: "Open roles should start as approved headcount before they become live jobs.",
     breadcrumbs: [{ label: "Requisitions" }],
   },
-  "/admin/scheduling": {
-    title: "Scheduling",
-    description: "Coordinate human interview stages and calendar holds.",
-    breadcrumbs: [{ label: "Scheduling" }],
-  },
-  "/admin/offers": {
-    title: "Offers",
-    description: "Track offer letters, approvals, and candidate responses.",
-    breadcrumbs: [{ label: "Offers" }],
-  },
+
   "/admin/people-search": {
     title: "People search",
     description: "Find candidates across jobs by name, email, or status.",

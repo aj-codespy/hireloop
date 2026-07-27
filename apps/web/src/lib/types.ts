@@ -39,9 +39,7 @@ export type ApplicationStatus =
   | "interview_expired"
   | "passed_ai"
   | "rejected_ai"
-  | "partner_review"
-  | "hired"
-  | "rejected_final";
+  | "cleared_interviews";
 
 export type QuestionSection = "technical" | "hr" | "situational";
 

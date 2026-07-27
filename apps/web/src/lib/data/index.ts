@@ -99,7 +99,7 @@ export function getCandidateWithApplication(candidateId: string) {
 }
 
 export function getJobStats(jobId: string) {
-  return jobStats[jobId] ?? { sourced: 0, applied: 0, interview: 0, assessment: 0, offer: 0, hired: 0 };
+  return jobStats[jobId] ?? { sourced: 0, applied: 0, interview: 0, assessment: 0, cleared: 0 };
 }
 
 export function getRecentActivity() {
@@ -115,6 +115,6 @@ export function getDashboardStats() {
     candidates: 28,
     activeJobs: jobs.filter((j) => j.status === "live").length,
     totalInterviews: 1248,
-    offers: 98,
+    cleared: 98,
   };
 }

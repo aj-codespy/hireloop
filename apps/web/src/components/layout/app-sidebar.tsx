@@ -10,11 +10,9 @@ import {
   IconCompliance,
   IconDashboard,
   IconJobBoard,
-  IconOffers,
   IconPeopleSearch,
   IconReports,
   IconRequisitions,
-  IconScheduling,
   IconSettings,
 } from "@/components/icons/brand-icons";
 import { useOrgPermissions } from "@/hooks/use-org-permissions";
@@ -60,8 +58,6 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: "Decide",
     items: [
       { href: "/admin/requisitions", label: "Requisitions", icon: IconRequisitions, managersOnly: true },
-      { href: "/admin/scheduling", label: "Scheduling", icon: IconScheduling },
-      { href: "/admin/offers", label: "Offers", icon: IconOffers, managersOnly: true },
       { href: "/admin/people-search", label: "People search", icon: IconPeopleSearch },
       { href: "/admin/reports", label: "Reports", icon: IconReports },
     ],

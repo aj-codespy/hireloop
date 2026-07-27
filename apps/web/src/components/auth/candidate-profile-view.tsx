@@ -36,15 +36,12 @@ function nextAction(status: string, hasToken: boolean) {
       return "Your interview is being reviewed.";
     case "passed_ai":
       return "You passed the screening interview. The hiring team will decide the next stage.";
-    case "partner_review":
-      return "Final interview stage. Watch for scheduling details from the hiring team.";
-    case "hired":
-      return "Congratulations. The team will follow up with offer/onboarding details.";
+    case "cleared_interviews":
+      return "Congratulations. You've successfully cleared the interviews. Further details will be shared later via mail.";
     case "interview_expired":
       return "Your interview window expired. Contact the hiring team for a new link.";
     case "auto_rejected":
     case "rejected_ai":
-    case "rejected_final":
       return "This application is no longer moving forward.";
     default:
       return "Application received. The hiring team will review your details.";

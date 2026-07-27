@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const stages = ["Sourced", "Applied", "Interview", "Assessment", "Offer", "Hired"] as const;
+const stages = ["Sourced", "Applied", "Interview", "Assessment", "Cleared"] as const;
 
 export default function JobsPage() {
   const { state, hydrated } = useHireLoop();
@@ -81,13 +81,12 @@ export default function JobsPage() {
               apps.length,
               apps.length,
               apps.filter((a) =>
-                ["interview_sent", "interviewed", "passed_ai", "rejected_ai", "partner_review", "hired"].includes(
+                ["interview_sent", "interviewed", "passed_ai", "rejected_ai", "cleared_interviews"].includes(
                   a.status
                 )
               ).length,
-              apps.filter((a) => ["passed_ai", "rejected_ai", "partner_review", "hired"].includes(a.status)).length,
-              apps.filter((a) => ["partner_review", "hired"].includes(a.status)).length,
-              apps.filter((a) => a.status === "hired").length,
+              apps.filter((a) => ["passed_ai", "rejected_ai", "cleared_interviews"].includes(a.status)).length,
+              apps.filter((a) => a.status === "cleared_interviews").length,
             ];
             const applicantCount = apps.length;
 
