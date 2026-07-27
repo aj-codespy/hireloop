@@ -72,7 +72,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
         <div className="flex items-center gap-2">
           {canManageJobs && (
             <ButtonLink href={`/admin/jobs/new?clone=${job.id}`} variant="outline" className="rounded-full">
-              <PhosphorIcon name="copy" className="mr-2" size="sm" />
+              <PhosphorIcon name="Copy" className="mr-2" size="sm" />
               Duplicate job
             </ButtonLink>
           )}
