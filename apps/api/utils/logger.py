@@ -37,7 +37,7 @@ def setup_logger():
     logger.add(
         "logs/api.log", 
         rotation="10 MB", 
-        retention="7 days", 
+        retention="3 days", 
         format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}"
     )
     

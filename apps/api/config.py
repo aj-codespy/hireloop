@@ -36,6 +36,7 @@ BREVO_FROM = os.getenv("BREVO_FROM", "") or _legacy_resend_from
 BREVO_FROM_NAME = os.getenv("BREVO_FROM_NAME", "HireLoop")
 
 APP_URL = os.getenv("APP_URL") or os.getenv("NEXT_PUBLIC_APP_URL", "http://localhost:3000")
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
 
 # — Dev SQLite fallback ————————————————————————————————————————————————
 DEV_SQLITE = os.getenv("DEV_SQLITE", "").strip() in ("1", "true", "yes")

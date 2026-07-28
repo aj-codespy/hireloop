@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 
 from config import SUPABASE_SECRET_KEY, SUPABASE_URL
-from utils.http_pool import get_http_client
+from utils.http_pool import get_http_client, request_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +49,7 @@ async def download_object(object_path: str) -> bytes:
         "apikey": SUPABASE_SECRET_KEY,
         "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
     }
-    client = get_http_client()
-    res = await client.get(url, headers=headers, timeout=60.0)
+    res = await request_with_retry("GET", url, headers=headers, timeout=60.0)
     if res.status_code >= 400:
         raise RuntimeError(f"Download failed: {res.status_code}")
     return res.content
