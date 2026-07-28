@@ -51,20 +51,45 @@ limiter = Limiter(key_func=get_remote_address)
 # CORS origins - set via environment variable
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
 
-# WebSocket connection tracking (simple in-memory per-process guard)
+# WebSocket connection tracking (supports Redis for distributed counters)
 _CONNECTIONS_BY_IP: dict[str, int] = {}
 _CONNECTIONS_LOCK = asyncio.Lock()
-MAX_WS_PER_IP = int(os.getenv("MAX_WS_PER_IP", "3"))
-MAX_WS_MESSAGE_BYTES = int(os.getenv("MAX_WS_MESSAGE_BYTES", str(10 * 1024 * 1024)))  # 10MB
+from config import REDIS_URL, MAX_WS_PER_IP, WS_CONNECTION_TTL, WS_MAX_BINARY_BYTES, WS_MAX_TEXT_CHARS
+MAX_WS_MESSAGE_BYTES = WS_MAX_BINARY_BYTES
+MAX_WS_TEXT_CHARS = WS_MAX_TEXT_CHARS
+
+# app.state.redis will be set at startup if REDIS_URL is configured and redis.asyncio is available
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting HireLoop Interview API")
     await init_http_client()
+
+    # Optional: connect to Redis for distributed WebSocket connection counting
+    app.state.redis = None
+    if REDIS_URL:
+        try:
+            import redis.asyncio as aioredis
+
+            try:
+                redis_client = aioredis.from_url(REDIS_URL)
+                await redis_client.ping()
+                app.state.redis = redis_client
+                logger.info("Connected to Redis at %s", REDIS_URL)
+            except Exception as exc:
+                logger.warning("Could not connect to Redis (%s): %s", REDIS_URL, exc)
+        except Exception:
+            logger.info("redis.asyncio not installed; continuing without Redis")
+
     yield
     # Shutdown
     logger.info("Shutting down HireLoop Interview API")
+    if getattr(app.state, "redis", None):
+        try:
+            await app.state.redis.close()
+        except Exception:
+            pass
     await close_http_client()
 
 app = FastAPI(title="HireLoop Interview API", version="0.3.0", lifespan=lifespan)
@@ -295,15 +320,36 @@ async def interview_websocket(
                     pass
         finally:
             receive_task.cancel()
+
             try:
                 await websocket.close()
             except Exception:
                 pass
             logger.info("Interview WebSocket closed")
     finally:
-        async with _CONNECTIONS_LOCK:
-            _CONNECTIONS_BY_IP[client_ip] = max(0, _CONNECTIONS_BY_IP.get(client_ip, 1) - 1)
-
+        # decrement distributed counter or in-memory fallback
+        try:
+            redis = getattr(app.state, "redis", None)
+            if redis is not None:
+                try:
+                    key = f"ws:conn:{client_ip}"
+                    val = await redis.decr(key)
+                    if val <= 0:
+                        try:
+                            await redis.delete(key)
+                        except Exception:
+                            pass
+                except Exception:
+                    # fall back to in-memory decrement
+                    async with _CONNECTIONS_LOCK:
+                        _CONNECTIONS_BY_IP[client_ip] = max(0, _CONNECTIONS_BY_IP.get(client_ip, 1) - 1)
+            else:
+                async with _CONNECTIONS_LOCK:
+                    _CONNECTIONS_BY_IP[client_ip] = max(0, _CONNECTIONS_BY_IP.get(client_ip, 1) - 1)
+        except Exception:
+            # ensure we never crash during cleanup
+            async with _CONNECTIONS_LOCK:
+                _CONNECTIONS_BY_IP[client_ip] = max(0, _CONNECTIONS_BY_IP.get(client_ip, 1) - 1)
 
 if __name__ == "__main__":
     import uvicorn

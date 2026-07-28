@@ -43,6 +43,17 @@ DEV_SQLITE = os.getenv("DEV_SQLITE", "").strip() in ("1", "true", "yes")
 DEV_SQLITE_PATH = os.getenv("DEV_SQLITE_PATH", str(Path(__file__).parent / "dev.sqlite"))
 _dev_sqlite_local = threading.local()
 
+# — Redis / WebSocket limits ————————————————————————————————————————————
+REDIS_URL = os.getenv("REDIS_URL", "")
+MAX_WS_PER_IP = int(os.getenv("MAX_WS_PER_IP", "3"))
+WS_CONNECTION_TTL = int(os.getenv("WS_CONNECTION_TTL", "3600"))  # seconds to keep per-IP counter
+WS_MAX_BINARY_BYTES = int(os.getenv("MAX_WS_MESSAGE_BYTES", str(10 * 1024 * 1024)))  # 10MB default
+WS_MAX_TEXT_CHARS = int(os.getenv("MAX_WS_TEXT_CHARS", "20000"))
+
+# — Supabase service-role key presence (informational) ————————————————————
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+SERVICE_ROLE_CONFIGURED = bool(SUPABASE_SERVICE_ROLE_KEY)
+
 
 def dev_sqlite_connection() -> sqlite3.Connection:
     """Return a per-thread SQLite connection for dev mode.
