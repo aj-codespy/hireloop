@@ -14,7 +14,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from config import PORT, SENTRY_DSN
+from config import PORT, SENTRY_DSN, MAX_WS_PER_IP, WS_MAX_BINARY_BYTES, WS_MAX_TEXT_CHARS, SERVICE_ROLE_CONFIGURED, supabase_enabled
 from interview.answer_upload import upload_answer_chunk
 from interview.question_audio import render_questions_for_job
 from interview.structured_relay import StructuredInterviewRelay
@@ -54,7 +54,6 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://loc
 # WebSocket connection tracking (supports Redis for distributed counters)
 _CONNECTIONS_BY_IP: dict[str, int] = {}
 _CONNECTIONS_LOCK = asyncio.Lock()
-from config import REDIS_URL, MAX_WS_PER_IP, WS_CONNECTION_TTL, WS_MAX_BINARY_BYTES, WS_MAX_TEXT_CHARS, SERVICE_ROLE_CONFIGURED, supabase_enabled
 MAX_WS_MESSAGE_BYTES = WS_MAX_BINARY_BYTES
 MAX_WS_TEXT_CHARS = WS_MAX_TEXT_CHARS
 
@@ -65,22 +64,6 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting HireLoop Interview API")
     await init_http_client()
-
-    # Optional: connect to Redis for distributed WebSocket connection counting
-    app.state.redis = None
-    if REDIS_URL:
-        try:
-            import redis.asyncio as aioredis
-
-            try:
-                redis_client = aioredis.from_url(REDIS_URL)
-                await redis_client.ping()
-                app.state.redis = redis_client
-                logger.info("Connected to Redis at %s", REDIS_URL)
-            except Exception as exc:
-                logger.warning("Could not connect to Redis (%s): %s", REDIS_URL, exc)
-        except Exception:
-            logger.info("redis.asyncio not installed; continuing without Redis")
 
     # Warn if Supabase service role key is not configured in environments where Supabase is enabled
     try:
@@ -96,11 +79,6 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     logger.info("Shutting down HireLoop Interview API")
-    if getattr(app.state, "redis", None):
-        try:
-            await app.state.redis.close()
-        except Exception:
-            pass
     await close_http_client()
 
 app = FastAPI(title="HireLoop Interview API", version="0.3.0", lifespan=lifespan)
@@ -338,29 +316,9 @@ async def interview_websocket(
                 pass
             logger.info("Interview WebSocket closed")
     finally:
-        # decrement distributed counter or in-memory fallback
-        try:
-            redis = getattr(app.state, "redis", None)
-            if redis is not None:
-                try:
-                    key = f"ws:conn:{client_ip}"
-                    val = await redis.decr(key)
-                    if val <= 0:
-                        try:
-                            await redis.delete(key)
-                        except Exception:
-                            pass
-                except Exception:
-                    # fall back to in-memory decrement
-                    async with _CONNECTIONS_LOCK:
-                        _CONNECTIONS_BY_IP[client_ip] = max(0, _CONNECTIONS_BY_IP.get(client_ip, 1) - 1)
-            else:
-                async with _CONNECTIONS_LOCK:
-                    _CONNECTIONS_BY_IP[client_ip] = max(0, _CONNECTIONS_BY_IP.get(client_ip, 1) - 1)
-        except Exception:
-            # ensure we never crash during cleanup
-            async with _CONNECTIONS_LOCK:
-                _CONNECTIONS_BY_IP[client_ip] = max(0, _CONNECTIONS_BY_IP.get(client_ip, 1) - 1)
+        async with _CONNECTIONS_LOCK:
+            _CONNECTIONS_BY_IP[client_ip] = max(0, _CONNECTIONS_BY_IP.get(client_ip, 1) - 1)
+
 
 if __name__ == "__main__":
     import uvicorn
