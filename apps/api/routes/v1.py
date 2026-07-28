@@ -150,15 +150,43 @@ class ExportConfigCreate(BaseModel):
     field_mapping: Optional[dict] = None
 
 
+# Small request models for strict validation
+class SlotItem(BaseModel):
+    starts_at: str
+    ends_at: str
+    interviewer_ids: list[str] | None = None
+    max_candidates: int | None = 1
+
+
+class CreateSlotsRequest(BaseModel):
+    slots: list[SlotItem]
+
+
+class BookSlotRequest(BaseModel):
+    candidate_id: str
+
+
+class ProctoringOverrideRequest(BaseModel):
+    flagged: bool
+    note: str
+
+
+class OfferCreate(BaseModel):
+    status: Optional[str] = None
+    # allow arbitrary additional offer fields
+    model_config = {"extra": "allow"}
+
+
 # Jobs endpoints
 @router.get("/jobs")
 async def list_jobs(
-    org_id: str = Depends(get_org_id),
+    auth: AuthenticatedKey = Depends(require_scopes("jobs", mode="read")),
     status: Optional[str] = Query(None),
     department_id: Optional[str] = Query(None),
     limit: int = Query(50, le=100),
     cursor: Optional[str] = Query(None),
 ):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -168,9 +196,12 @@ async def list_jobs(
         params["status"] = f"eq.{status}"
     if department_id:
         params["department_id"] = f"eq.{department_id}"
+    if cursor:
+        params["created_at"] = f"lt.{cursor}"
 
     rows = await store._request("GET", "job_roles", params=params)
-    return {"data": rows or [], "next_cursor": None}
+    next_cursor = rows[-1].get("created_at") if rows and len(rows) == limit else None
+    return {"data": rows or [], "next_cursor": next_cursor}
 
 
 @router.post("/jobs", status_code=201)
@@ -198,7 +229,8 @@ async def create_job(job: JobCreate, auth: AuthenticatedKey = Depends(require_sc
 
 
 @router.get("/jobs/{job_id}")
-async def get_job(job_id: str, org_id: str = Depends(get_org_id)):
+async def get_job(job_id: str, auth: AuthenticatedKey = Depends(require_scopes("jobs", mode="read"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -250,31 +282,36 @@ async def delete_job(job_id: str, auth: AuthenticatedKey = Depends(require_scope
 # Applications endpoints
 @router.get("/applications")
 async def list_applications(
-    org_id: str = Depends(get_org_id),
+    auth: AuthenticatedKey = Depends(require_scopes("applications", mode="read")),
     job_id: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     stage_id: Optional[str] = Query(None),
     limit: int = Query(50, le=100),
     cursor: Optional[str] = Query(None),
 ):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
 
-    params = {"org_id": f"eq.{org_id}", "order": "created_at.desc", "limit": "50"}
+    params = {"org_id": f"eq.{org_id}", "order": "created_at.desc", "limit": str(limit)}
     if job_id:
         params["job_role_id"] = f"eq.{job_id}"
     if status:
         params["status"] = f"eq.{status}"
     if stage_id:
         params["current_stage_id"] = f"eq.{stage_id}"
+    if cursor:
+        params["created_at"] = f"lt.{cursor}"
 
     rows = await store._request("GET", "applications", params=params)
-    return {"data": rows or [], "next_cursor": None}
+    next_cursor = rows[-1].get("created_at") if rows and len(rows) == limit else None
+    return {"data": rows or [], "next_cursor": next_cursor}
 
 
 @router.get("/applications/{app_id}")
-async def get_application(app_id: str, org_id: str = Depends(get_org_id)):
+async def get_application(app_id: str, auth: AuthenticatedKey = Depends(require_scopes("applications", mode="read"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -391,32 +428,33 @@ async def transition_application(
 # Candidates endpoints
 @router.get("/candidates")
 async def list_candidates(
-    org_id: str = Depends(get_org_id),
+    auth: AuthenticatedKey = Depends(require_scopes("candidates", mode="read")),
     email: Optional[str] = Query(None),
     job_id: Optional[str] = Query(None),
     limit: int = Query(50, le=100),
 ):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
 
-    params = {"org_id": f"eq.{org_id}", "order": "created_at.desc", "limit": "50"}
+    params = {"org_id": f"eq.{org_id}", "order": "created_at.desc", "limit": str(limit)}
     if email:
         params["email"] = f"ilike.*{email}*"
 
     rows = await store._request("GET", "candidates", params=params)
-    return {"data": rows or []}
+    next_cursor = rows[-1].get("created_at") if rows and len(rows) == limit else None
+    return {"data": rows or [], "next_cursor": next_cursor}
 
 
 @router.get("/candidates/{candidate_id}")
-async def get_candidate(candidate_id: str, org_id: str = Depends(get_org_id)):
+async def get_candidate(candidate_id: str, auth: AuthenticatedKey = Depends(require_scopes("candidates", mode="read"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
 
-    rows = await store._request(
-        "GET", "candidates", params={"id": f"eq.{candidate_id}", "org_id": f"eq.{org_id}"}
-    )
+    rows = await store._request("GET", "candidates", params={"id": f"eq.{candidate_id}", "org_id": f"eq.{org_id}"})
     if not rows:
         raise HTTPException(status_code=404, detail="Candidate not found")
     return rows[0]
@@ -424,7 +462,8 @@ async def get_candidate(candidate_id: str, org_id: str = Depends(get_org_id)):
 
 # Scores endpoints
 @router.get("/applications/{app_id}/score")
-async def get_application_score(app_id: str, org_id: str = Depends(get_org_id)):
+async def get_application_score(app_id: str, auth: AuthenticatedKey = Depends(require_scopes("scores", mode="read"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -441,7 +480,8 @@ async def get_application_score(app_id: str, org_id: str = Depends(get_org_id)):
 
 # Stages endpoints
 @router.get("/jobs/{job_id}/stages")
-async def list_job_stages(job_id: str, org_id: str = Depends(get_org_id)):
+async def list_job_stages(job_id: str, auth: AuthenticatedKey = Depends(require_scopes("stages", mode="read"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -456,7 +496,8 @@ async def list_job_stages(job_id: str, org_id: str = Depends(get_org_id)):
 
 # Scorecards endpoints
 @router.get("/applications/{app_id}/scorecards")
-async def list_scorecards(app_id: str, org_id: str = Depends(get_org_id)):
+async def list_scorecards(app_id: str, auth: AuthenticatedKey = Depends(require_scopes("scorecards", mode="read"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -502,7 +543,8 @@ async def list_schedules(app_id: str, org_id: str = Depends(get_org_id)):
 
 
 @router.post("/applications/{app_id}/schedules")
-async def create_schedule(app_id: str, schedule: ScheduleCreate, org_id: str = Depends(get_org_id)):
+async def create_schedule(app_id: str, schedule: ScheduleCreate, auth: AuthenticatedKey = Depends(require_scopes("schedules", mode="write"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -525,7 +567,8 @@ async def create_schedule(app_id: str, schedule: ScheduleCreate, org_id: str = D
 
 # Offers endpoints
 @router.get("/applications/{app_id}/offer")
-async def get_offer(app_id: str, org_id: str = Depends(get_org_id)):
+async def get_offer(app_id: str, auth: AuthenticatedKey = Depends(require_scopes("offers", mode="read"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -539,17 +582,18 @@ async def get_offer(app_id: str, org_id: str = Depends(get_org_id)):
 
 
 @router.post("/applications/{app_id}/offer")
-async def create_offer(app_id: str, offer_data: dict, org_id: str = Depends(get_org_id)):
+async def create_offer(app_id: str, offer: OfferCreate, auth: AuthenticatedKey = Depends(require_scopes("offers", mode="write"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
 
     offer_id = f"offer-{uuid4().hex[:12]}"
     payload = {
-        "id": f"offer-{uuid4().hex[:12]}",
+        "id": offer_id,
         "application_id": app_id,
-        "status": "draft",
-        **offer_data,
+        "status": offer.status or "draft",
+        **offer.model_dump(exclude_unset=True),
     }
 
     await store._request("POST", "offers", json=payload)
@@ -845,7 +889,8 @@ async def preview_scoring_prompt(body: dict, auth: AuthenticatedKey = Depends(re
 
 
 @router.get("/exports")
-async def list_exports(org_id: str = Depends(get_org_id)):
+async def list_exports(auth: AuthenticatedKey = Depends(require_scopes("exports", mode="read"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -855,14 +900,15 @@ async def list_exports(org_id: str = Depends(get_org_id)):
 
 
 @router.post("/exports")
-async def create_export(config: ExportConfigCreate, org_id: str = Depends(get_org_id)):
+async def create_export(config: ExportConfigCreate, auth: AuthenticatedKey = Depends(require_scopes("exports", mode="write"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
 
     export_id = f"exp-{uuid4().hex[:12]}"
     payload = {
-        "id": f"exp-{uuid4().hex[:12]}",
+        "id": export_id,
         "org_id": org_id,
         **config.model_dump(),
     }

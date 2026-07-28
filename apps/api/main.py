@@ -7,14 +7,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from config import PORT
+from config import PORT, SENTRY_DSN
 from interview.answer_upload import upload_answer_chunk
 from interview.question_audio import render_questions_for_job
 from interview.structured_relay import StructuredInterviewRelay
@@ -25,6 +25,23 @@ from routes.v1 import router as v1_router
 from utils.http_pool import close_http_client, init_http_client
 from utils.logger import setup_logger
 
+# Optional observability
+try:
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST, Counter
+    METRICS_ENABLED = True
+    WS_ERROR_COUNTER = Counter('hireloop_ws_errors_total', 'WebSocket errors')
+except Exception:
+    METRICS_ENABLED = False
+
+# Optional Sentry
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+
+        sentry_sdk.init(dsn=SENTRY_DSN)
+    except Exception:
+        pass
+
 setup_logger()
 logger = logging.getLogger(__name__)
 
@@ -33,6 +50,12 @@ limiter = Limiter(key_func=get_remote_address)
 
 # CORS origins - set via environment variable
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
+
+# WebSocket connection tracking (simple in-memory per-process guard)
+_CONNECTIONS_BY_IP: dict[str, int] = {}
+_CONNECTIONS_LOCK = asyncio.Lock()
+MAX_WS_PER_IP = int(os.getenv("MAX_WS_PER_IP", "3"))
+MAX_WS_MESSAGE_BYTES = int(os.getenv("MAX_WS_MESSAGE_BYTES", str(10 * 1024 * 1024)))  # 10MB
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -73,6 +96,14 @@ async def root() -> FileResponse:
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok", "service": "hireloop-interview-api", "mode": "structured"}
+
+
+# Prometheus metrics endpoint
+if METRICS_ENABLED:
+    @app.get('/metrics')
+    async def metrics():
+        data = generate_latest()
+        return PlainTextResponse(content=data, media_type=CONTENT_TYPE_LATEST)
 
 
 class RenderAudioRequest(BaseModel):
@@ -163,83 +194,115 @@ async def interview_websocket(
     if not token:
         await websocket.close(code=4001, reason="Interview token required")
         return
-    
-    # Validate token exists and interview is accessible
+
+    # Per-IP connection limit
+    client_ip = "unknown"
     try:
-        ctx = await store.load_application_for_interview(token)
-        if not ctx:
-            await websocket.close(code=4002, reason="Invalid or expired interview link")
+        client_ip = websocket.client[0]
+    except Exception:
+        pass
+    async with _CONNECTIONS_LOCK:
+        count = _CONNECTIONS_BY_IP.get(client_ip, 0)
+        if count >= MAX_WS_PER_IP:
+            await websocket.close(code=4009, reason="Too many connections from this IP")
             return
-    except ValueError as exc:
-        await websocket.close(code=4002, reason=str(exc))
-        return
-    except Exception as exc:
-        logger.error("Token validation failed: %s", exc)
-        await websocket.close(code=1011, reason="Validation error")
-        return
-
-    await websocket.accept()
-    logger.info("Interview WebSocket connected token=yes lang=%s", lang)
+        _CONNECTIONS_BY_IP[client_ip] = count + 1
 
     try:
-        await websocket.send_json({"type": "bootstrap"})
-    except WebSocketDisconnect:
-        logger.info("Client disconnected before session bootstrap")
-        return
-
-    relay = StructuredInterviewRelay(websocket, token=token, language=lang)
-
-    async def receive_from_client() -> None:
+        # Validate token exists and interview is accessible
         try:
-            while True:
-                message = await websocket.receive()
-                if message.get("type") == "websocket.disconnect":
-                    break
-                if message.get("bytes") is not None:
-                    await relay.handle_client_message(message["bytes"])
-                elif message.get("text") is not None:
-                    try:
-                        payload = json.loads(message["text"])
-                    except json.JSONDecodeError:
-                        payload = {"type": "text", "text": message["text"]}
-                    await relay.handle_client_message(payload)
-        except WebSocketDisconnect:
-            logger.info("Interview WebSocket disconnected")
-        except RuntimeError as exc:
-            if "disconnect" in str(exc).lower() or "close" in str(exc).lower():
-                logger.info("Interview WebSocket receive ended after disconnect")
-            else:
-                logger.error("Client receive error: %s", exc, exc_info=True)
+            ctx = await store.load_application_for_interview(token)
+            if not ctx:
+                await websocket.close(code=4002, reason="Invalid or expired interview link")
+                return
+        except ValueError as exc:
+            await websocket.close(code=4002, reason=str(exc))
+            return
         except Exception as exc:
-            logger.error("Client receive error: %s", exc, exc_info=True)
-        finally:
-            # Client is gone — stop the relay loops so they don't spin forever.
-            relay.client_disconnected()
+            logger.error("Token validation failed: %s", exc)
+            await websocket.close(code=1011, reason="Validation error")
+            return
 
-    receive_task = asyncio.create_task(receive_from_client())
+        await websocket.accept()
+        logger.info("Interview WebSocket connected token=yes lang=%s", lang)
 
-    try:
-        await relay.run()
-    except WebSocketDisconnect:
-        logger.info("Client disconnected during interview relay")
-    except Exception as exc:
-        if exc.__class__.__name__ == "ClientDisconnected":
-            logger.info("Client disconnected during interview relay")
-        else:
-            logger.error("Interview relay error: %s", exc, exc_info=True)
+        try:
+            await websocket.send_json({"type": "bootstrap"})
+        except WebSocketDisconnect:
+            logger.info("Client disconnected before session bootstrap")
+            return
+
+        relay = StructuredInterviewRelay(websocket, token=token, language=lang)
+
+        async def receive_from_client() -> None:
             try:
-                await websocket.send_json(
-                    {"type": "error", "message": f"{type(exc).__name__}: {exc}"}
-                )
+                while True:
+                    message = await websocket.receive()
+                    if message.get("type") == "websocket.disconnect":
+                        break
+                    # Size checks
+                    if message.get("bytes") is not None:
+                        if len(message["bytes"]) > MAX_WS_MESSAGE_BYTES:
+                            logger.warning("Dropping oversized binary message from %s", client_ip)
+                            await websocket.close(code=4003, reason="Message too large")
+                            break
+                        await relay.handle_client_message(message["bytes"])
+                    elif message.get("text") is not None:
+                        if len(message["text"]) > 20000:
+                            logger.warning("Dropping oversized text message from %s", client_ip)
+                            await websocket.close(code=4003, reason="Message too large")
+                            break
+                        try:
+                            payload = json.loads(message["text"])
+                        except json.JSONDecodeError:
+                            payload = {"type": "text", "text": message["text"]}
+                        await relay.handle_client_message(payload)
+            except WebSocketDisconnect:
+                logger.info("Interview WebSocket disconnected")
+            except RuntimeError as exc:
+                if "disconnect" in str(exc).lower() or "close" in str(exc).lower():
+                    logger.info("Interview WebSocket receive ended after disconnect")
+                else:
+                    logger.error("Client receive error: %s", exc, exc_info=True)
+                    if METRICS_ENABLED:
+                        WS_ERROR_COUNTER.inc()
+            except Exception as exc:
+                logger.error("Client receive error: %s", exc, exc_info=True)
+                if METRICS_ENABLED:
+                    WS_ERROR_COUNTER.inc()
+            finally:
+                # Client is gone — stop the relay loops so they don't spin forever.
+                relay.client_disconnected()
+
+        receive_task = asyncio.create_task(receive_from_client())
+
+        try:
+            await relay.run()
+        except WebSocketDisconnect:
+            logger.info("Client disconnected during interview relay")
+        except Exception as exc:
+            if exc.__class__.__name__ == "ClientDisconnected":
+                logger.info("Client disconnected during interview relay")
+            else:
+                logger.error("Interview relay error: %s", exc, exc_info=True)
+                if METRICS_ENABLED:
+                    WS_ERROR_COUNTER.inc()
+                try:
+                    await websocket.send_json(
+                        {"type": "error", "message": f"{type(exc).__name__}: {exc}"}
+                    )
+                except Exception:
+                    pass
+        finally:
+            receive_task.cancel()
+            try:
+                await websocket.close()
             except Exception:
                 pass
+            logger.info("Interview WebSocket closed")
     finally:
-        receive_task.cancel()
-        try:
-            await websocket.close()
-        except Exception:
-            pass
-        logger.info("Interview WebSocket closed")
+        async with _CONNECTIONS_LOCK:
+            _CONNECTIONS_BY_IP[client_ip] = max(0, _CONNECTIONS_BY_IP.get(client_ip, 1) - 1)
 
 
 if __name__ == "__main__":

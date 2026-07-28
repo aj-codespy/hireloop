@@ -9,6 +9,7 @@ import aiosmtplib
 from email.mime.text import MIMEText
 
 from config import APP_URL, BREVO_SMTP_HOST, BREVO_SMTP_PORT, BREVO_SMTP_LOGIN, BREVO_SMTP_KEY, BREVO_FROM, BREVO_FROM_NAME, email_configured
+from utils.mask import mask_email, mask_name
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +52,8 @@ async def send_interview_expired_email(
     if not email_configured():
         logger.info(
             "INTERVIEW EXPIRED EMAIL (Brevo SMTP not configured) → %s <%s> for role %r",
-            candidate_name,
-            candidate_email,
+            mask_name(candidate_name),
+            mask_email(candidate_email),
             job_title,
         )
         return
@@ -97,8 +98,8 @@ async def send_interview_invite_email(
     if not email_configured():
         logger.info(
             "INTERVIEW INVITE EMAIL (Brevo SMTP not configured) → %s <%s> for role %r\nURL: %s",
-            candidate_name,
-            candidate_email,
+            mask_name(candidate_name),
+            mask_email(candidate_email),
             job_title,
             interview_url,
         )

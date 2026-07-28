@@ -15,7 +15,7 @@ import httpx
 import sqlite3
 
 from config import DEV_SQLITE, SUPABASE_SECRET_KEY, SUPABASE_URL, supabase_enabled
-from utils.http_pool import get_http_client
+from utils.http_pool import get_http_client, request_with_retry
 from interview.questions import Question
 from interview.session import SessionStatus, TranscriptEntry
 
@@ -64,14 +64,9 @@ class SupabaseInterviewStore:
         headers = dict(self._headers)
         if prefer:
             headers["Prefer"] = prefer
-        client = get_http_client()
-        res = await client.request(
-            method,
-            f"{self._base}/{path}",
-            headers=headers,
-            params=params,
-            json=json,
-        )
+        url = f"{self._base}/{path}"
+        # Use request_with_retry to tolerate transient network/server failures
+        res = await request_with_retry(method, url, headers=headers, params=params, json=json, timeout=30.0, retries=3)
         if res.status_code >= 400:
             raise RuntimeError(f"Supabase {method} {path}: {res.status_code} {res.text}")
         if res.status_code == 204 or not res.content:
@@ -504,12 +499,30 @@ class SupabaseInterviewStore:
         current_index: int = 0,
     ) -> None:
         now = datetime.now(timezone.utc).isoformat()
+        mapped = self._map_status(status)
+
+        # First try an atomic RPC if the DB implements it; fall back to conservative
+        # PATCH sequence if the RPC is not available.
+        rpc_payload = {
+            "p_session_id": session_id,
+            "p_status": mapped,
+            "p_ended_at": now,
+            "p_total_duration_seconds": int(round(elapsed_seconds)),
+            "p_transcript": self._transcript_to_json(entries),
+            "p_current_index": current_index,
+        }
+        try:
+            await self._request("POST", "rpc/finalize_session_rpc", json=rpc_payload, prefer="return=minimal")
+            return
+        except Exception:
+            # RPC not present or failed — continue with existing patch flow
+            pass
+
         rows = await self._request(
             "GET",
             "interview_sessions",
             params={"id": f"eq.{session_id}", "select": "status"},
         )
-        mapped = self._map_status(status)
         if rows and rows[0].get("status") == "flagged":
             mapped = "flagged"
         await self._request(
