@@ -48,8 +48,14 @@ logger = logging.getLogger(__name__)
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
 
-# CORS origins - set via environment variable
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
+# CORS origins - set via environment variable (trim whitespace from CSV entries)
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001"
+    ).split(",")
+    if origin.strip()
+]
 
 # WebSocket connection tracking (simple in-memory per-process guard)
 _CONNECTIONS_BY_IP: dict[str, int] = {}

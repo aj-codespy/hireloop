@@ -64,6 +64,7 @@ class StructuredInterviewRelay:
         self._send_lock = asyncio.Lock()
         self._question_timeout_at: float | None = None
         self._transcribe_tasks: set[asyncio.Task] = set()
+        self._finalize_task: asyncio.Task | None = None
         self._proctoring_warnings = 0
         self._proctoring_critical = 0
         self._last_snapshot_at = 0.0
@@ -383,7 +384,9 @@ class StructuredInterviewRelay:
             self._question_timeout_at = None
 
             chunk_count = message.get("chunk_count")
-            if chunk_count and self.db_session_id:
+            audio_bytes = b""
+            mime_type = "audio/webm"
+            if chunk_count and self.db_session_id and not message.get("audio_base64"):
                 try:
                     chunk_count_int = int(chunk_count)
                     if chunk_count_int <= 0 or chunk_count_int > 100:
@@ -393,9 +396,27 @@ class StructuredInterviewRelay:
                     )
                 except Exception as exc:
                     logger.error("Failed to assemble chunked answer: %s", exc, exc_info=True)
-                    audio_bytes, mime_type = b"", "audio/webm"
+                    await self._send_json(
+                        {
+                            "type": "answer_error",
+                            "index": index,
+                            "message": "Answer upload incomplete. Please record again.",
+                        }
+                    )
+                    return
             else:
                 audio_bytes, mime_type = decode_audio_payload(message)
+
+            if not audio_bytes:
+                logger.warning("Rejecting empty answer audio for index %s", index)
+                await self._send_json(
+                    {
+                        "type": "answer_error",
+                        "index": index,
+                        "message": "No audio received. Please record again.",
+                    }
+                )
+                return
 
             # Placeholder entry keeps transcript ordering and marks the
             # question as answered; the background task fills in the text.
@@ -657,7 +678,9 @@ class StructuredInterviewRelay:
             finally:
                 self._done_event.set()
 
-        asyncio.create_task(_finish_and_score())
+        # Keep a strong reference so Cloud Run does not GC the task, and so
+        # client_disconnected can avoid aborting finalize/score early.
+        self._finalize_task = asyncio.create_task(_finish_and_score())
 
     async def _run_scoring(self) -> None:
         if not self.store or not self.db_session_id or not self.ctx:
@@ -698,9 +721,16 @@ class StructuredInterviewRelay:
         """Called when the client socket goes away. Flags stop the loops (they
         exit on their next tick) without cancelling in-flight persistence or
         scoring. The session row stays in_progress so the candidate can
-        reconnect within the allowed window."""
+        reconnect within the allowed window.
+
+        Do not set ``_done_event`` while finalize/score is still running —
+        that would let ``run()`` return and Cloud Run can freeze CPU before
+        transcripts and scores are persisted.
+        """
         self._client_gone = True
-        self._done_event.set()
+        finalize = getattr(self, "_finalize_task", None)
+        if finalize is None or finalize.done():
+            self._done_event.set()
 
     async def _send_json(self, payload: dict) -> None:
         if self._client_gone:

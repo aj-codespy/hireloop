@@ -72,7 +72,7 @@ export function InterviewStructured({
   onComplete?: (result: { passed?: boolean; totalScore?: number; status?: string; reason?: string }) => void;
 }) {
   const socket = useRef<WebSocket | null>(null);
-  const uploadPromises = useRef<Promise<unknown>[]>([]);
+  const uploadPromises = useRef<Promise<boolean>[]>([]);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
   const ttsAudio = useRef<HTMLAudioElement | null>(null);
@@ -308,9 +308,12 @@ export function InterviewStructured({
     }
     chunks.current = [];
     chunkIndexRef.current = 0;
+    uploadPromises.current = [];
     recorder.ondataavailable = (e) => {
       if (e.data.size === 0) return;
       chunks.current.push(e.data);
+      // Best-effort durable upload. Submission always falls back to the local
+      // blob over WebSocket if any chunk upload fails (CORS/network/storage).
       const sessionId = sessionIdRef.current;
       if (!sessionId) return;
       const chunkIdx = chunkIndexRef.current++;
@@ -320,9 +323,13 @@ export function InterviewStructured({
         recordingIndexRef.current,
         chunkIdx,
         e.data
-      ).catch((err) => {
-        console.warn("Chunk upload failed", err);
-      });
+      ).then(
+        () => true,
+        (err) => {
+          console.warn("Chunk upload failed", err);
+          return false;
+        }
+      );
       uploadPromises.current.push(p);
     };
     recorder.start(3000);
@@ -349,16 +356,20 @@ export function InterviewStructured({
     });
     mediaRecorder.current = null;
 
-    await Promise.all(uploadPromises.current);
+    const uploadResults = await Promise.all(uploadPromises.current);
     uploadPromises.current = [];
-
     const chunkCount = chunkIndexRef.current;
     const sessionId = sessionIdRef.current;
+    const uploadsOk =
+      Boolean(sessionId) &&
+      chunkCount > 0 &&
+      uploadResults.length === chunkCount &&
+      uploadResults.every(Boolean);
 
     armSubmitWatchdog();
 
-    if (sessionId && chunkCount > 0) {
-      // Chunks already uploaded over HTTP — tell the server to assemble.
+    if (uploadsOk) {
+      // Chunks landed in storage — tell the server to assemble.
       sendWsMessage({
         type: "submit_answer",
         question_index: recordingIndexRef.current,
@@ -368,9 +379,15 @@ export function InterviewStructured({
       return;
     }
 
-    // Fallback: no session id yet or zero chunks — send inline (demo/offline).
+    // Reliable path: send the local recording over the WebSocket.
+    // Used when chunk uploads failed, session id was missing, or no chunks fired.
     const blob = new Blob(chunks.current, { type: "audio/webm" });
     chunks.current = [];
+    if (blob.size === 0) {
+      setError("No audio was captured. Please record again or skip.");
+      setPhase("active");
+      return;
+    }
     const base64 = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -541,6 +558,11 @@ export function InterviewStructured({
         case "answer_received":
           // Upload acknowledged; the next question follows immediately.
           clearSubmitWatchdog();
+          break;
+        case "answer_error":
+          clearSubmitWatchdog();
+          setPhase("active");
+          setError(payload.message || "Answer upload failed. Please record again.");
           break;
         case "answer_saved":
           // Background transcription finished (usually for a previous question).
