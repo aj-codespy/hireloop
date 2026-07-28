@@ -1,23 +1,18 @@
-FROM python:3.11-slim AS builder
-
-WORKDIR /app
-
-RUN pip install --no-cache-dir uv
-
-COPY apps/api/pyproject.toml apps/api/
-RUN cd apps/api && uv sync --no-dev
-
 FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY --from=builder /app /app
-COPY apps/api/ /app/apps/api/
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=8080 \
+    DEV_SQLITE=0
 
-ENV PYTHONPATH=/app/apps/api \
-    DEV_SQLITE=1 \
-    PYTHONUNBUFFERED=1
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 8000
+COPY . .
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+EXPOSE 8080
+
+# Cloud Run sets $PORT. Use 1 worker (Cloud Run scales instances, not workers).
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1 --ws-max-size 33554432"]

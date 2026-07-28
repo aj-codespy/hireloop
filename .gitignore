@@ -49,7 +49,8 @@ dev.sqlite-wal
 .agents/
 .hermes/
 .superpowers/
-docs/
+docs/*
+!docs/deployment.md
 scripts/
 prometheus.yml
 

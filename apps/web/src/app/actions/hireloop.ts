@@ -124,7 +124,13 @@ export async function loadInterviewByTokenAction(
   token: string
 ): Promise<InterviewTokenContext | null | { ok: false; error: string }> {
   try {
-    if (!isSupabaseServerEnabled()) return null;
+    if (!isSupabaseServerEnabled()) {
+      return {
+        ok: false,
+        error:
+          "Server database is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY on Vercel, then redeploy.",
+      };
+    }
     return await fetchInterviewContextByToken(token);
   } catch (err) {
     if (isRedirectError(err) || isNotFoundError(err)) throw err;
