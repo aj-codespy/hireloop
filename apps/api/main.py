@@ -54,7 +54,7 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://loc
 # WebSocket connection tracking (supports Redis for distributed counters)
 _CONNECTIONS_BY_IP: dict[str, int] = {}
 _CONNECTIONS_LOCK = asyncio.Lock()
-from config import REDIS_URL, MAX_WS_PER_IP, WS_CONNECTION_TTL, WS_MAX_BINARY_BYTES, WS_MAX_TEXT_CHARS
+from config import REDIS_URL, MAX_WS_PER_IP, WS_CONNECTION_TTL, WS_MAX_BINARY_BYTES, WS_MAX_TEXT_CHARS, SERVICE_ROLE_CONFIGURED, supabase_enabled
 MAX_WS_MESSAGE_BYTES = WS_MAX_BINARY_BYTES
 MAX_WS_TEXT_CHARS = WS_MAX_TEXT_CHARS
 
@@ -81,6 +81,17 @@ async def lifespan(app: FastAPI):
                 logger.warning("Could not connect to Redis (%s): %s", REDIS_URL, exc)
         except Exception:
             logger.info("redis.asyncio not installed; continuing without Redis")
+
+    # Warn if Supabase service role key is not configured in environments where Supabase is enabled
+    try:
+        if supabase_enabled() and not SERVICE_ROLE_CONFIGURED:
+            logger.warning(
+                "SUPABASE_SERVICE_ROLE_KEY not set — some DB RPCs expect the service role key (e.g., finalize_session_rpc).\n"
+                "Set SUPABASE_SERVICE_ROLE_KEY in production/staging to the Supabase service_role key."
+            )
+    except Exception:
+        # keep startup resilient if config checks fail
+        pass
 
     yield
     # Shutdown
