@@ -16,7 +16,7 @@ export const PROCTORING = {
   /** Max critical events before lockout */
   maxCritical: 3,
   /** JPEG quality for snapshots sent to server */
-  snapshotQuality: 0.72,
+  snapshotQuality: 0.55,
   /** Max snapshot width (px) */
-  snapshotMaxWidth: 640,
+  snapshotMaxWidth: 480,
 } as const;

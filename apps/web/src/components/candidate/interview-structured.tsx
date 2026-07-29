@@ -512,7 +512,16 @@ export function InterviewStructured({
         case "session_started": {
           const started = payload as InterviewEvent;
           sessionEstablishedRef.current = true;
-          reconnectAttemptsRef.current = 0;
+          // Only clear the reconnect budget after the socket has stayed up —
+          // resetting on every brief connect caused infinite reconnect loops when
+          // the server dropped large proctoring frames.
+          if (reconnectAttemptsRef.current > 0) {
+            window.setTimeout(() => {
+              if (socket.current?.readyState === WebSocket.OPEN) {
+                reconnectAttemptsRef.current = 0;
+              }
+            }, 15_000);
+          }
           setReconnecting(false);
           setSessionReady(true);
           sessionIdRef.current = started.session_id ?? null;

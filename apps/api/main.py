@@ -249,19 +249,28 @@ async def interview_websocket(
                     # Size checks
                     if message.get("bytes") is not None:
                         if len(message["bytes"]) > MAX_WS_MESSAGE_BYTES:
-                            logger.warning("Dropping oversized binary message from %s", client_ip)
-                            await websocket.close(code=4003, reason="Message too large")
-                            break
+                            # Never tear down the interview socket for one bad frame —
+                            # proctoring/audio can be large; reject the payload only.
+                            logger.warning(
+                                "Dropping oversized binary message from %s (%s bytes)",
+                                client_ip,
+                                len(message["bytes"]),
+                            )
+                            continue
                         await relay.handle_client_message(message["bytes"])
                     elif message.get("text") is not None:
-                        if len(message["text"]) > 20000:
-                            logger.warning("Dropping oversized text message from %s", client_ip)
-                            await websocket.close(code=4003, reason="Message too large")
-                            break
+                        text = message["text"]
+                        if len(text) > MAX_WS_MESSAGE_BYTES:
+                            logger.warning(
+                                "Dropping oversized text message from %s (%s bytes)",
+                                client_ip,
+                                len(text),
+                            )
+                            continue
                         try:
-                            payload = json.loads(message["text"])
+                            payload = json.loads(text)
                         except json.JSONDecodeError:
-                            payload = {"type": "text", "text": message["text"]}
+                            payload = {"type": "text", "text": text}
                         await relay.handle_client_message(payload)
             except WebSocketDisconnect:
                 logger.info("Interview WebSocket disconnected")
