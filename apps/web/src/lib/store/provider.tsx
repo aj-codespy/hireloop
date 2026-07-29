@@ -22,7 +22,7 @@ import { evaluateEligibility } from "@/lib/eligibility";
 import { isDocumentFieldType } from "@/lib/form-fields";
 import { generateId, generateInterviewToken } from "@/lib/id";
 import { loadLocalState, persistLocalState } from "@/lib/store/local-store";
-import { seedState } from "@/lib/store/seed";
+import { seedState, emptyHireLoopState } from "@/lib/store/seed";
 import { isSupabaseClientEnabled } from "@/lib/supabase/config";
 import type {
   Application,
@@ -119,11 +119,13 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
         return;
       }
       setUsingSupabase(false);
-      setState(loadLocalState());
+      // Never show demo mock data when Supabase client env is present —
+      // that masked live org issues (missing membership / secret) before.
+      setState(isSupabaseClientEnabled() ? emptyHireLoopState() : loadLocalState());
     } catch (err) {
       console.error("Failed to refresh state from database:", err);
       setUsingSupabase(false);
-      setState(loadLocalState());
+      setState(isSupabaseClientEnabled() ? emptyHireLoopState() : loadLocalState());
     }
   }, []);
 
@@ -154,13 +156,13 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
           setState(remote);
           setUsingSupabase(true);
         } else {
-          setState(loadLocalState());
+          setState(isSupabaseClientEnabled() ? emptyHireLoopState() : loadLocalState());
           setUsingSupabase(false);
         }
       } catch (err) {
         console.error("Failed to hydrate state from database:", err);
         if (!cancelled) {
-          setState(loadLocalState());
+          setState(isSupabaseClientEnabled() ? emptyHireLoopState() : loadLocalState());
           setUsingSupabase(false);
         }
       } finally {

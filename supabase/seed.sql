@@ -1,5 +1,8 @@
 -- Demo seed for local testing (run after all migrations).
 -- Auth users: run `node scripts/seed-test-users.mjs` after this SQL.
+-- After seeding questions, pre-render Gemini TTS so interviews do not fall back
+-- to browser speechSynthesis:
+--   cd apps/api && python scripts/ensure_question_audio.py --all-missing
 
 insert into public.organizations (id, name, primary_color, intro_video_url, website, about, created_at)
 values (

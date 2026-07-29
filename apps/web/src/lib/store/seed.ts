@@ -9,7 +9,7 @@ import {
   scorecards,
 } from "@/lib/mock-data";
 
-/** Initial seed — loaded once when localStorage is empty */
+/** Initial seed — loaded once when localStorage is empty (offline/demo only). */
 export function seedState(): HireLoopState {
   return {
     organization,
@@ -29,5 +29,22 @@ export function seedState(): HireLoopState {
     applications: [...applications],
     interviewSessions: [...interviewSessions],
     scorecards: [...scorecards],
+  };
+}
+
+/** Empty workspace used when Supabase is configured but remote state is unavailable. */
+export function emptyHireLoopState(): HireLoopState {
+  return {
+    organization: {
+      id: "org-pending",
+      name: "Your organization",
+      primaryColor: "#FF6B00",
+    },
+    jobs: [],
+    questions: [],
+    candidates: [],
+    applications: [],
+    interviewSessions: [],
+    scorecards: [],
   };
 }

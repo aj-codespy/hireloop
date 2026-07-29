@@ -117,7 +117,29 @@ class StructuredInterviewRelay:
         )
         await self._emit_question(first)
         self._timer_task = asyncio.create_task(self._timer_loop())
+        # Backfill Gemini TTS for any questions missing pre-rendered audio
+        # (e.g. SQL/API seeds that skipped the render step). Non-blocking —
+        # this interview may still use browser fallback if URLs were null.
+        asyncio.create_task(self._ensure_missing_question_audio(questions))
         await self._done_event.wait()
+
+    async def _ensure_missing_question_audio(self, questions: list) -> None:
+        if not self.store:
+            return
+        missing = [
+            q.id
+            for q in questions
+            if not getattr(q, "audio_url", None) or not getattr(q, "audio_url_hi", None)
+        ]
+        if not missing:
+            return
+        try:
+            from interview.question_audio import render_questions_for_job
+
+            await render_questions_for_job(self.store, missing, langs=("en", "hi"))
+            logger.info("Pre-rendered TTS for questions: %s", missing)
+        except Exception as exc:
+            logger.warning("Background question TTS render failed: %s", exc)
 
     async def _bootstrap_session(self) -> tuple[list, bool]:
         if self.store:

@@ -37,7 +37,13 @@ def synthesize_question(text: str, *, language: str = "en") -> tuple[bytes, str]
                 ),
             ),
         )
-        for part in response.candidates[0].content.parts:
+        candidates = getattr(response, "candidates", None) or []
+        if not candidates:
+            logger.warning("TTS generation returned no candidates (lang=%s)", language)
+            return b"", "audio/wav"
+        content = getattr(candidates[0], "content", None)
+        parts = getattr(content, "parts", None) or []
+        for part in parts:
             inline = getattr(part, "inline_data", None)
             if inline and inline.data:
                 data = inline.data

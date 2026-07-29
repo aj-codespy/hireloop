@@ -87,6 +87,7 @@ export function InterviewStructured({
   const [oTimer, setOTimer] = useState("&mdash;");
   const [error, setError] = useState<string | null>(null);
   const [reconnecting, setReconnecting] = useState(false);
+  const [wrappingUp, setWrappingUp] = useState(false);
   const [resumed, setResumed] = useState(false);
   const [lockReason, setLockReason] = useState<string | null>(null);
   const [ttsBlocked, setTtsBlocked] = useState(false);
@@ -479,6 +480,7 @@ export function InterviewStructured({
     setPhase("connecting");
     setError(null);
     setLockReason(null);
+    setWrappingUp(false);
     setQuestionText("");
     setQuestionMeta("");
     setQTimer("&mdash;");
@@ -564,10 +566,19 @@ export function InterviewStructured({
             sendNextQuestion();
           }
           break;
-        case "answer_received":
+        case "answer_received": {
           // Upload acknowledged; the next question follows immediately.
           clearSubmitWatchdog();
+          const answeredIndex = payload.index ?? recordingIndexRef.current;
+          const lastQuestion =
+            questionCount > 0 && answeredIndex >= questionCount - 1;
+          if (lastQuestion) {
+            // Don't leave the candidate on "Submitting…" while STT/score finish.
+            setWrappingUp(true);
+            setPhase("submitting");
+          }
           break;
+        }
         case "answer_error":
           clearSubmitWatchdog();
           setPhase("active");
@@ -585,6 +596,7 @@ export function InterviewStructured({
         case "session_ended":
           // Scoring happens server-side; candidates never see results.
           clearSubmitWatchdog();
+          setWrappingUp(false);
           setSessionReady(false);
           setTimeUp(false);
           setPhase("done");
@@ -820,7 +832,7 @@ export function InterviewStructured({
               {phase === "submitting" ? (
                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
                   <PhosphorIcon name="Loader2" className="h-4 w-4 animate-spin motion-reduce:animate-none" />
-                  Submitting your answer…
+                  {wrappingUp ? "Wrapping up…" : "Submitting your answer…"}
                 </p>
               ) : null}
 
