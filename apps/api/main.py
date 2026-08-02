@@ -10,9 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from config import PORT, SENTRY_DSN
 from interview.answer_upload import upload_answer_chunk
@@ -46,7 +44,7 @@ setup_logger()
 logger = logging.getLogger(__name__)
 
 # Rate limiter
-limiter = Limiter(key_func=get_remote_address)
+from utils.rate_limit import limiter
 
 # CORS origins - set via environment variable (trim whitespace from CSV entries)
 ALLOWED_ORIGINS = [
@@ -152,10 +150,16 @@ async def health() -> dict:
     return {"status": "ok", "service": "hireloop-interview-api", "mode": "structured"}
 
 
-# Prometheus metrics endpoint
+# Prometheus metrics endpoint — requires METRICS_TOKEN (scrapers send it via ?token= or header)
 if METRICS_ENABLED:
     @app.get('/metrics')
-    async def metrics():
+    async def metrics(request: Request):
+        metrics_token = os.getenv("METRICS_TOKEN", "")
+        token = request.headers.get("X-Metrics-Token", "") or request.query_params.get("token", "")
+        if not metrics_token:
+            raise HTTPException(status_code=503, detail="Metrics disabled (METRICS_TOKEN not set)")
+        if token != metrics_token:
+            raise HTTPException(status_code=401, detail="Invalid metrics token")
         data = generate_latest()
         return PlainTextResponse(content=data, media_type=CONTENT_TYPE_LATEST)
 

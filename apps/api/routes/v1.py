@@ -10,6 +10,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
+from utils.rate_limit import limiter
 from interview.api_keys import (
     AuthenticatedKey,
     SCOPE_READ,
@@ -74,6 +75,21 @@ async def get_auth(x_api_key: str | None = Header(None, alias="X-API-Key")) -> A
 async def get_org_id(auth: AuthenticatedKey = Depends(get_auth)) -> str:
     """Thin wrapper so existing routes keep receiving ``org_id: str``."""
     return auth.org_id
+
+
+async def _require_org_application(app_id: str, org_id: str, store: Any) -> dict:
+    """Fetch an application and verify it belongs to `org_id` (404 otherwise).
+
+    Prevents cross-org access via child resources (schedules, offers, ...).
+    """
+    rows = await store._request(
+        "GET",
+        "applications",
+        params={"id": f"eq.{app_id}", "org_id": f"eq.{org_id}"},
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return rows[0]
 
 
 def require_scopes(*resources: str, mode: str = "write"):
@@ -357,7 +373,9 @@ async def get_application(app_id: str, auth: AuthenticatedKey = Depends(require_
 
 
 @router.post("/applications/{app_id}/transition")
+@limiter.limit("120/minute")
 async def transition_application(
+    request: Request,
     app_id: str, transition: ApplicationTransition, auth: AuthenticatedKey = Depends(require_scopes("applications", mode="write"))
 ):
     store = get_store()
@@ -538,11 +556,13 @@ async def create_scorecard(app_id: str, scorecard: ScorecardCreate, auth: Authen
 
 # Schedules endpoints
 @router.get("/applications/{app_id}/schedules")
-async def list_schedules(app_id: str, org_id: str = Depends(get_org_id)):
+async def list_schedules(app_id: str, auth: AuthenticatedKey = Depends(require_scopes("applications", mode="read"))):
+    org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
 
+    await _require_org_application(app_id, org_id, store)
     rows = await store._request(
         "GET", "interview_schedules", params={"application_id": f"eq.{app_id}"}
     )
@@ -550,12 +570,14 @@ async def list_schedules(app_id: str, org_id: str = Depends(get_org_id)):
 
 
 @router.post("/applications/{app_id}/schedules")
-async def create_schedule(app_id: str, schedule: ScheduleCreate, auth: AuthenticatedKey = Depends(require_scopes("schedules", mode="write"))):
+@limiter.limit("60/minute")
+async def create_schedule(request: Request, app_id: str, schedule: ScheduleCreate, auth: AuthenticatedKey = Depends(require_scopes("schedules", mode="write"))):
     org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
 
+    await _require_org_application(app_id, org_id, store)
     schedule_id = f"sched-{uuid4().hex[:12]}"
     payload = {
         "id": schedule_id,
@@ -580,6 +602,7 @@ async def get_offer(app_id: str, auth: AuthenticatedKey = Depends(require_scopes
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
 
+    await _require_org_application(app_id, org_id, store)
     rows = await store._request(
         "GET", "offers", params={"application_id": f"eq.{app_id}"}
     )
@@ -589,12 +612,14 @@ async def get_offer(app_id: str, auth: AuthenticatedKey = Depends(require_scopes
 
 
 @router.post("/applications/{app_id}/offer")
-async def create_offer(app_id: str, offer: OfferCreate, auth: AuthenticatedKey = Depends(require_scopes("offers", mode="write"))):
+@limiter.limit("60/minute")
+async def create_offer(request: Request, app_id: str, offer: OfferCreate, auth: AuthenticatedKey = Depends(require_scopes("offers", mode="write"))):
     org_id = auth.org_id
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
 
+    await _require_org_application(app_id, org_id, store)
     offer_id = f"offer-{uuid4().hex[:12]}"
     payload = {
         "id": offer_id,
@@ -618,7 +643,8 @@ async def list_webhooks(auth: AuthenticatedKey = Depends(require_scopes("webhook
 
 
 @router.post("/webhooks", status_code=201)
-async def create_webhook(subscription: WebhookSubscriptionCreate, auth: AuthenticatedKey = Depends(require_scopes("webhooks", mode="write"))):
+@limiter.limit("30/minute")
+async def create_webhook(request: Request, subscription: WebhookSubscriptionCreate, auth: AuthenticatedKey = Depends(require_scopes("webhooks", mode="write"))):
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -673,7 +699,8 @@ async def update_webhook(webhook_id: str, updates: dict, auth: AuthenticatedKey 
 
 
 @router.post("/webhooks/{webhook_id}/rotate-secret")
-async def rotate_webhook_secret(webhook_id: str, auth: AuthenticatedKey = Depends(require_scopes("webhooks", mode="admin"))):
+@limiter.limit("30/minute")
+async def rotate_webhook_secret(request: Request, webhook_id: str, auth: AuthenticatedKey = Depends(require_scopes("webhooks", mode="admin"))):
     store = get_store()
     if not store:
         raise HTTPException(status_code=503, detail="Database not configured")
@@ -713,7 +740,9 @@ async def list_api_keys(auth: AuthenticatedKey = Depends(require_scopes("api_key
 
 
 @router.post("/api-keys", status_code=201)
+@limiter.limit("30/minute")
 async def create_api_key_endpoint(
+    request: Request,
     body: dict,
     auth: AuthenticatedKey = Depends(require_scopes("api_keys", mode="admin")),
 ):

@@ -871,12 +871,21 @@ class SupabaseInterviewStore:
         )
 
     async def get_webhook_deliveries(self, sub_id: str, org_id: str, limit: int = 50) -> list[dict]:
+        # Resolve the subscription to learn which event types it listens to,
+        # then list matching events for this org. (Events do not carry a
+        # subscription_id column, so org + event_type is the correct filter.)
+        sub = await self.get_webhook_subscription(sub_id, org_id)
+        if not sub:
+            return []
+        event_types = sub.get("events") or []
+        if not event_types:
+            return []
         rows = await self._request(
             "GET",
             "webhook_events",
             params={
                 "org_id": f"eq.{org_id}",
-                "payload->>subscription_id": f"eq.{sub_id}",
+                "event_type": "in.(" + ",".join(event_types) + ")",
                 "order": "created_at.desc",
                 "limit": str(limit),
                 "select": "id,event_type,status,attempts,response_code,created_at",
