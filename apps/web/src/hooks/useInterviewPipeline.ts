@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useApplicationRows, useHireLoop } from "@/lib/store/provider";
 import { PIPELINE_COLUMNS, APPLICATION_STATUS_LABELS } from "@/lib/constants";
 import type { ApplicationStatus } from "@/lib/types";
+import { transitionApplicationStageAction } from "@/app/actions/hireloop";
 import { api } from "@/lib/api/client";
 import { toast } from "sonner";
 
@@ -41,7 +42,7 @@ export type PipelineColumn = {
 
 export function useInterviewPipeline() {
   const rows = useApplicationRows();
-  const { state } = useHireLoop();
+  const { state, refreshState } = useHireLoop();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
@@ -86,20 +87,32 @@ export function useInterviewPipeline() {
   }, [rows, searchQuery, selectedJobId]);
 
   const handleDragEnd = useCallback(
-    (activeId: string, overId: string | null) => {
+    async (activeId: string, overId: string | null) => {
       if (!overId || activeId === overId) return;
-      const [targetStatus] = overId.split(":");
+      // Active id format: "card:<applicationId>"; over id is the target column status.
+      const applicationId = activeId.startsWith("card:") ? activeId.slice(5) : activeId;
+      const targetStatus = overId.startsWith("card:") ? null : overId;
       if (
+        !applicationId ||
         !targetStatus ||
         !PIPELINE_COLUMNS.includes(targetStatus as ApplicationStatus)
       )
         return;
 
+      const res = await transitionApplicationStageAction({
+        applicationId,
+        status: targetStatus as ApplicationStatus,
+      });
+      if ("ok" in res && res.ok === false) {
+        toast.error(res.error);
+        return;
+      }
+      await refreshState();
       toast.success(
         `Moved to ${APPLICATION_STATUS_LABELS[targetStatus as ApplicationStatus] ?? targetStatus}`,
       );
     },
-    [],
+    [refreshState],
   );
 
   const staleCounts = useMemo(() => {

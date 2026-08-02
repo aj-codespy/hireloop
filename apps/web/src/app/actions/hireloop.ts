@@ -510,6 +510,7 @@ async function notifyCandidateStatus(application: Application): Promise<void> {
 }
 
 const PIPELINE_TRANSITION_TARGETS: ApplicationStatus[] = [
+  "shortlisted",
   "interview_sent",
   "cleared_interviews",
   "interview_expired",
