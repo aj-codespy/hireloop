@@ -54,7 +54,7 @@ export async function signInAction(
       email: email.trim().toLowerCase(),
       password,
     });
-    if (error) return { error: error.message };
+    if (error) return { error: authNetworkErrorMessage(error) };
 
     const { data: profileRow } = await supabase
       .from("profiles")
@@ -139,7 +139,7 @@ export async function sendOtpAction(input: {
             : undefined,
       },
     });
-    if (error) return { error: error.message };
+    if (error) return { error: authNetworkErrorMessage(error) };
     return { ok: true };
   } catch (error) {
     return { error: authNetworkErrorMessage(error) };
@@ -165,7 +165,7 @@ export async function verifyOtpAction(input: {
       token,
       type: "email",
     });
-    if (error) return { error: error.message };
+    if (error) return { error: authNetworkErrorMessage(error) };
     if (!data.user) return { error: "Could not verify code." };
 
     const admin = createAdminClient();
@@ -320,7 +320,7 @@ export async function signUpCandidateAction(input: {
     user_metadata: { full_name: input.fullName.trim() },
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
   if (!data.user) return { error: "Could not create account" };
 
   if (input.phone) {
@@ -374,7 +374,7 @@ export async function signUpOrgAdminAction(input: {
     user_metadata: { full_name: input.fullName.trim() },
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
   if (!data.user) return { error: "Could not create account" };
 
   const orgId = generateId("org");
@@ -444,7 +444,7 @@ export async function updateCandidateProfileAction(input: {
     })
     .eq("id", userId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
 
   await supabase
     .from("candidates")
@@ -477,7 +477,7 @@ export async function updateAdminProfileAction(input: {
     .eq("id", userId)
     .eq("account_type", "org_admin");
 
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
 
   revalidatePath("/admin/settings");
   return { ok: true };
@@ -514,7 +514,7 @@ export async function updatePasswordAction(input: {
   if (verifyError) return { error: "Current password is incorrect." };
 
   const { error } = await supabase.auth.updateUser({ password: input.newPassword });
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
 
   return { ok: true };
 }
@@ -609,7 +609,7 @@ export async function inviteTeamMemberAction(input: {
     user_metadata: { full_name: input.fullName.trim() },
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
   if (!data.user) return { error: "Could not create account" };
 
   await admin
