@@ -363,6 +363,10 @@ export function WebhooksManager() {
     setShowForm(true);
   };
 
+  const failedCount = webhooks.filter(
+    (wh) => wh.lastDeliveryStatus === "failed"
+  ).length;
+
   return (
     <FadeIn className="space-y-6">
       {/* Header */}
@@ -384,6 +388,27 @@ export function WebhooksManager() {
           Add endpoint
         </Button>
       </div>
+
+      {/* Failed-delivery alert */}
+      {failedCount > 0 && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
+          <PhosphorIcon name="Warning" className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+          <div>
+            <p className="font-medium">
+              {failedCount === 1
+                ? "1 webhook endpoint is failing delivery"
+                : `${failedCount} webhook endpoints are failing delivery`}
+            </p>
+            <p className="text-xs text-red-700">
+              Check that the endpoint is reachable and responding with HTTP 200.
+              Failed deliveries retry automatically with exponential backoff.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Info card */}
       <Card className="border-brand/30 bg-brand-muted/50">
