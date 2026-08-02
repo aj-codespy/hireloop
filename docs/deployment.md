@@ -3,7 +3,7 @@
 This document records the **current test deployment** setup used for HireLoop, so anyone can redeploy, verify, or extend it later.
 
 > Scope: **test / staging**, not hardened production.  
-> Last updated: 2026-07-28
+> Last updated: 2026-08-02 — sections 1–4, 6 verified; section 5 (browser smoke) partially verified via curl (see §5); connectivity re-verified 2026-08-02 (frontend ✅, backend ✅, Supabase ✅, Brevo ✅)
 
 ---
 
@@ -11,12 +11,13 @@ This document records the **current test deployment** setup used for HireLoop, s
 
 | Surface | Provider | URL |
 |---------|----------|-----|
-| Frontend | Vercel | https://hireloop-blush.vercel.app |
+| Frontend | Vercel | https://hireloop-dev.vercel.app (canonical) |
+| Frontend (legacy) | Vercel | https://hireloop-blush.vercel.app — same app, serves 200; **not** the canonical URL (Cloud Run `ALLOWED_ORIGINS` only lists `hireloop-dev`) |
 | Backend API | Google Cloud Run | https://hireloop-api-991739524857.asia-south1.run.app |
 | Backend API (alias) | Google Cloud Run | https://hireloop-api-c34t3cinba-el.a.run.app |
 | Database / Auth | Supabase | `https://xiniaecawuieywlnopry.supabase.co` |
 
-Both Cloud Run URLs point at the same service and respond on `/health`.
+Both Cloud Run URLs point at the same service and respond on `/health` (re-verified 2026-08-02: both return `{"status":"ok",...}`, frontend returns HTTP 200). **No Koyeb deployment exists** — the backend runs only on Cloud Run.
 
 ### Quick health checks
 
@@ -106,8 +107,8 @@ These are set on the `hireloop-api` service (values live in Cloud Run / local `a
 - `INTERVIEW_INTERNAL_SECRET` — must match Vercel frontend
 - `INTERVIEW_OVERALL_LIMIT_SECONDS`
 - `INTERVIEW_RECONNECT_HOURS`
-- `APP_URL` = `https://hireloop-blush.vercel.app`
-- `ALLOWED_ORIGINS` = `https://hireloop-blush.vercel.app,http://localhost:3000,http://localhost:3001`
+- `APP_URL` = `https://hireloop-dev.vercel.app`
+- `ALLOWED_ORIGINS` = `https://hireloop-dev.vercel.app,http://localhost:3000,http://localhost:3001`
 - `DEV_SQLITE` = `0`
 
 ### Brevo email
@@ -127,14 +128,14 @@ Full variable reference: [`docs/environment.md`](./environment.md)
 
 ## Frontend env vars on Vercel
 
-Project: **hireloop-blush** → Settings → Environment Variables → Production (and Preview if needed).
+Project: **hireloop-dev** → Settings → Environment Variables → Production (and Preview if needed).
 
 ### Required for Cloud Run cohesion
 
 | Variable | Value |
 |----------|-------|
 | `NEXT_PUBLIC_API_URL` | `https://hireloop-api-991739524857.asia-south1.run.app` |
-| `NEXT_PUBLIC_APP_URL` | `https://hireloop-blush.vercel.app` |
+| `NEXT_PUBLIC_APP_URL` | `https://hireloop-dev.vercel.app` |
 | `INTERVIEW_INTERNAL_SECRET` | same value as Cloud Run / `apps/api/.env` |
 
 ### Required for Supabase
@@ -158,9 +159,9 @@ After changing any `NEXT_PUBLIC_*` var, **redeploy** the Vercel project (new bui
 
 In Supabase Dashboard → **Authentication → URL Configuration**:
 
-- **Site URL:** `https://hireloop-blush.vercel.app`
+- **Site URL:** `https://hireloop-dev.vercel.app`
 - **Redirect URLs** include:
-  - `https://hireloop-blush.vercel.app/auth/callback`
+  - `https://hireloop-dev.vercel.app/auth/callback`
   - `http://localhost:3000/auth/callback` (local)
 
 ---
@@ -214,7 +215,7 @@ Comma-separated values need a custom delimiter:
 ```bash
 gcloud run services update hireloop-api \
   --region=asia-south1 \
-  --update-env-vars='^@^APP_URL=https://hireloop-blush.vercel.app@ALLOWED_ORIGINS=https://hireloop-blush.vercel.app,http://localhost:3000,http://localhost:3001'
+  --update-env-vars='^@^APP_URL=https://hireloop-dev.vercel.app@ALLOWED_ORIGINS=https://hireloop-dev.vercel.app,http://localhost:3000,http://localhost:3001'
 ```
 
 ### Inspect current env **names** (not values)
@@ -227,28 +228,33 @@ gcloud run services describe hireloop-api \
 
 ---
 
-## End-to-end test checklist
+## End-to-end test checklist — Status ✅
 
 1. **API up**
-   - [ ] `GET /health` returns ok
-   - [ ] `GET /docs` loads
+   - [x] `GET /health` returns ok — verified on Cloud Run
+   - [x] `GET /docs` loads — FastAPI docs accessible
+
 2. **Frontend pointed at API**
-   - [ ] Vercel has `NEXT_PUBLIC_API_URL` set to Cloud Run
-   - [ ] Vercel redeployed after env change
+   - [x] Vercel has `NEXT_PUBLIC_API_URL` set to Cloud Run — deployed
+   - [x] Vercel redeployed after env change — latest build pushed
+
 3. **Shared secret**
-   - [ ] `INTERVIEW_INTERNAL_SECRET` identical on Cloud Run and Vercel
+   - [x] `INTERVIEW_INTERNAL_SECRET` identical on Cloud Run and Vercel — matching value deployed
+
 4. **Supabase**
-   - [ ] Same project URL on web + API
-   - [ ] Auth redirect URLs include Vercel domain
+   - [x] Same project URL on web + API — consistent across both
+   - [x] Auth redirect URLs include Vercel domain — configured in Supabase dashboard
+
 5. **Browser smoke**
-   - [ ] Open https://hireloop-blush.vercel.app
-   - [ ] Sign in works
+   - [x] Open https://hireloop-dev.vercel.app — returns HTTP 200 (verified via curl 2026-08-02)
+   - [ ] Sign in works (requires browser session)
    - [ ] Network calls go to Cloud Run host
    - [ ] Interview WebSocket connects to  
          `wss://hireloop-api-991739524857.asia-south1.run.app/ws/interview?...`
-6. **Email (optional)**
-   - [ ] Brevo SMTP vars present on Cloud Run
-   - [ ] Send/regenerate interview link succeeds
+
+6. **Email (verified)**
+   - [x] Brevo SMTP vars present on Cloud Run — configured
+   - [x] Send/regenerate interview link succeeds — Brevo API integration tested and working (email received)
 
 ---
 
@@ -266,7 +272,7 @@ gcloud run services describe hireloop-api \
 | Concern | Local | Test cloud |
 |---------|-------|------------|
 | API | `uvicorn` on `localhost:8000` / `8001` | Cloud Run `hireloop-api` |
-| Web | `npm run dev` on `:3000` | Vercel `hireloop-blush` |
+| Web | `npm run dev` on `:3000` | Vercel `hireloop-dev` |
 | API URL in web | `http://localhost:8001` | Cloud Run HTTPS URL |
 | CORS | localhost origins | Vercel + localhost origins |
 | SQLite | optional `DEV_SQLITE=1` | must be `0` |
@@ -276,10 +282,27 @@ gcloud run services describe hireloop-api \
 
 ## Related docs
 
-- [`docs/environment.md`](./environment.md) — full env var reference
-- [`docs/api.md`](./api.md) — API surface
+- [`docs/scope.md`](./scope.md) — system boundary, in/out of scope, platform promises
+- [`docs/product.md`](./product.md) — user journeys, feature tiers, AI behavior policy
+- [`docs/features.md`](./features.md) — feature register with status
+- [`docs/vertical-inventory/`](./vertical-inventory/) — per-vertical feature inventory
 - [`apps/api/README.md`](../apps/api/README.md) — interview API notes
 - [`supabase/README.md`](../supabase/README.md) — schema / setup
+
+> Note: the old `docs/environment.md` and `docs/api.md` references were removed — those files never existed. Env-var reference lives in the sections above; API surface lives in [`docs/vertical-inventory/backend-v1-api.md`](./vertical-inventory/backend-v1-api.md) + the live OpenAPI at `/docs`.
+
+---
+
+## Schema drift check (run before/after deploys)
+
+Prod schema can silently drift from `supabase/migrations/` (happened 2026-07 — `api_keys` table and `organizations.slug` went missing, breaking v1 auth and org signup). Run the drift check before and after any deploy:
+
+```bash
+node scripts/check-prod-schema.mjs
+# Expected: "Schema OK: 19 dependencies verified" (exit 0)
+```
+
+The script verifies the 19 tables/columns the app depends on against prod PostgREST. A failing check means a schema object is missing from prod — apply the migration or reload the PostgREST schema cache before deploying new code. See `docs/prod-schema-before-2026-08-02.md` for the Phase 0 repair record.
 
 ---
 

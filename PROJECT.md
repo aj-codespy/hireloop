@@ -1,25 +1,27 @@
-# Project: HireLoop Architecture Audit & Remediation
+# Project: HireLoop
+
+AI-powered interview screening platform. Structured, proctored voice interviews with reviewable evidence; qualified candidates delivered to customer systems via webhook. System boundary: **AI screening + human orchestration → qualified candidate list → `candidate.qualified` webhook. Customer owns offer/onboarding.**
 
 ## Architecture
-- **Frontend**: Next.js (`apps/web`) using TypeScript, React, and Tailwind CSS. Communicates with Supabase (directly via Supabase client or server actions) and the Backend API.
-- **Backend**: FastAPI Python application (`apps/api`) using Supabase client, async tasks, and external integrations.
-- **Database**: Supabase Postgres DB (`supabase/migrations`, `supabase/seed.sql`) storing applications, profiles, interviews, proctoring logs, and AI usage logs.
 
-## Milestones
-| # | Name | Scope | Dependencies | Status |
-|---|------|-------|-------------|--------|
-| 1 | Exploration & Audit | Perform comprehensive audit of backend, database schema, and frontend. Document issues. | None | DONE |
-| 2 | Backend & DB Remediation | Implement connection pooling, proctoring race condition fix, CHECK constraints, RLS tenant fixes, transcription index fixes. | M1 | DONE |
-| 3 | Frontend Remediation | Fix Next.js frontend issues found during audit (missing error states, unhandled promise rejections, client/server boundary issues). | M1 | DONE |
-| 4 | Verification & Audit | Write concurrency verification script, test all scenarios, run build verification, run forensic integrity audit. | M2, M3 | DONE |
+- **Frontend**: Next.js (`apps/web`) — TypeScript, React 19, Tailwind CSS. Supabase via server actions / client; FastAPI backend via REST + WebSocket.
+- **Backend**: FastAPI Python (`apps/api`) — interview engine (session, STT, scoring, TTS, proctoring), v1 REST API (API-key auth), webhook dispatch, email (Brevo).
+- **Database**: Supabase Postgres — `supabase/migrations`, `supabase/seed.sql`. Dual-mode store (Supabase ↔ localStorage fallback) in `apps/web/src/lib/store/`.
+- **AI**: Google Gemini (question generation, scoring, STT, TTS).
+
+## Docs
+
+Product/scope/features/deployment: [`docs/`](./docs/) — start at [`docs/scope.md`](./docs/scope.md). Per-vertical feature inventory: [`docs/vertical-inventory/`](./docs/vertical-inventory/).
 
 ## Interface Contracts
-- **Supabase / PostgreSQL**:
-  - `applications.status` check constraint must enforce valid status values.
-  - `ai_usage_logs` RLS policies must prevent cross-tenant access by checking organization membership.
-- **Backend Connection Pooling**:
-  - Maintain a shared `httpx.AsyncClient` instance/pool in `apps/api` instead of instantiating client per-request.
-- **Proctoring Logs Updates**:
-  - Concurrent updates to `proctoring_logs` must not overwrite each other. Must use atomic updates, optimistic locking, or database transactions.
-- **Transcription Saves**:
-  - Fix stale index tracking when saving background transcription chunks to avoid out-of-order data corruption.
+
+- **Supabase / PostgreSQL**: `applications.status` CHECK constraint; `ai_usage_logs` RLS policies must prevent cross-tenant access via organization membership.
+- **Backend Connection Pooling**: shared `httpx.AsyncClient` instance/pool in `apps/api` (no per-request client).
+- **Proctoring Logs Updates**: concurrent updates to `proctoring_logs` must not overwrite each other — atomic updates / optimistic locking / transactions.
+- **Transcription Saves**: stale index tracking when saving background transcription chunks must be fixed to avoid out-of-order corruption.
+- **API errors**: v1 routes return clean JSON (401/403/503/429/500) — never raw stack traces (Phase 1, 2026-08-02).
+
+## Status
+
+- Audit (M1), backend/DB remediation (M2), frontend remediation (M3), verification (M4) — **DONE**.
+- Hardening Phase 1 (error handling, 10 tasks) — **DONE** 2026-08-02. Phase 2 (feature inventory) / Phase 3 (docs) / Phase 4 (solidification) — in progress.

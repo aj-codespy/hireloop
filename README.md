@@ -81,3 +81,14 @@ Once both servers are running:
 - The **API** is running on [http://localhost:8001](http://localhost:8001).
 
 You can access the admin dashboard by navigating to `/admin/login` on the Web Application.
+
+## Docs
+
+- [`docs/scope.md`](docs/scope.md) — product scope, system boundary, platform promises
+- [`docs/product.md`](docs/product.md) — user journeys, feature tiers, AI behavior policy
+- [`docs/features.md`](docs/features.md) — feature register with status
+- [`docs/deployment.md`](docs/deployment.md) — live endpoints, env vars, deploy procedure
+- [`docs/vertical-inventory/`](docs/vertical-inventory/) — per-vertical feature inventory
+- [`brand-guidelines.md`](brand-guidelines.md) — design tokens / voice (source of truth)
+- [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) — 20-minute sales demo walkthrough
+- [`PLAN-frontend-ux.md`](PLAN-frontend-ux.md) — frontend UX plan
