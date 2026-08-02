@@ -375,7 +375,10 @@ export function HireLoopProvider({ children }: { children: ReactNode }) {
       const dupApp = state.applications.find(
         (a) => a.jobRoleId === jobId && a.candidateId === (existing?.id ?? "")
       );
-      if (dupApp) throw new Error("You have already applied to this job");
+      if (dupApp)
+        throw new Error(
+          "You have already attempted this job. If you believe this is a mistake, please contact the hiring team."
+        );
 
       const candidate: Candidate = existing
         ? { ...existing, name, phone }

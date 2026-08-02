@@ -346,7 +346,9 @@ export async function submitApplicationInDb(
 
   if (appQueryError) throw new Error(appQueryError.message);
   if (existingApps && existingApps.length > 0)
-    throw new Error("You have already applied to this job");
+    throw new Error(
+      "You have already attempted this job. If you believe this is a mistake, please contact the hiring team."
+    );
 
   let status: ApplicationStatus = eligibility.passed ? "shortlisted" : "auto_rejected";
   let interviewToken: string | undefined;

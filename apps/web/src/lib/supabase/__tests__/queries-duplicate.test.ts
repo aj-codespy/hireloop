@@ -158,7 +158,9 @@ describe("submitApplicationInDb — duplicate candidates (Bug 2)", () => {
 
     await expect(
       submitApplicationInDb("job-1", { name: "A", email: "a@x.com" })
-    ).rejects.toThrow("You have already applied to this job");
+    ).rejects.toThrow(
+      "You have already attempted this job. If you believe this is a mistake, please contact the hiring team."
+    );
   });
 });
 
