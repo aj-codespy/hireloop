@@ -333,14 +333,16 @@ export async function submitApplicationInDb(
     profileId,
   });
 
-  const { data: existingApp } = await supabase
+  const { data: existingApps, error: appQueryError } = await supabase
     .from("applications")
     .select("id")
     .eq("candidate_id", candidate.id)
     .eq("job_role_id", jobId)
-    .maybeSingle();
+    .limit(2);
 
-  if (existingApp) throw new Error("You have already applied to this job");
+  if (appQueryError) throw new Error(appQueryError.message);
+  if (existingApps && existingApps.length > 0)
+    throw new Error("You have already applied to this job");
 
   let status: ApplicationStatus = eligibility.passed ? "shortlisted" : "auto_rejected";
   let interviewToken: string | undefined;
@@ -391,13 +393,20 @@ async function findOrCreateCandidate(
     profileId?: string;
   }
 ): Promise<Candidate> {
-  const { data: existing, error: findError } = await supabase
+  const { data: existingRows, error: findError } = await supabase
     .from("candidates")
     .select("*")
     .ilike("email", input.email)
-    .maybeSingle();
+    .eq("org_id", input.orgId)
+    .order("created_at", { ascending: true })
+    .limit(2);
 
   if (findError) throw new Error(findError.message);
+
+  // Same email can exist as multiple rows (data drift). Scope by org and take
+  // the earliest row deterministically instead of letting .maybeSingle() crash
+  // with a raw "Cannot coerce" error.
+  const existing = existingRows && existingRows.length > 0 ? existingRows[0] : null;
 
   if (existing) {
     const { data: updated, error: updateError } = await supabase
@@ -500,16 +509,22 @@ export async function fetchInterviewContextByToken(
 ): Promise<InterviewTokenContext | null> {
   const supabase = db();
 
-  const { data: appRow, error: appError } = await supabase
+  const { data: appRows, error: appError } = await supabase
     .from("applications")
     .select("*")
     .eq("interview_token", token)
-    .maybeSingle();
+    .limit(2);
 
   if (appError) {
     throw appError;
   }
-  if (!appRow) return null;
+  if (!appRows || appRows.length === 0) return null;
+  if (appRows.length > 1) {
+    throw new Error(
+      "This interview link is not valid. Please contact the hiring team for a new link."
+    );
+  }
+  const appRow = appRows[0];
 
   const application = mapApplication(appRow);
 
