@@ -247,10 +247,14 @@ gcloud run services describe hireloop-api \
 
 5. **Browser smoke**
    - [x] Open https://hireloop-dev.vercel.app — returns HTTP 200 (verified via curl 2026-08-02)
+   - [x] Public apply link renders live job form — `/apply/job-ce337413-…` HTTP 200 with form fields (verified 2026-08-02)
+   - [x] API `/health` ok on Cloud Run (verified 2026-08-02, revision 00007-87r)
+   - [x] Webhook delivery live — seeded `candidate.qualified` event delivered HMAC-signed to webhook.site, event flipped `pending → delivered` (verified 2026-08-02)
+   - [x] `/metrics` token-gated — 401 without `X-Metrics-Token`, 200 with (verified 2026-08-02)
+   - [x] Interview WebSocket reachable — real handshake to `wss://hireloop-api-991739524857.asia-south1.run.app/ws/interview` returns 403 for a bogus token (validated pre-accept, main.py:246); valid token → connected (browser smoke)
    - [ ] Sign in works (requires browser session)
-   - [ ] Network calls go to Cloud Run host
-   - [ ] Interview WebSocket connects to  
-         `wss://hireloop-api-991739524857.asia-south1.run.app/ws/interview?...`
+   - [ ] Network calls go to Cloud Run host (requires browser session)
+   - [ ] Interview WebSocket connects with a valid interview token (requires a live application + browser session)
 
 6. **Email (verified)**
    - [x] Brevo SMTP vars present on Cloud Run — configured
