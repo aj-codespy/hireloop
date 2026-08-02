@@ -362,8 +362,13 @@ class WebhookDispatcher:
 
     async def process_retries(self) -> None:
         """Process pending retries (called by background job)."""
+        now = datetime.now(timezone.utc).timestamp()
         pending = await self.store.get_pending_webhook_events()
         for event in pending:
+            if event.next_retry_at:
+                retry_ts = event.next_retry_at.timestamp() if hasattr(event.next_retry_at, "timestamp") else event.next_retry_at
+                if retry_ts > now:
+                    continue  # retry window not yet open
             subs = await self.store.get_webhook_subscriptions(event.org_id, event.event_type)
             for sub in subs:
                 if event.event_type in sub["events"]:

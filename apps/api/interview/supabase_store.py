@@ -18,6 +18,7 @@ from config import DEV_SQLITE, SUPABASE_SECRET_KEY, SUPABASE_URL, supabase_enabl
 from utils.http_pool import get_http_client, request_with_retry
 from interview.questions import Question
 from interview.session import SessionStatus, TranscriptEntry
+from interview.webhooks import WebhookEvent
 
 logger = logging.getLogger(__name__)
 
@@ -884,6 +885,92 @@ class SupabaseInterviewStore:
         return rows or []
 
     # ------------------------------------------------------------------
+    # Webhook event queue (dispatch worker)
+    # ------------------------------------------------------------------
+    async def create_webhook_event(self, event: WebhookEvent) -> None:
+        await self._request(
+            "POST",
+            "webhook_events",
+            json={
+                "id": event.id,
+                "org_id": event.org_id,
+                "event_type": event.event_type,
+                "payload": event.payload,
+                "status": event.status,
+                "attempts": event.attempts,
+                "created_at": event.created_at.isoformat(),
+            },
+            prefer="return=minimal",
+        )
+
+    async def update_webhook_event(self, event: WebhookEvent) -> None:
+        updates: dict = {
+            "status": event.status,
+            "attempts": event.attempts,
+            "response_code": event.response_code,
+            "response_body": event.response_body,
+        }
+        if event.last_attempt_at:
+            updates["last_attempt_at"] = event.last_attempt_at.isoformat()
+        if event.next_retry_at:
+            updates["next_retry_at"] = event.next_retry_at.isoformat()
+        await self._request(
+            "PATCH",
+            "webhook_events",
+            params={"id": f"eq.{event.id}"},
+            json=updates,
+            prefer="return=minimal",
+        )
+
+    async def get_pending_webhook_events(self, limit: int = 50) -> list[WebhookEvent]:
+        now = datetime.now(timezone.utc).isoformat()
+        rows = await self._request(
+            "GET",
+            "webhook_events",
+            params={
+                "status": "in.(pending,failed)",
+                "or": f"(next_retry_at.is.null,next_retry_at.lte.{now})",
+                "order": "created_at.asc",
+                "limit": str(limit),
+                "select": "*",
+            },
+        )
+        events: list[WebhookEvent] = []
+        for r in rows or []:
+            events.append(
+                WebhookEvent(
+                    id=r["id"],
+                    org_id=r["org_id"],
+                    event_type=r["event_type"],
+                    payload=r.get("payload") or {},
+                    status=r.get("status", "pending"),
+                    attempts=r.get("attempts", 0),
+                    last_attempt_at=r.get("last_attempt_at"),
+                    next_retry_at=r.get("next_retry_at"),
+                    response_code=r.get("response_code"),
+                    response_body=r.get("response_body"),
+                    created_at=r.get("created_at"),
+                )
+            )
+        return events
+
+    async def get_webhook_subscriptions(
+        self, org_id: str, event_type: str
+    ) -> list[dict]:
+        """Subscriptions for an org that listen to `event_type` (with secret for signing)."""
+        rows = await self._request(
+            "GET",
+            "webhook_subscriptions",
+            params={
+                "org_id": f"eq.{org_id}",
+                "active": "eq.true",
+                "events": f"cs.{{{event_type}}}",
+                "select": "id,url,secret,events,version,active",
+            },
+        )
+        return rows or []
+
+    # ------------------------------------------------------------------
     # Calendar connections + slots
     # ------------------------------------------------------------------
     async def create_calendar_connection(
@@ -1314,6 +1401,10 @@ class DevSqliteStore:
     async def get_proctoring_sessions(self, *args, **kwargs) -> list: return []
     async def set_proctoring_override(self, *args, **kwargs) -> None: pass
     async def dispatch_candidate_qualified_webhook(self, *args, **kwargs) -> None: pass
+    async def create_webhook_event(self, *args, **kwargs) -> None: pass
+    async def update_webhook_event(self, *args, **kwargs) -> None: pass
+    async def get_pending_webhook_events(self, *args, **kwargs) -> list: return []
+    async def get_webhook_subscriptions(self, *args, **kwargs) -> list: return []
     async def _deliver_webhook(self, *args, **kwargs) -> None: pass
     async def load_questions_for_job(self, *args, **kwargs) -> list: return []
     async def save_answer_chunks_meta(self, *args, **kwargs) -> None: pass

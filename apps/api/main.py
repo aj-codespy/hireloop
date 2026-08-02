@@ -22,7 +22,7 @@ from interview.supabase_store import get_store
 from interview.webhooks import WebhookEventType, build_webhook_payload, sign_payload
 from interview.calendar import CalendarSyncService
 from routes.v1 import router as v1_router
-from utils.http_pool import close_http_client, init_http_client
+from utils.http_pool import close_http_client, get_http_client, init_http_client
 from utils.logger import setup_logger
 
 # Optional observability
@@ -68,9 +68,41 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting HireLoop Interview API")
     await init_http_client()
+
+    # Webhook delivery worker: sweeps the pending queue (candidate.qualified etc.)
+    webhook_task: asyncio.Task | None = None
+    try:
+        from interview.webhooks import WebhookDispatcher
+
+        store = get_store()
+        if store is not None:
+            dispatcher = WebhookDispatcher(get_http_client(), store)
+
+            async def _webhook_loop() -> None:
+                poll_seconds = int(os.getenv("WEBHOOK_POLL_SECONDS", "30"))
+                while True:
+                    try:
+                        await dispatcher.process_retries()
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception:
+                        logger.exception("Webhook sweep failed; retrying next cycle")
+                    await asyncio.sleep(poll_seconds)
+
+            webhook_task = asyncio.create_task(_webhook_loop())
+            logger.info("Webhook dispatcher worker started")
+    except Exception:
+        logger.exception("Failed to start webhook dispatcher; continuing without it")
+
     yield
     # Shutdown
     logger.info("Shutting down HireLoop Interview API")
+    if webhook_task is not None:
+        webhook_task.cancel()
+        try:
+            await webhook_task
+        except (asyncio.CancelledError, Exception):
+            pass
     await close_http_client()
 
 app = FastAPI(title="HireLoop Interview API", version="0.3.0", lifespan=lifespan)
