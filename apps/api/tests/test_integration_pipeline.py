@@ -14,7 +14,7 @@ cfg.SUPABASE_KEY = "test-key"
 cfg.SUPABASE_SERVICE_KEY = "test-service-key"
 cfg.SUPABASE_SECRET_KEY = "test-secret-key"
 cfg.DEV_SQLITE = True
-cfg.supabase_enabled = False
+cfg.supabase_enabled = lambda: False
 cfg.dev_sqlite_connection = lambda: __import__("sqlite3", fromlist=["connect"]).connect(":memory:")
 sys.modules["config"] = cfg
 
