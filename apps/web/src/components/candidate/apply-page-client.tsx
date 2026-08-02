@@ -5,29 +5,39 @@ import { ApplicationForm } from "@/components/candidate/application-form";
 import { useHireLoop } from "@/lib/store/provider";
 import type { JobRole, Organization } from "@/lib/types";
 import Link from "next/link";
-import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 
 export function ApplyPageClient({
-  jobId,
   initialJob,
   initialOrganization,
+  jobNotFound,
 }: {
-  jobId: string;
   initialJob?: JobRole | null;
   initialOrganization?: Organization | null;
+  jobNotFound?: boolean;
 }) {
-  const { state, hydrated } = useHireLoop();
-  const job = initialJob ?? state.jobs.find((j) => j.id === jobId);
+  const { state } = useHireLoop();
+  // Public apply pages must render ONLY server-provided data. Never fall back
+  // to the client store here: local state (seeded from localStorage on
+  // non-admin pages) can mask a job that does not exist in the database.
+  const job = initialJob ?? null;
   const org = initialOrganization ?? state.organization;
 
-  if (!initialJob && !hydrated) {
+  if (jobNotFound || (!initialJob && !job)) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-stone-50 px-5">
-        <p className="flex items-center gap-3 text-sm text-slate-600" role="status" aria-live="polite">
-          <span className="size-4 animate-spin rounded-full border-2 border-stone-200 border-t-[#F97316] motion-reduce:animate-none" aria-hidden />
-          Loading role…
-        </p>
-      </div>
+      <main className="flex min-h-[100dvh] items-center justify-center bg-stone-50 px-5 py-12">
+        <div className="w-full max-w-md rounded-3xl border border-stone-200 bg-white p-6 shadow-[0_12px_40px_rgba(15,15,15,0.06)]">
+          <p className="text-sm font-semibold text-[#F97316]">Role unavailable</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+            This job link is no longer available
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            The role may have been removed or the link may be incorrect.
+          </p>
+          <Link href="/" className="mt-6 inline-flex min-h-11 items-center rounded-full border border-stone-200 px-5 text-sm font-semibold text-slate-900 transition-colors duration-200 hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2">
+            Return home
+          </Link>
+        </div>
+      </main>
     );
   }
 

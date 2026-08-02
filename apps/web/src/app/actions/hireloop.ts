@@ -150,7 +150,6 @@ export async function loadPublicJobAction(jobId: string): Promise<{
       .from("job_roles")
       .select("*")
       .eq("id", jobId)
-      .eq("status", "live")
       .maybeSingle();
 
     if (jobError) throw jobError;

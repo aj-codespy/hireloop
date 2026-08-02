@@ -22,9 +22,9 @@ export default async function ApplyPage({ params }: { params: Promise<{ jobId: s
 
   return (
     <ApplyPageClient
-      jobId={jobId}
       initialJob={publicJob?.job ?? null}
       initialOrganization={publicJob?.organization ?? null}
+      jobNotFound={publicJob === null}
     />
   );
 }
