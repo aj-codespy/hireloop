@@ -42,11 +42,18 @@ async def get_auth(x_api_key: str | None = Header(None, alias="X-API-Key")) -> A
 
     # bcrypt has no direct lookup by plaintext, so we iterate active key hashes.
     # Org-level key counts are small (dozens); this is negligible overhead.
-    rows = await store._request(
-        "GET",
-        "api_keys",
-        params={"active": "eq.true", "select": "id,org_id,key_hash,scopes,expires_at"},
-    )
+    try:
+        rows = await store._request(
+            "GET",
+            "api_keys",
+            params={"active": "eq.true", "select": "id,org_id,key_hash,scopes,expires_at"},
+        )
+    except RuntimeError as exc:
+        # e.g. missing api_keys table (PGRST205) or Supabase unreachable —
+        # surface as 503 so clients don't see a bare 500 and can distinguish
+        # "bad key" (401) from "auth service unavailable" (503).
+        logger.error("api_keys lookup failed: %s", exc)
+        raise HTTPException(status_code=503, detail="Auth service unavailable") from exc
     if not rows:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
