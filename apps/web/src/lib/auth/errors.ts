@@ -44,10 +44,11 @@ export function authNetworkErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.includes("ENOTFOUND")) {
     return "Authentication service is unreachable. Verify Supabase URL configuration.";
   }
-  if (error instanceof Error) {
-    for (const { match, message } of FRIENDLY_PATTERNS) {
-      if (match.test(error.message)) return message;
-    }
+  // supabase-js errors can be plain objects ({ message }) rather than Error
+  // instances — match on the stringified message either way.
+  const message = typeof error === "string" ? error : String((error as { message?: unknown })?.message ?? "");
+  for (const { match, message: friendly } of FRIENDLY_PATTERNS) {
+    if (match.test(message)) return friendly;
   }
   return "Something went wrong during sign in. Please try again.";
 }

@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
+import { authNetworkErrorMessage } from "@/lib/auth/errors";
 import type { AccountType } from "@/lib/types";
 
 export type BrowserAuthResult = { error?: string; ok?: boolean };
@@ -13,7 +14,7 @@ export async function browserSignInWithPassword(
     email: email.trim().toLowerCase(),
     password,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -21,7 +22,7 @@ export async function browserSignInWithPassword(
     .eq("id", data.user.id)
     .maybeSingle();
 
-  if (profileError) return { error: profileError.message };
+  if (profileError) return { error: authNetworkErrorMessage(profileError) };
   if (profile && profile.account_type !== accountType) {
     await supabase.auth.signOut();
     return {
@@ -41,7 +42,7 @@ export async function browserSignUp(
     email: email.trim().toLowerCase(),
     password,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
   if (!data.user) return { error: "Could not create account." };
   return { ok: true, userId: data.user.id };
 }
@@ -55,7 +56,7 @@ export async function browserSendOtp(
     email: email.trim().toLowerCase(),
     options: { shouldCreateUser: mode === "signup" },
   });
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
   return { ok: true };
 }
 
@@ -70,7 +71,7 @@ export async function browserVerifyOtp(
     token: token.trim(),
     type: "email",
   });
-  if (error) return { error: error.message };
+  if (error) return { error: authNetworkErrorMessage(error) };
   if (!data.user) return { error: "Could not verify code." };
 
   const { data: profile, error: profileError } = await supabase
@@ -79,7 +80,7 @@ export async function browserVerifyOtp(
     .eq("id", data.user.id)
     .maybeSingle();
 
-  if (profileError) return { error: profileError.message };
+  if (profileError) return { error: authNetworkErrorMessage(profileError) };
   if (profile && profile.account_type !== accountType) {
     await supabase.auth.signOut();
     return {
