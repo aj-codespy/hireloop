@@ -11,6 +11,7 @@ import {
   type QuestionInput,
 } from "@/lib/store/provider";
 import { ShareJobLink } from "@/components/jobs/share-job-link";
+import { JobStatusToggle } from "@/components/jobs/job-status-toggle";
 import { ExportCandidatesButton } from "@/components/candidates/export-candidates-button";
 import { useOrgPermissions } from "@/hooks/use-org-permissions";
 import { JobDetailsEditor } from "@/components/jobs/job-details-editor";
@@ -91,8 +92,9 @@ export function JobDetailView({ jobId }: { jobId: string }) {
             enable it.
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-wrap items-center gap-3">
           <ShareJobLink jobId={job.id} disabled={job.status !== "live"} />
+          {canManageJobs ? <JobStatusToggle jobId={job.id} status={job.status} /> : null}
         </CardContent>
       </Card>
 

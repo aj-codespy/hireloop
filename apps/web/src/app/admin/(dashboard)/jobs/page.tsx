@@ -7,6 +7,7 @@ import { FadeInItem, FadeInStagger } from "@/components/motion/fade-in";
 import { useHireLoop } from "@/lib/store/provider";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/patterns/empty-state";
+import { JobStatusToggle } from "@/components/jobs/job-status-toggle";
 import {
   Select,
   SelectContent,
@@ -92,11 +93,11 @@ export default function JobsPage() {
 
             return (
               <FadeInItem key={job.id}>
-                <Link
-                  href={`/admin/jobs/${job.id}`}
-                  className="block min-w-0 px-1 py-5 transition-colors hover:bg-slate-50 sm:px-4 motion-reduce:transition-none"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-3 px-1 py-5 transition-colors hover:bg-slate-50 sm:px-4 motion-reduce:transition-none">
+                  <Link
+                    href={`/admin/jobs/${job.id}`}
+                    className="min-w-0 flex-1"
+                  >
                     <div>
                       <h3 className="font-semibold">{job.title}</h3>
                       <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
@@ -104,6 +105,16 @@ export default function JobsPage() {
                         {applicantCount} applicant{applicantCount !== 1 ? "s" : ""}
                       </p>
                     </div>
+                    <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-6">
+                      {stages.map((stage, i) => (
+                        <div key={stage} className="text-center">
+                          <p className="text-lg font-semibold tabular-nums">{values[i]}</p>
+                          <p className="text-xs text-muted-foreground">{stage}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </Link>
+                  <div className="flex flex-col items-end gap-2">
                     <Badge
                       className={
                         job.status === "live"
@@ -113,16 +124,9 @@ export default function JobsPage() {
                     >
                       {job.status === "live" ? "Published" : job.status}
                     </Badge>
+                    <JobStatusToggle jobId={job.id} status={job.status} className="rounded-full" />
                   </div>
-                  <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-6">
-                    {stages.map((stage, i) => (
-                      <div key={stage} className="text-center">
-                        <p className="text-lg font-semibold tabular-nums">{values[i]}</p>
-                        <p className="text-xs text-muted-foreground">{stage}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Link>
+                </div>
               </FadeInItem>
             );
           })
