@@ -333,8 +333,8 @@ export async function updateJobAction(
   patch: Partial<JobRole>
 ): Promise<JobRole | { ok: false; error: string }> {
   try {
-    await requireOrgRole(ORG_MANAGER_ROLES);
-    return await updateJobInDb(id, patch);
+    const { orgId } = await requireOrgRole(ORG_MANAGER_ROLES);
+    return await updateJobInDb(id, patch, orgId);
   } catch (err) {
     if (isRedirectError(err) || isNotFoundError(err)) throw err;
     return { ok: false, error: err instanceof Error ? err.message : "Failed to update job" };

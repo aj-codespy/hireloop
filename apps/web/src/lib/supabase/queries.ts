@@ -157,7 +157,8 @@ export async function createJobInDb(
 
 export async function updateJobInDb(
   id: string,
-  patch: Partial<JobRole>
+  patch: Partial<JobRole>,
+  orgId: string
 ): Promise<JobRole> {
   const supabase = db();
   const { data: existing, error: fetchError } = await supabase
@@ -166,7 +167,10 @@ export async function updateJobInDb(
     .eq("id", id)
     .single();
 
-  if (fetchError) throw new Error(fetchError.message);
+  if (fetchError || !existing) throw new Error(fetchError?.message ?? "Job not found");
+  if (existing.org_id !== orgId) {
+    throw new Error("Access denied");
+  }
 
   const current = mapJobRole(existing);
   const updated: JobRole = {
