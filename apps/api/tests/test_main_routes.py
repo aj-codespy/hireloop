@@ -236,6 +236,25 @@ class TestWebSocketEndpoint:
         except Exception:
             pass
 
+    def test_websocket_close_reason_is_sanitized(self, test_app):
+        """H4: a ValueError from token validation must not leak internal
+        exception text through the WebSocket close reason."""
+        client, store = test_app
+        # Simulate a store ValueError carrying an internal detail
+        async def racy_load(token):
+            raise ValueError("Internal DB detail: secret_condition_failed for token")
+
+        store.load_application_for_interview = racy_load  # type: ignore[attr-defined]
+
+        from starlette.websockets import WebSocketDisconnect
+
+        with pytest.raises(WebSocketDisconnect) as excinfo:
+            with client.websocket_connect("/ws/interview?token=bad") as websocket:
+                websocket.receive()
+        assert excinfo.value.code == 4002
+        assert excinfo.value.reason == "invalid_token"
+        assert "secret_condition_failed" not in excinfo.value.reason
+
 
 class TestCORS:
     def test_cors_preflight(self, test_app):

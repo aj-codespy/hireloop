@@ -238,7 +238,10 @@ async def interview_websocket(
                 await websocket.close(code=4002, reason="Invalid or expired interview link")
                 return
         except ValueError as exc:
-            await websocket.close(code=4002, reason=str(exc))
+            # Never leak internal exception text through the close reason —
+            # candidates get the human explanation via email/UI instead.
+            logger.info("Token validation rejected: %s", exc)
+            await websocket.close(code=4002, reason="invalid_token")
             return
         except Exception as exc:
             logger.error("Token validation failed: %s", exc)
