@@ -25,6 +25,7 @@ import {
 } from "@/lib/supabase/queries";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createApplicationDocumentSignedUrl, createProctoringSnapshotSignedUrl, uploadApplicationDocument } from "@/lib/supabase/storage";
+import { buildCandidatesCsv } from "@/lib/export/candidates-csv";
 import type { HireLoopState } from "@/lib/store/provider";
 import type { CreateJobInput, QuestionInput } from "@/lib/store/provider";
 import type {
@@ -925,3 +926,24 @@ export async function renderQuestionAudioAction(
 }
 
 export { isApplicationDocument };
+
+/**
+ * Export applicants as CSV — org-scoped, server-side truth (not localStorage).
+ * Returns the CSV string so the client can trigger a download.
+ */
+export async function exportCandidatesCsvAction(
+  options: { jobId?: string; onlyCleared?: boolean } = {}
+): Promise<{ csv: string; filename: string } | { ok: false; error: string }> {
+  try {
+    const { orgId } = await requireOrgRole(ORG_PIPELINE_ROLES);
+    const state = await fetchHireLoopState(orgId);
+    const csv = buildCandidatesCsv(state, options);
+    const orgSlug = state.organization.name.toLowerCase().replace(/\s+/g, "-");
+    const scope = options.onlyCleared ? "cleared" : "candidates";
+    const filename = `hireloop-${orgSlug}-${scope}${options.jobId ? `-${options.jobId.slice(0, 8)}` : ""}.csv`;
+    return { csv, filename };
+  } catch (err) {
+    if (isRedirectError(err) || isNotFoundError(err)) throw err;
+    return { ok: false, error: err instanceof Error ? err.message : "Failed to export candidates" };
+  }
+}

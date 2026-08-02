@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/patterns/status-badge";
 import { formatDate } from "@/lib/format";
 import { FadeIn } from "@/components/motion/fade-in";
 import { InterviewPipeline } from "@/components/candidates/interview-pipeline";
+import { ExportCandidatesButton } from "@/components/candidates/export-candidates-button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -151,6 +152,8 @@ export function CandidatesTable() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
+          <ExportCandidatesButton onlyCleared label="Export cleared" />
+          <ExportCandidatesButton label="Export all" />
           <ToggleGroup type="single" value={view} onValueChange={(v) => v && switchView(v as any)} className="rounded-full border border-border bg-card p-0.5 gap-0">
             <ToggleGroupItem value="table" className="h-8 rounded-full px-3 text-xs data-[state=on]:bg-brand data-[state=on]:text-brand-foreground data-[state=on]:hover:bg-brand/90">
               <PhosphorIcon name="List" className="h-3.5 w-3.5 mr-1" />

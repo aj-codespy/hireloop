@@ -11,6 +11,7 @@ import {
   type QuestionInput,
 } from "@/lib/store/provider";
 import { ShareJobLink } from "@/components/jobs/share-job-link";
+import { ExportCandidatesButton } from "@/components/candidates/export-candidates-button";
 import { useOrgPermissions } from "@/hooks/use-org-permissions";
 import { JobDetailsEditor } from "@/components/jobs/job-details-editor";
 import { JobFormFieldsEditor } from "@/components/jobs/job-form-fields-editor";
@@ -372,6 +373,15 @@ export function JobDetailView({ jobId }: { jobId: string }) {
         {/* Applicants */}
         <TabsContent value="applicants" className="mt-6">
           <Card className="border-border shadow-card">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Applicants</CardTitle>
+              {applicants.length > 0 ? (
+                <div className="flex items-center gap-2">
+                  <ExportCandidatesButton jobId={jobId} onlyCleared label="Export cleared" />
+                  <ExportCandidatesButton jobId={jobId} label="Export all" />
+                </div>
+              ) : null}
+            </CardHeader>
             <CardContent className="p-0">
               {applicants.length === 0 ? (
                 <p className="p-6 text-sm text-muted-foreground">
