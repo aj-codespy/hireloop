@@ -77,7 +77,11 @@ export function CandidatesTable() {
 
   function switchView(next: "table" | "board") {
     setView(next);
-    localStorage.setItem(VIEW_KEY, next);
+    try {
+      localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // Best-effort persistence — storage may be unavailable
+    }
   }
 
   const filtered = useMemo(() => {

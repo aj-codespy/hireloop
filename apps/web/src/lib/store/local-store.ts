@@ -15,5 +15,12 @@ export function loadLocalState(): HireLoopState {
 }
 
 export function persistLocalState(state: HireLoopState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Storage can be unavailable (private mode, quota, security policy).
+    // The store keeps working in-memory — never let persistence crash a
+    // state update.
+  }
 }

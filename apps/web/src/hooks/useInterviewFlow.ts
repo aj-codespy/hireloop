@@ -299,8 +299,12 @@ export function useInterviewFlow(interviewToken: string): UseInterviewFlowReturn
         },
       };
 
-      // Save to localStorage
-      localStorage.setItem(`interview-progress-${interviewToken}`, JSON.stringify(snapshot));
+      // Save to localStorage (best-effort — storage may be unavailable)
+      try {
+        localStorage.setItem(`interview-progress-${interviewToken}`, JSON.stringify(snapshot));
+      } catch {
+        // Never crash the interview flow over persistence
+      }
       
       setProgress(prev => ({
         ...prev,
@@ -334,7 +338,11 @@ export function useInterviewFlow(interviewToken: string): UseInterviewFlowReturn
   }, [interviewToken]);
 
   const clearProgressStorage = useCallback(() => {
-    localStorage.removeItem(`interview-progress-${interviewToken}`);
+    try {
+      localStorage.removeItem(`interview-progress-${interviewToken}`);
+    } catch {
+      // Best-effort cleanup — storage may be unavailable
+    }
   }, [interviewToken]);
 
   // Actions
