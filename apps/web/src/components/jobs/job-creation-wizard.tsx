@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PhosphorIcon } from "@/components/icons/phosphor-icon";
 import { toast } from "sonner";
@@ -22,7 +22,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -33,10 +32,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FadeIn } from "@/components/motion/fade-in";
 import { JobQuestionsEditor } from "@/components/jobs/job-questions-editor";
-import {
-  validateInterviewQuestionCount,
-  INTERVIEW_CONFIG_ERRORS,
-} from "@/lib/interview-questions";
 
 const STEPS = [
   { label: "Job details", description: "Define the role candidates will see." },
@@ -95,7 +90,9 @@ export function JobCreationWizard() {
   // Step 4
   const [rules, setRules] = useState<EligibilityRule[]>([]);
 
-  const [publishLive, setPublishLive] = useState(false);
+  const [publishLive, setPublishLive] = useState(true);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const publishingRef = useRef(false);
 
   function addField() {
     const label = "New field";
@@ -156,6 +153,8 @@ export function JobCreationWizard() {
   }
 
   async function handlePublish() {
+    // Guard against double-clicks / repeated submission while audio is generating.
+    if (publishingRef.current) return;
     if (!title.trim()) {
       toast.error("Job title is required");
       setStep(0);
@@ -192,29 +191,37 @@ export function JobCreationWizard() {
       })),
     };
 
-    let job;
+    // Acquire the re-entry lock before any work that creates side effects.
+    publishingRef.current = true;
+    setIsPublishing(true);
     try {
-      job = await createJob(input);
-    } catch {
-      toast.error("Could not save job");
-      return;
-    }
+      let job;
+      try {
+        job = await createJob(input);
+      } catch {
+        toast.error("Could not save job");
+        return;
+      }
 
-    // Pass the rounds via setJobQuestions (we just pass an empty questions array for the legacy arg, or we can pass the first round's questions to avoid breaking old getters temporarily)
-    const legacyQuestions = rounds[0]?.questions.filter((q) => q.promptText.trim()) || [];
-    const promise = setJobQuestions(job.id, legacyQuestions, null, input.rounds);
-    toast.promise(promise, {
-      loading: "Generating question audio in the background...",
-      success: publishLive ? "Job published" : "Job saved as draft",
-      error: (err) => err instanceof Error ? err.message : "Could not save job",
-    });
+      // Pass the rounds via setJobQuestions (we just pass an empty questions array for the legacy arg, or we can pass the first round's questions to avoid breaking old getters temporarily)
+      const legacyQuestions = rounds[0]?.questions.filter((q) => q.promptText.trim()) || [];
+      const promise = setJobQuestions(job.id, legacyQuestions, null, input.rounds);
+      toast.promise(promise, {
+        loading: "Generating question audio in the background...",
+        success: publishLive ? "Job published" : "Job saved as draft",
+        error: (err) => err instanceof Error ? err.message : "Could not save job",
+      });
 
-    try {
-      await promise;
-      setCreatedJobId(job.id);
-      setStep(4);
-    } catch {
-      // Handled by toast.promise
+      try {
+        await promise;
+        setCreatedJobId(job.id);
+        setStep(4);
+      } catch {
+        // Handled by toast.promise
+      }
+    } finally {
+      publishingRef.current = false;
+      setIsPublishing(false);
     }
   }
 
@@ -605,8 +612,10 @@ export function JobCreationWizard() {
                 <Button variant="outline" className="rounded-full" onClick={() => setStep(2)}>
                   Back
                 </Button>
-                <Button className="rounded-full bg-brand hover:bg-brand/90" onClick={handlePublish}>
-                  {publishLive ? "Publish job" : "Save as draft"}
+                <Button className="rounded-full bg-brand hover:bg-brand/90" onClick={handlePublish} disabled={isPublishing}>
+                  {isPublishing
+                    ? "Creating job…"
+                    : publishLive ? "Publish job" : "Save as draft"}
                 </Button>
               </div>
             </CardContent>
